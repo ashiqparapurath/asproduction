@@ -69,15 +69,13 @@ service cloud.firestore {
     /**
      * @description Rules for the /roles_admin collection.
      * @path /roles_admin/{uid}
-     * @allow (create) An admin role can be created
-     * @deny (create) A non-admin attempts to create an admin role.
+     * @allow (read) Any signed-in user can check for the existence of an admin role document (for cross-service rules).
+     * @allow (write) Only admins can manage other admin roles.
+     * @deny (write) A non-admin attempts to create an admin role.
      */
     match /roles_admin/{uid} {
-        allow get: if isAdmin();
-        allow list: if isAdmin();
-        allow create: if isAdmin();
-        allow update: if isAdmin();
-        allow delete: if isAdmin();
+        allow get: if isSignedIn();
+        allow list, create, update, delete: if isAdmin();
     }
   }
 }
