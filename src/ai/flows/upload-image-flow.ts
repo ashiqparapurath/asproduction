@@ -19,13 +19,12 @@ import { firebaseConfig } from '@/firebase/config';
 // Create a dedicated, server-safe initialization function
 function initializeServerFirebase() {
   if (typeof window === 'undefined') {
-    if (getApps().length) {
-      const app = getApp();
-      return { firebaseApp: app, storage: getStorage(app) };
-    }
-    const app = initializeApp(firebaseConfig);
+    // Check if an app is already initialized. If so, use it; otherwise, initialize a new one.
+    // This is the standard pattern for preventing re-initialization errors in serverless environments.
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     return { firebaseApp: app, storage: getStorage(app) };
   }
+  // This function should never be called on the client.
   throw new Error("Attempted to call server-side Firebase initialization on the client.");
 }
 
