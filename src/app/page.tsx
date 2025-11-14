@@ -58,7 +58,7 @@ export default function Home() {
                       <h2 className="text-3xl md:text-4xl font-bold">Mid-Season Sale</h2>
                       <p className="mt-2 text-lg md:text-xl">Up to 30% off on selected Apparel.</p>
                       <Button asChild className="mt-4">
-                        <Link href="#">Shop Now</Link>
+                        <Link href="/products?category=Apparel">Shop Now</Link>
                       </Button>
                     </div>
                   </CardContent>
@@ -79,7 +79,7 @@ export default function Home() {
                       <h2 className="text-3xl md:text-4xl font-bold">New Electronics</h2>
                       <p className="mt-2 text-lg md:text-xl">Discover the latest in tech.</p>
                        <Button asChild className="mt-4">
-                        <Link href="#">Explore</Link>
+                        <Link href="/products?category=Electronics">Explore</Link>
                       </Button>
                     </div>
                   </CardContent>
@@ -100,7 +100,7 @@ export default function Home() {
                       <h2 className="text-3xl md:text-4xl font-bold">Bestselling Books</h2>
                       <p className="mt-2 text-lg md:text-xl">Expand your library with top titles.</p>
                        <Button asChild className="mt-4">
-                        <Link href="#">Discover Books</Link>
+                        <Link href="/products?category=Books">Discover Books</Link>
                       </Button>
                     </div>
                   </CardContent>
