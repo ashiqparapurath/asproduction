@@ -12,8 +12,6 @@ function NewArrivalsContent() {
   const firestore = useFirestore();
   const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    // Assuming you have a 'createdAt' timestamp field in your product documents
-    // to determine which are "new". If not, you'll need to add one.
     return query(collection(firestore, 'products'), orderBy('createdAt', 'desc'), limit(4));
   }, [firestore]);
 
@@ -42,11 +40,10 @@ function NewArrivalsContent() {
     )
   }
 
-  // A check in case there's a createdAt field but no products yet.
   if (!newArrivals || newArrivals.length === 0) {
     return (
       <div className="text-center py-10">
-        <p className="text-muted-foreground">No new arrivals at the moment. Check back soon!</p>
+        <p className="text-muted-foreground">No new arrivals at the moment. Add some in the admin panel!</p>
       </div>
     )
   }

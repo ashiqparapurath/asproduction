@@ -1,16 +1,20 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ProductList } from '@/components/admin/product-list';
+import { ProductDialog } from '@/components/admin/product-dialog';
+import type { Product } from '@/lib/products';
 
 function AdminContent() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
@@ -41,13 +45,24 @@ function AdminContent() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-4xl md:text-5xl font-bold tracking-tighter">
-        Admin Panel
-      </h1>
-      <p className="text-lg text-muted-foreground">
-        Welcome, Admin! Here you will be able to add, edit, and delete products.
-      </p>
+    <div className="space-y-6 w-full">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tighter">
+            Admin Panel
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Manage your products here.
+          </p>
+        </div>
+         <ProductDialog 
+            isOpen={isDialogOpen} 
+            onOpenChange={setIsDialogOpen}
+          >
+            <Button onClick={() => setIsDialogOpen(true)}>Add New Product</Button>
+          </ProductDialog>
+      </div>
+      <ProductList />
     </div>
   );
 }
@@ -80,8 +95,10 @@ export default function AdminPage() {
   }
 
   const handleSignOut = async () => {
-    await auth.signOut();
-    router.push('/login');
+    if (auth) {
+        await auth.signOut();
+        router.push('/login');
+    }
   };
 
   return (
@@ -91,7 +108,9 @@ export default function AdminPage() {
         <div className="container py-12 md:py-20 lg:py-24">
           <div className="flex justify-between items-start">
              <AdminContent />
-             <Button onClick={handleSignOut} variant="outline">Sign Out</Button>
+             {user && (
+                <Button onClick={handleSignOut} variant="outline">Sign Out</Button>
+             )}
           </div>
         </div>
       </main>

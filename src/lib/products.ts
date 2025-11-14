@@ -5,6 +5,8 @@ export type Product = {
   price: number;
   category: 'Electronics' | 'Apparel' | 'Books';
   imageId: string;
+  createdAt?: any;
+  updatedAt?: any;
 };
 
 // This static data is no longer used. Products are now fetched from Firestore.
