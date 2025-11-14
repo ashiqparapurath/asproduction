@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { cn } from '@/lib/utils';
 import { CartProvider } from '@/context/cart-context';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -23,9 +24,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <body className={cn("min-h-screen bg-background font-sans antialiased", inter.variable)}>
-        <CartProvider>
-          {children}
-        </CartProvider>
+        <FirebaseClientProvider>
+          <CartProvider>
+            {children}
+          </CartProvider>
+        </FirebaseClientProvider>
         <Toaster />
       </body>
     </html>

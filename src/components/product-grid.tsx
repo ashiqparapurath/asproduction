@@ -6,13 +6,14 @@ import { ProductCard } from '@/components/product-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 interface ProductGridProps {
   products: Product[];
 }
 
 export function ProductGrid({ products }: ProductGridProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get('category');
   
@@ -26,9 +27,20 @@ export function ProductGrid({ products }: ProductGridProps) {
     }
   }, [searchParams]);
 
-  const categories = useMemo(() => ['All', ...Array.from(new Set(products.map((p) => p.category)))], [products]);
+  const categories = useMemo(() => {
+    if (!products || products.length === 0) return ['All'];
+    return ['All', ...Array.from(new Set(products.map((p) => p.category)))];
+  }, [products]);
+
+  const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && searchTerm.toLowerCase() === 'adm') {
+      event.preventDefault();
+      router.push('/admin');
+    }
+  };
 
   const filteredProducts = useMemo(() => {
+    if (!products) return [];
     return products
       .filter((product) => {
         if (selectedCategory === 'All') return true;
@@ -47,10 +59,11 @@ export function ProductGrid({ products }: ProductGridProps) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search products..."
+            placeholder="Search products... or type 'adm'"
             className="pl-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
           />
         </div>
         <div className="flex flex-wrap gap-2 justify-center">
@@ -76,7 +89,9 @@ export function ProductGrid({ products }: ProductGridProps) {
       ) : (
         <div className="text-center py-16">
           <h2 className="text-2xl font-semibold mb-2">No Products Found</h2>
-          <p className="text-muted-foreground">Try adjusting your search or filter criteria.</p>
+          <p className="text-muted-foreground">
+            The database is currently empty. Use the admin panel to add products.
+          </p>
         </div>
       )}
     </div>

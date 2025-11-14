@@ -1,12 +1,62 @@
+'use client';
 import { Header } from '@/components/header';
 import { ProductGrid } from '@/components/product-grid';
-import { products } from '@/lib/products';
 import Link from 'next/link';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, limit, orderBy, query } from 'firebase/firestore';
+import type { Product } from '@/lib/products';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from '@/components/ui/card';
+
+function NewArrivalsContent() {
+  const firestore = useFirestore();
+  const productsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    // Assuming you have a 'createdAt' timestamp field in your product documents
+    // to determine which are "new". If not, you'll need to add one.
+    return query(collection(firestore, 'products'), orderBy('createdAt', 'desc'), limit(4));
+  }, [firestore]);
+
+  const { data: newArrivals, isLoading } = useCollection<Product>(productsQuery);
+
+  if (isLoading) {
+    return (
+       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i}>
+            <CardContent className="p-0">
+              <Skeleton className="w-full h-48" />
+            </CardContent>
+            <CardContent className="p-4 space-y-2">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </CardContent>
+            <CardContent className="p-4 pt-0 flex justify-between items-center">
+              <Skeleton className="h-6 w-1/3" />
+              <Skeleton className="h-10 w-10" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
+  // A check in case there's a createdAt field but no products yet.
+  if (!newArrivals || newArrivals.length === 0) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-muted-foreground">No new arrivals at the moment. Check back soon!</p>
+      </div>
+    )
+  }
+
+
+  return <ProductGrid products={newArrivals} />;
+}
+
 
 export default function NewArrivalsPage() {
-  // Let's define new arrivals as the last 4 products added.
-  const newArrivals = products.slice(-4);
-
   return (
     <div className="flex flex-col min-h-screen bg-secondary/40">
       <Header />
@@ -18,7 +68,7 @@ export default function NewArrivalsPage() {
               Check out the latest additions to our collection. Fresh finds, just for you.
             </p>
           </div>
-          <ProductGrid products={newArrivals} />
+          <NewArrivalsContent />
         </div>
       </main>
       <footer className="py-8 bg-background text-center text-sm text-muted-foreground border-t">
