@@ -22,7 +22,7 @@ export function CartDrawer() {
   const totalAmount = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
   const handleSendEnquiry = () => {
-    const businessPhoneNumber = '919876543210'; // Replace with your business WhatsApp number
+    const businessPhoneNumber = '917592868316'; // Replace with your business WhatsApp number
     
     const messageParts = cartItems.map(item => 
       `${item.name} (x${item.quantity}) - ${formatPrice(item.price * item.quantity)}`
