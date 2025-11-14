@@ -17,22 +17,14 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
   const { toast } = useToast();
-  const [imgSrc, setImgSrc] = useState(product.imageUrl);
   const [imgError, setImgError] = useState(false);
 
   const fallbackImage = "https://placehold.co/600x600/EEE/31343C?text=Image+Not+Available";
 
+  // Reset error state when the product prop changes
   useEffect(() => {
-    // Reset state when product changes
-    setImgSrc(product.imageUrl);
     setImgError(false);
-
-    // Specifically check for non-image hosting URLs like Google Drive right away
-    if (product.imageUrl && product.imageUrl.includes('drive.google.com')) {
-      setImgError(true);
-    }
   }, [product.imageUrl]);
-
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -49,23 +41,14 @@ export function ProductCard({ product }: ProductCardProps) {
     });
   };
 
-  // Proactive check before rendering to avoid Next.js error
-  const isInvalidUrl = !product.imageUrl || product.imageUrl.includes('drive.google.com');
+  const currentSrc = imgError || !product.imageUrl ? fallbackImage : product.imageUrl;
 
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group bg-card">
       <CardHeader className="p-0 border-b">
         <div className="relative w-full aspect-square overflow-hidden">
-          {isInvalidUrl || imgError ? (
-             <Image
-              src={fallbackImage}
-              alt="Image not available"
-              fill
-              className="object-cover"
-            />
-          ) : (
             <Image
-              src={imgSrc}
+              src={currentSrc}
               alt={product.name}
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -73,7 +56,6 @@ export function ProductCard({ product }: ProductCardProps) {
                 setImgError(true);
               }}
             />
-          )}
         </div>
       </CardHeader>
       <CardContent className="p-4 flex-grow flex flex-col">
