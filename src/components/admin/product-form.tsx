@@ -77,8 +77,8 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
 
   const uploadImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
-      if (!auth.currentUser) {
-        return reject(new Error("User not authenticated for upload."));
+      if (!auth || !auth.currentUser) {
+        return reject(new Error("User not authenticated for upload. Please sign in again."));
       }
 
       const storage = getStorage();
@@ -94,7 +94,12 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         (error) => {
           console.error('Upload failed:', error);
           setUploadProgress(null);
-          reject(error);
+          // Provide more context on permission errors
+          if (error.code === 'storage/unauthorized') {
+            reject(new Error('Permission denied. You might not have the rights to upload to this location.'));
+          } else {
+            reject(error);
+          }
         },
         () => {
           getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
@@ -108,7 +113,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
 
 
   const onSubmit = async (data: ProductFormValues) => {
-    if (!firestore) return;
+    if (!firestore || !auth) return;
     
     let imageUrl = product?.imageUrl; // Keep existing image URL if not changed
 
@@ -116,29 +121,30 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     if (imageFile) {
       try {
         imageUrl = await uploadImage(imageFile);
-      } catch (error) {
+      } catch (error: any) {
         toast({
           variant: 'destructive',
           title: 'Image Upload Failed',
-          description: 'Could not upload the image. Please try again.',
+          description: error.message || 'Could not upload the image. Please try again.',
         });
         return; // Stop submission if upload fails
       }
     }
 
-    if (!imageUrl) {
+    if (!isEditMode && !imageUrl) {
         toast({
           variant: 'destructive',
           title: 'Image Required',
-          description: 'Please select an image for the product.',
+          description: 'Please select an image for the new product.',
         });
         return;
     }
 
-    const productData = {
+    const productData: Partial<Product> & { name: string; description: string; price: number; category: "Electronics" | "Apparel" | "Books"; showPrice: boolean; imageUrl?: string} = {
         ...data,
         imageUrl,
     };
+    // @ts-ignore
     delete productData.image; // Remove file data before saving to Firestore
 
 
@@ -153,6 +159,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     } else {
       const collectionRef = collection(firestore, 'products');
       const newData = { ...productData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
+      // @ts-ignore
       addDocumentNonBlocking(collectionRef, newData);
       toast({
         title: 'Product Added',
