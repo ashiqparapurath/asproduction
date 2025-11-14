@@ -27,7 +27,7 @@ export function ProductCard({ product }: ProductCardProps) {
     setImgSrc(product.imageUrl);
     setImgError(false);
 
-    // Specifically check for non-image hosting URLs like Google Drive
+    // Specifically check for non-image hosting URLs like Google Drive right away
     if (product.imageUrl && product.imageUrl.includes('drive.google.com')) {
       setImgError(true);
     }
@@ -49,11 +49,21 @@ export function ProductCard({ product }: ProductCardProps) {
     });
   };
 
+  // Proactive check before rendering to avoid Next.js error
+  const isInvalidUrl = !product.imageUrl || product.imageUrl.includes('drive.google.com');
+
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group bg-card">
       <CardHeader className="p-0 border-b">
         <div className="relative w-full aspect-square overflow-hidden">
-          {product.imageUrl && !imgError ? (
+          {isInvalidUrl || imgError ? (
+             <Image
+              src={fallbackImage}
+              alt="Image not available"
+              fill
+              className="object-cover"
+            />
+          ) : (
             <Image
               src={imgSrc}
               alt={product.name}
@@ -62,13 +72,6 @@ export function ProductCard({ product }: ProductCardProps) {
               onError={() => {
                 setImgError(true);
               }}
-            />
-          ) : (
-             <Image
-              src={fallbackImage}
-              alt="Image not available"
-              fill
-              className="object-cover"
             />
           )}
         </div>
