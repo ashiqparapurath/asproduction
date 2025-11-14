@@ -265,8 +265,8 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={isSubmitting || !user} className="w-full">
-           {isSubmitting ? 'Saving...' : !user ? 'Authenticating...' : 'Save Product'}
+        <Button type="submit" disabled={isSubmitting} className="w-full">
+           {isSubmitting ? 'Saving...' : 'Save Product'}
         </Button>
       </form>
     </Form>
