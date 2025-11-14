@@ -25,13 +25,13 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { useFirebase, useUser } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { Product } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useState } from 'react';
 import Image from 'next/image';
-import { v4 as uuidv4 } from 'uuid';
+import { uploadImage } from '@/ai/flows/upload-image-flow';
+
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -43,10 +43,9 @@ const formSchema = z.object({
   showPrice: z.boolean().default(true),
 })
 .refine(data => {
-    // If editing, and there's an existing imageUrl, then imageFile is not required.
-    if (data.imageUrl) return true;
-    // If creating, or if imageUrl is empty, then imageFile is required.
-    return !!data.imageFile;
+    // If we are editing and an imageUrl already exists, imageFile is optional.
+    // In all other cases (creating, or editing without an imageUrl), imageFile is required.
+    return !!data.imageUrl || !!data.imageFile;
 }, {
     message: "An image file must be provided.",
     path: ["imageFile"],
@@ -61,11 +60,10 @@ interface ProductFormProps {
 }
 
 export function ProductForm({ product, onFinished }: ProductFormProps) {
-  const { firestore, firebaseApp } = useFirebase();
+  const { firestore } = useFirebase();
   const { user } = useUser();
   const { toast } = useToast();
   const isEditMode = !!product;
-  const storage = firebaseApp ? getStorage(firebaseApp) : null;
 
   const [imagePreview, setImagePreview] = useState<string | null>(product?.imageUrl || null);
 
@@ -92,36 +90,44 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         setImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
-      form.setValue('imageFile', file);
-      form.setValue('imageUrl', ''); // Clear imageUrl if a file is selected
-      form.clearErrors('imageFile'); 
-      form.clearErrors('imageUrl');
+      form.setValue('imageFile', file, { shouldValidate: true });
+      form.setValue('imageUrl', '');
     }
   };
 
 
   const onSubmit = async (data: ProductFormValues) => {
-    // Manually trigger the submitting state.
-    form.control.register('isSubmitting' as any, { value: true });
-
-    if (!firestore || !user || !storage) {
+    if (!firestore || !user) {
         toast({
             variant: 'destructive',
-            title: 'Authentication or Storage Error',
-            description: 'You must be signed in and storage must be available.',
+            title: 'Authentication Error',
+            description: 'You must be signed in to save a product.',
         });
-        form.reset(data); // Reset form state
         return;
     }
     
-    let imageUrl = data.imageUrl || product?.imageUrl || '';
+    let finalImageUrl = product?.imageUrl || '';
 
     if (data.imageFile) {
         try {
-            const imageId = uuidv4();
-            const storageRef = ref(storage, `products/${user.uid}/${imageId}`);
-            await uploadBytes(storageRef, data.imageFile);
-            imageUrl = await getDownloadURL(storageRef);
+            const reader = new FileReader();
+            const fileAsDataURL = await new Promise<string>((resolve) => {
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(data.imageFile!);
+            });
+            
+            const result = await uploadImage({
+                fileDataUri: fileAsDataURL,
+                fileName: data.imageFile.name,
+                userId: user.uid,
+            });
+
+            if (result.downloadUrl) {
+                finalImageUrl = result.downloadUrl;
+            } else {
+                throw new Error("Image upload failed to return a URL.");
+            }
+
         } catch (error) {
             console.error("Image upload failed:", error);
             toast({
@@ -129,8 +135,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                 title: "Image Upload Failed",
                 description: "Could not upload the new image. Please try again.",
             });
-            form.reset(data); // Reset form state
-            return;
+            return; // Stop execution if image upload fails
         }
     }
 
@@ -141,7 +146,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         price: data.price,
         category: data.category,
         showPrice: data.showPrice,
-        imageUrl: imageUrl,
+        imageUrl: finalImageUrl,
     };
     
     try {
@@ -169,9 +174,6 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             title: 'Failed to save product',
             description: error.message || 'An unexpected error occurred.',
         });
-    } finally {
-        // Explicitly set isSubmitting to false when everything is done.
-        form.reset(form.getValues());
     }
   };
 
@@ -241,27 +243,34 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             </FormItem>
           )}
         />
-         <FormItem>
-          <FormLabel>Product Image</FormLabel>
-          {imagePreview && (
-            <div className="mt-2 relative w-full h-48 rounded-md overflow-hidden border">
-              <Image src={imagePreview} alt="Image Preview" layout="fill" objectFit="cover" />
-            </div>
-          )}
-          <FormControl>
-            <Input 
-                type="file" 
-                accept="image/*" 
-                onChange={handleImageChange} 
-                disabled={isSubmitting} 
-                className="file:text-foreground"
-            />
-          </FormControl>
-          <FormDescription>
-            Upload an image from your computer. This will replace any existing image url.
-          </FormDescription>
-          <FormMessage />
-        </FormItem>
+        <FormField
+            control={form.control}
+            name="imageFile"
+            render={() => (
+            <FormItem>
+            <FormLabel>Product Image</FormLabel>
+            {imagePreview && (
+                <div className="mt-2 relative w-full h-48 rounded-md overflow-hidden border">
+                <Image src={imagePreview} alt="Image Preview" layout="fill" objectFit="cover" />
+                </div>
+            )}
+            <FormControl>
+                <Input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleImageChange} 
+                    disabled={isSubmitting} 
+                    className="file:text-foreground"
+                />
+            </FormControl>
+            <FormDescription>
+                Upload an image from your computer.
+            </FormDescription>
+            <FormMessage />
+            </FormItem>
+        )}
+        />
+
         <FormField
           control={form.control}
           name="showPrice"
@@ -281,7 +290,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={isSubmitting} className="w-full">
+        <Button type="submit" disabled={isSubmitting || !form.formState.isValid} className="w-full">
            {isSubmitting ? 'Saving...' : 'Save Product'}
         </Button>
       </form>
