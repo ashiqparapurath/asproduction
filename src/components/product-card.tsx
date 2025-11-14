@@ -17,18 +17,12 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
   const { toast } = useToast();
-  const [imgError, setImgError] = useState(false);
+  const [imgSrc, setImgSrc] = useState(product.imageUrl);
 
   const fallbackImage = "https://placehold.co/600x600/EEE/31343C?text=Image+Not+Available";
 
-  // Preemptively check for invalid URLs that Next/Image cannot process.
-  const isInvalidUrl = product.imageUrl && product.imageUrl.includes("drive.google.com");
-
-  const currentSrc = imgError || isInvalidUrl || !product.imageUrl ? fallbackImage : product.imageUrl;
-
-  // Reset error state when the product prop changes
   useEffect(() => {
-    setImgError(false);
+    setImgSrc(product.imageUrl);
   }, [product.imageUrl]);
 
   const formatPrice = (price: number) => {
@@ -50,13 +44,13 @@ export function ProductCard({ product }: ProductCardProps) {
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group bg-card">
       <CardHeader className="p-0 border-b">
         <div className="relative w-full aspect-square overflow-hidden">
-            <Image
-              src={currentSrc}
+            {/* Using a standard img tag for flexibility with any URL */}
+            <img
+              src={imgSrc || fallbackImage}
               alt={product.name}
-              fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
               onError={() => {
-                setImgError(true);
+                setImgSrc(fallbackImage);
               }}
             />
         </div>
