@@ -16,8 +16,8 @@ export function Header() {
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
             <Link href="/products" className="text-muted-foreground hover:text-foreground transition-colors">Shop</Link>
-            <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">New Arrivals</Link>
-            <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
+            <Link href="/new-arrivals" className="text-muted-foreground hover:text-foreground transition-colors">New Arrivals</Link>
+            <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
           </nav>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon">
