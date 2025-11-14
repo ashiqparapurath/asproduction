@@ -10,8 +10,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { firebaseConfig } from '@/firebase/config';
+import { initializeFirebase } from '@/firebase';
 import { v4 as uuidv4 } from 'uuid';
 
 const UploadImageInputSchema = z.object({
@@ -30,14 +29,6 @@ const UploadImageOutputSchema = z.object({
 });
 export type UploadImageOutput = z.infer<typeof UploadImageOutputSchema>;
 
-// Ensure Firebase is initialized
-function getFirebaseApp() {
-    if (!getApps().length) {
-        return initializeApp(firebaseConfig);
-    }
-    return getApp();
-}
-
 export async function uploadImage(input: UploadImageInput): Promise<UploadImageOutput> {
   return uploadImageFlow(input);
 }
@@ -49,7 +40,8 @@ const uploadImageFlow = ai.defineFlow(
     outputSchema: UploadImageOutputSchema,
   },
   async (input) => {
-    const firebaseApp = getFirebaseApp();
+    // Use the centralized initializeFirebase function
+    const { firebaseApp } = initializeFirebase();
     const storage = getStorage(firebaseApp);
     
     // Extract file extension and generate a unique name
