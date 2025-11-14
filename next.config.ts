@@ -45,6 +45,12 @@ const nextConfig: NextConfig = {
         hostname: 'www.google.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.flowerchimp.com.ph',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
