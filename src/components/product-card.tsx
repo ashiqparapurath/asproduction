@@ -46,7 +46,7 @@ export function ProductCard({ product }: ProductCardProps) {
       </CardContent>
       <CardFooter className="p-4 pt-0 flex justify-between items-center">
         <p className="text-xl font-bold text-primary">{formatPrice(product.price)}</p>
-        <Button asChild size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button asChild size="sm" className="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
           <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
             <WhatsAppIcon className="h-4 w-4 mr-2" />
             Order
