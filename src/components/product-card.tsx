@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import type { Product } from '@/lib/products';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart } from 'lucide-react';
@@ -15,7 +14,6 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const image = PlaceHolderImages.find((img) => img.id === product.imageId);
   const { addToCart } = useCart();
   const { toast } = useToast();
 
@@ -39,11 +37,10 @@ export function ProductCard({ product }: ProductCardProps) {
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group bg-card">
       <CardHeader className="p-0 border-b">
         <div className="relative w-full aspect-square overflow-hidden">
-          {image && (
+          {product.imageUrl && (
             <Image
-              src={image.imageUrl}
+              src={product.imageUrl}
               alt={product.name}
-              data-ai-hint={image.imageHint}
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
@@ -56,7 +53,11 @@ export function ProductCard({ product }: ProductCardProps) {
         <CardDescription className="text-sm text-muted-foreground line-clamp-2">{product.description}</CardDescription>
       </CardContent>
       <CardFooter className="p-4 pt-0 flex justify-between items-center">
-        <p className="text-xl font-bold text-primary">{formatPrice(product.price)}</p>
+        {product.showPrice ? (
+          <p className="text-xl font-bold text-primary">{formatPrice(product.price)}</p>
+        ) : (
+          <p className="text-sm text-muted-foreground">Price available on request</p>
+        )}
         <Button onClick={handleAddToCart} size="icon" className="md:w-auto md:px-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
             <ShoppingCart className="h-4 w-4 md:mr-2" />
             <span className="sr-only md:not-sr-only">Add to Cart</span>

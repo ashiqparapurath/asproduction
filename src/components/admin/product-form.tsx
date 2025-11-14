@@ -21,19 +21,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc, serverTimestamp, addDoc, updateDoc } from 'firebase/firestore';
+import { Switch } from '@/components/ui/switch';
+import { useFirestore } from '@/firebase';
+import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import type { Product } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
-import { addDocumentNonBlocking, setDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   price: z.coerce.number().positive('Price must be a positive number.'),
   category: z.enum(['Electronics', 'Apparel', 'Books']),
-  imageId: z.string().min(1, 'Please select an image.'),
+  imageUrl: z.string().url('Please enter a valid image URL.'),
+  showPrice: z.boolean().default(true),
 });
 
 type ProductFormValues = z.infer<typeof formSchema>;
@@ -56,14 +57,16 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
           description: product.description,
           price: product.price,
           category: product.category,
-          imageId: product.imageId,
+          imageUrl: product.imageUrl,
+          showPrice: product.showPrice,
         }
       : {
           name: '',
           description: '',
           price: 0,
           category: 'Apparel',
-          imageId: '',
+          imageUrl: '',
+          showPrice: true,
         },
   });
 
@@ -89,8 +92,6 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     }
     onFinished();
   };
-
-  const imageOptions = PlaceHolderImages.filter(img => img.id.startsWith('prod_'));
 
   return (
     <Form {...form}>
@@ -156,25 +157,34 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             </FormItem>
           )}
         />
-         <FormField
+        <FormField
           control={form.control}
-          name="imageId"
+          name="imageUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Image</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select an image" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {imageOptions.map(image => (
-                    <SelectItem key={image.id} value={image.id}>{image.description}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormLabel>Image URL</FormLabel>
+              <FormControl>
+                <Input placeholder="https://example.com/image.png" {...field} />
+              </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="showPrice"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <div className="space-y-0.5">
+                <FormLabel>Show Price</FormLabel>
+                <FormMessage />
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
             </FormItem>
           )}
         />

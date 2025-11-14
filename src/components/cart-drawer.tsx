@@ -5,9 +5,7 @@ import Image from 'next/image';
 import { useCart } from '@/context/cart-context';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Trash2, Plus, Minus, Send, ShoppingCart } from 'lucide-react';
-import Link from 'next/link';
 
 export function CartDrawer() {
   const { cartItems, removeFromCart, updateQuantity, clearCart } = useCart();
@@ -47,14 +45,12 @@ export function CartDrawer() {
         <>
           <ScrollArea className="flex-1 -mx-6">
             <div className="px-6 space-y-4">
-            {cartItems.map((item) => {
-              const image = PlaceHolderImages.find((img) => img.id === item.imageId);
-              return (
+            {cartItems.map((item) => (
                 <div key={item.id} className="flex items-start gap-4">
                    <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0">
-                    {image && (
+                    {item.imageUrl && (
                       <Image
-                        src={image.imageUrl}
+                        src={item.imageUrl}
                         alt={item.name}
                         fill
                         className="object-cover"
@@ -63,7 +59,9 @@ export function CartDrawer() {
                   </div>
                   <div className="flex-1">
                     <p className="font-semibold text-sm line-clamp-2">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">{formatPrice(item.price)}</p>
+                    {item.showPrice ? (
+                      <p className="text-sm text-muted-foreground">{formatPrice(item.price)}</p>
+                    ) : null}
                     <div className="flex items-center gap-2 mt-2">
                       <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
                         <Minus className="h-3.5 w-3.5" />
@@ -78,8 +76,7 @@ export function CartDrawer() {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-              );
-            })}
+              ))}
             </div>
           </ScrollArea>
           <div className="border-t mt-auto -mx-6 px-6 pt-4">

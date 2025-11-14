@@ -30,6 +30,10 @@
         "categoryId": {
           "type": "string",
           "description": "Reference to Category. (Relationship: Category 1:N Product)"
+        },
+        "showPrice": {
+          "type": "boolean",
+          "description": "Whether to show the price of the product."
         }
       },
       "required": [
@@ -38,7 +42,8 @@
         "description",
         "price",
         "imageUrl",
-        "categoryId"
+        "categoryId",
+        "showPrice"
       ]
     },
     "Category": {
