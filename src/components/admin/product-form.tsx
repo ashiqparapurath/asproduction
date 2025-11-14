@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { useFirestore, useAuth, useUser } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import type { Product } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
@@ -30,8 +30,6 @@ import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/no
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useState } from 'react';
 import { Progress } from '@/components/ui/progress';
-import type { User } from 'firebase/auth';
-
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -48,37 +46,6 @@ interface ProductFormProps {
   product?: Product;
   onFinished: () => void;
 }
-
-const uploadImage = (file: File, user: User): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      if (!user) {
-        return reject(new Error("User not authenticated for upload. Please sign in again."));
-      }
-
-      const storage = getStorage();
-      const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on(
-        'state_changed',
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          // This state update is handled by the component using the promise
-        },
-        (error) => {
-          console.error('Upload failed:', error);
-          if (error.code === 'storage/unauthorized') {
-            reject(new Error('Permission denied. You might not have the rights to upload to this location.'));
-          } else {
-            reject(error);
-          }
-        },
-        () => {
-          getDownloadURL(uploadTask.snapshot.ref).then(resolve).catch(reject);
-        }
-      );
-    });
-  };
 
 export function ProductForm({ product, onFinished }: ProductFormProps) {
   const firestore = useFirestore();
@@ -118,17 +85,17 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     }
     
     let imageUrl = product?.imageUrl; 
-
     const imageFile = data.image?.[0];
+
     if (imageFile) {
         setUploadProgress(0);
         try {
-            const storage = getStorage();
-            const storageRef = ref(storage, `products/${Date.now()}_${imageFile.name}`);
-            const uploadTask = uploadBytesResumable(storageRef, imageFile);
-            
-            await new Promise<void>((resolve, reject) => {
-                 uploadTask.on(
+            imageUrl = await new Promise<string>((resolve, reject) => {
+                const storage = getStorage();
+                const storageRef = ref(storage, `products/${Date.now()}_${imageFile.name}`);
+                const uploadTask = uploadBytesResumable(storageRef, imageFile);
+                
+                uploadTask.on(
                     'state_changed',
                     (snapshot) => {
                       const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
@@ -136,26 +103,23 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                     },
                     (error) => {
                       console.error('Upload failed:', error);
-                      setUploadProgress(null);
                       reject(error);
                     },
                     async () => {
                       try {
                         const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        imageUrl = downloadURL;
-                        resolve();
+                        resolve(downloadURL);
                       } catch (error) {
                         reject(error);
                       }
                     }
                 );
             });
-
         } catch (error: any) {
             toast({
-            variant: 'destructive',
-            title: 'Image Upload Failed',
-            description: error.message || 'Could not upload the image. Please try again.',
+                variant: 'destructive',
+                title: 'Image Upload Failed',
+                description: error.message || 'Could not upload the image. Please try again.',
             });
             setUploadProgress(null);
             return; 
@@ -173,33 +137,41 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         return;
     }
 
-    const productData: Partial<Product> & { name: string; description: string; price: number; category: "Electronics" | "Apparel" | "Books"; showPrice: boolean; imageUrl?: string} = {
-        ...data,
-        imageUrl,
+    const productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'> & { imageUrl: string } = {
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        category: data.category,
+        showPrice: data.showPrice,
+        imageUrl: imageUrl as string,
     };
-    // @ts-ignore
-    delete productData.image; 
-
-
-    if (isEditMode && product) {
-      const docRef = doc(firestore, 'products', product.id);
-      const updatedData = { ...productData, updatedAt: serverTimestamp() };
-      updateDocumentNonBlocking(docRef, updatedData);
-      toast({
-        title: 'Product Updated',
-        description: `${data.name} has been successfully updated.`,
-      });
-    } else {
-      const collectionRef = collection(firestore, 'products');
-      const newData = { ...productData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
-      // @ts-ignore
-      addDocumentNonBlocking(collectionRef, newData);
-      toast({
-        title: 'Product Added',
-        description: `${data.name} has been successfully added.`,
-      });
+    
+    try {
+        if (isEditMode && product) {
+          const docRef = doc(firestore, 'products', product.id);
+          const updatedData = { ...productData, updatedAt: serverTimestamp() };
+          updateDocumentNonBlocking(docRef, updatedData);
+          toast({
+            title: 'Product Updated',
+            description: `${data.name} has been successfully updated.`,
+          });
+        } else {
+          const collectionRef = collection(firestore, 'products');
+          const newData = { ...productData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
+          addDocumentNonBlocking(collectionRef, newData);
+          toast({
+            title: 'Product Added',
+            description: `${data.name} has been successfully added.`,
+          });
+        }
+        onFinished();
+    } catch (error: any) {
+         toast({
+            variant: 'destructive',
+            title: 'Failed to save product',
+            description: error.message || 'An unexpected error occurred.',
+        });
     }
-    onFinished();
   };
 
   const isSubmitting = form.formState.isSubmitting || uploadProgress !== null;
@@ -279,6 +251,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                     type="file" 
                     accept="image/*"
                     onChange={(e) => field.onChange(e.target.files)}
+                    disabled={isSubmitting}
                  />
               </FormControl>
               <FormMessage />
@@ -301,6 +274,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                 <Switch
                   checked={field.value}
                   onCheckedChange={field.onChange}
+                  disabled={isSubmitting}
                 />
               </FormControl>
             </FormItem>
