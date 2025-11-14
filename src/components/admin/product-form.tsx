@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -66,6 +67,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
   const isEditMode = !!product;
 
   const [imagePreview, setImagePreview] = useState<string | null>(product?.imageUrl || null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
 
   const form = useForm<ProductFormValues>({
@@ -106,13 +108,9 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         return;
     }
     
-    form.control.register('name', { disabled: true });
+    setIsSubmitting(true);
 
     let finalImageUrl = product?.imageUrl || '';
-
-    // Manually trigger form submission state
-    form.control.register('name', { disabled: true });
-
 
     if (data.imageFile) {
         try {
@@ -135,14 +133,23 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                 throw new Error("Image upload failed to return a URL.");
             }
 
-        } catch (error) {
+        } catch (error: any) {
             console.error("Image upload failed:", error);
-            toast({
-                variant: "destructive",
-                title: "Image Upload Failed",
-                description: "Could not upload the new image. Please try again.",
-            });
-            form.control.register('name', { disabled: false }); // Re-enable on error
+            if (error.message?.includes('storage/unknown')) {
+                toast({
+                    variant: "destructive",
+                    title: "Firebase Storage Not Ready",
+                    description: "Your storage bucket may not be enabled. Please go to the Firebase Console, navigate to Storage, and complete the setup.",
+                    duration: 10000,
+                });
+            } else {
+                 toast({
+                    variant: "destructive",
+                    title: "Image Upload Failed",
+                    description: "Could not upload the new image. Please try again.",
+                });
+            }
+            setIsSubmitting(false);
             return;
         }
     }
@@ -183,11 +190,9 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             description: error.message || 'An unexpected error occurred.',
         });
     } finally {
-        form.control.register('name', { disabled: false }); // Re-enable form after completion
+        setIsSubmitting(false);
     }
   };
-
-  const { isSubmitting } = form.formState;
 
   return (
     <Form {...form}>
