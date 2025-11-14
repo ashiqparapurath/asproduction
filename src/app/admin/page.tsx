@@ -13,6 +13,8 @@ import type { Product } from '@/lib/products';
 
 function AdminContent() {
   const { user } = useUser();
+  const auth = useAuth();
+  const router = useRouter();
   const firestore = useFirestore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -22,6 +24,14 @@ function AdminContent() {
   }, [user, firestore]);
 
   const { data: adminRole, isLoading: isAdminLoading } = useDoc(adminRoleRef);
+
+  const handleSignOut = async () => {
+    if (auth) {
+        await auth.signOut();
+        router.push('/login');
+    }
+  };
+
 
   if (isAdminLoading) {
     return (
@@ -40,6 +50,7 @@ function AdminContent() {
         <p className="text-muted-foreground mt-2">
           You do not have the necessary permissions to view this page.
         </p>
+         <Button onClick={handleSignOut} variant="outline" className="mt-4">Sign Out</Button>
       </div>
     );
   }
@@ -55,12 +66,15 @@ function AdminContent() {
             Manage your products here.
           </p>
         </div>
-         <ProductDialog 
-            isOpen={isDialogOpen} 
-            onOpenChange={setIsDialogOpen}
-          >
-            <Button onClick={() => setIsDialogOpen(true)}>Add New Product</Button>
+        <div className="flex items-center gap-4">
+          <ProductDialog 
+              isOpen={isDialogOpen} 
+              onOpenChange={setIsDialogOpen}
+            >
+              <Button onClick={() => setIsDialogOpen(true)}>Add New Product</Button>
           </ProductDialog>
+          <Button onClick={handleSignOut} variant="outline">Sign Out</Button>
+        </div>
       </div>
       <ProductList />
     </div>
@@ -69,7 +83,6 @@ function AdminContent() {
 
 export default function AdminPage() {
   const { user, isUserLoading } = useUser();
-  const auth = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -94,24 +107,12 @@ export default function AdminPage() {
     );
   }
 
-  const handleSignOut = async () => {
-    if (auth) {
-        await auth.signOut();
-        router.push('/login');
-    }
-  };
-
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
       <main className="flex-1">
         <div className="container py-12 md:py-20 lg:py-24">
-          <div className="flex justify-between items-start">
-             <AdminContent />
-             {user && (
-                <Button onClick={handleSignOut} variant="outline">Sign Out</Button>
-             )}
-          </div>
+          <AdminContent />
         </div>
       </main>
     </div>
