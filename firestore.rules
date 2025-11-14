@@ -30,7 +30,7 @@ service cloud.firestore {
     }
 
     /**
-     * @description Checks if the current user is an admin.
+     * @description Checks if the current user is an admin by verifying the existence of their UID in the roles_admin collection.
      * @path N/A
      * @allow N/A
      * @deny N/A
@@ -69,8 +69,8 @@ service cloud.firestore {
     /**
      * @description Rules for the /roles_admin collection.
      * @path /roles_admin/{uid}
-     * @allow (read) Any signed-in user can check for the existence of an admin role document (for cross-service rules).
-     * @allow (write) Only admins can manage other admin roles.
+     * @allow (get) Any signed-in user's token can be used by server-side rules (like Storage rules) to check for a document's existence. This rule does NOT allow client-side reads.
+     * @allow (list, write) Only admins can manage other admin roles.
      * @deny (write) A non-admin attempts to create an admin role.
      */
     match /roles_admin/{uid} {

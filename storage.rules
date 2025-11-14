@@ -2,15 +2,20 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
+
+    function isAdmin() {
+      return exists(/databases/(default)/documents/roles_admin/$(request.auth.uid));
+    }
+
     // Rules for product images
     match /products/{userId}/{allPaths=**} {
       // Allow public read access so images can be displayed on the site.
       allow read: if true;
 
       // Allow write (create, update, delete) only if the user is authenticated
-      // and their UID matches the {userId} in the path. This ensures users
-      // can only upload to their own designated folder.
-      allow write: if request.auth != null && request.auth.uid == userId;
+      // and is an admin. This is checked by calling the isAdmin() function which
+      // verifies their role in Firestore.
+      allow write: if request.auth != null && isAdmin();
     }
   }
 }
