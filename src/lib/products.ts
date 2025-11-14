@@ -4,8 +4,8 @@ export type Product = {
   description: string;
   price: number;
   category: 'Electronics' | 'Apparel' | 'Books';
-  imageUrl: string; // Changed from imageId
-  showPrice: boolean; // New field
+  imageUrl: string; 
+  showPrice: boolean;
   createdAt?: any;
   updatedAt?: any;
 };

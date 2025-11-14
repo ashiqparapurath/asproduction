@@ -137,7 +137,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         return;
     }
 
-    const productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'> & { imageUrl: string } = {
+    const productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'categoryId'> & { imageUrl: string; category: string } = {
         name: data.name,
         description: data.description,
         price: data.price,
@@ -285,6 +285,8 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             ? `Uploading... ${Math.round(uploadProgress)}%`
             : isSubmitting
             ? 'Saving...'
+            : !user
+            ? 'Authenticating...'
             : 'Save Product'}
         </Button>
       </form>
