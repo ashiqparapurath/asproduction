@@ -16,13 +16,12 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
   const { toast } = useToast();
-  const [imgSrc, setImgSrc] = useState(product.imageUrl);
-
+  
   const fallbackImage = "https://placehold.co/600x600/EEE/31343C?text=Image+Not+Available";
 
-  useEffect(() => {
-    setImgSrc(product.imageUrl);
-  }, [product.imageUrl]);
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    e.currentTarget.src = fallbackImage;
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -44,12 +43,10 @@ export function ProductCard({ product }: ProductCardProps) {
       <CardHeader className="p-0 border-b">
         <div className="relative w-full aspect-square overflow-hidden">
             <img
-              src={imgSrc || fallbackImage}
+              src={product.imageUrl || fallbackImage}
               alt={product.name}
               className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
-              onError={() => {
-                setImgSrc(fallbackImage);
-              }}
+              onError={handleImageError}
             />
         </div>
       </CardHeader>
@@ -64,7 +61,7 @@ export function ProductCard({ product }: ProductCardProps) {
         ) : (
           <p className="text-sm text-muted-foreground">Price available on request</p>
         )}
-        <Button onClick={handleAddToCart} size="icon" className="md:w-auto md:px-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button onClick={handleAddToCart} size="icon" className="md:w-auto md:px-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
             <ShoppingCart className="h-4 w-4 md:mr-2" />
             <span className="sr-only md:not-sr-only">Add to Cart</span>
         </Button>
