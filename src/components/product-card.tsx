@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Product } from '@/lib/products';
@@ -59,7 +60,10 @@ export function ProductCard({ product }: ProductCardProps) {
         {product.showPrice ? (
           <p className="text-xl font-bold text-primary">{formatPrice(product.price)}</p>
         ) : (
-          <p className="text-sm text-muted-foreground whitespace-nowrap">Price available on request</p>
+          <div className="text-sm text-muted-foreground">
+            <p>Price available</p>
+            <p>on request</p>
+          </div>
         )}
         <Button onClick={handleAddToCart} size="icon" className="md:w-auto md:px-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
             <ShoppingCart className="h-4 w-4 md:mr-2" />
