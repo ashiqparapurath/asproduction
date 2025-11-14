@@ -29,9 +29,14 @@ function AdminContent() {
   const handleSignOut = async () => {
     if (auth) {
       setIsSigningOut(true);
-      await auth.signOut();
-      // Directly navigating to the home page upon sign-out.
-      router.push('/');
+      try {
+        await auth.signOut();
+        // Directly navigating to the home page upon sign-out.
+        router.push('/');
+      } catch (error) {
+        console.error("Sign out failed:", error);
+        setIsSigningOut(false);
+      }
     }
   };
 
@@ -54,8 +59,8 @@ function AdminContent() {
         <p className="text-muted-foreground mt-2">
           You do not have the necessary permissions to view this page.
         </p>
-        <Button onClick={handleSignOut} variant="outline" className="mt-4">
-          Sign Out & Go Home
+        <Button onClick={handleSignOut} variant="outline" className="mt-4" disabled={isSigningOut}>
+          {isSigningOut ? 'Signing Out...' : 'Sign Out & Go Home'}
         </Button>
       </div>
     );

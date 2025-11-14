@@ -22,6 +22,14 @@ export default function LoginPage() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth) {
+       toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: 'Authentication service is not available. Please try again later.',
+      });
+      return;
+    }
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -81,7 +89,7 @@ export default function LoginPage() {
                 disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading || !auth}>
               {isLoading ? 'Signing In...' : 'Sign In'}
             </Button>
           </form>
