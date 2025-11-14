@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -22,21 +23,30 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { useFirestore, useUser } from '@/firebase';
+import { useFirebase, useUser } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { Product } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useState } from 'react';
+import Image from 'next/image';
+import { v4 as uuidv4 } from 'uuid';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   price: z.coerce.number().positive('Price must be a positive number.'),
   category: z.enum(['Electronics', 'Apparel', 'Books']),
-  imageUrl: z.string().url('Please enter a valid URL.'),
+  imageFile: z.instanceof(File).optional(),
+  imageUrl: z.string().url('Please enter a valid URL.').optional(),
   showPrice: z.boolean().default(true),
+})
+.refine(data => data.imageUrl || data.imageFile, {
+    message: "Either an image URL or an image file must be provided.",
+    path: ["imageFile"],
 });
+
 
 type ProductFormValues = z.infer<typeof formSchema>;
 
@@ -46,49 +56,79 @@ interface ProductFormProps {
 }
 
 export function ProductForm({ product, onFinished }: ProductFormProps) {
-  const firestore = useFirestore();
+  const { firestore, firebaseApp } = useFirebase();
   const { user } = useUser();
   const { toast } = useToast();
   const isEditMode = !!product;
+  const storage = firebaseApp ? getStorage(firebaseApp) : null;
+
+  const [imagePreview, setImagePreview] = useState<string | null>(product?.imageUrl || null);
+
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: product
-      ? {
-          name: product.name,
-          description: product.description,
-          price: product.price,
-          category: product.category,
-          imageUrl: product.imageUrl,
-          showPrice: product.showPrice,
-        }
-      : {
-          name: '',
-          description: '',
-          price: 0,
-          category: 'Apparel',
-          imageUrl: '',
-          showPrice: true,
-        },
+    defaultValues: {
+      name: product?.name || '',
+      description: product?.description || '',
+      price: product?.price || 0,
+      category: product?.category || 'Apparel',
+      imageUrl: product?.imageUrl || '',
+      showPrice: product?.showPrice ?? true,
+      imageFile: undefined,
+    },
   });
 
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      form.setValue('imageFile', file);
+      form.clearErrors('imageFile'); 
+    }
+  };
+
+
   const onSubmit = async (data: ProductFormValues) => {
-    if (!firestore || !user) {
+    if (!firestore || !user || !storage) {
         toast({
             variant: 'destructive',
-            title: 'Authentication Error',
-            description: 'You must be signed in to create or update products.',
+            title: 'Authentication or Storage Error',
+            description: 'You must be signed in and storage must be available.',
         });
         return;
     }
     
-    const productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'categoryId'> & { imageUrl: string; category: string } = {
+    let imageUrl = product?.imageUrl || '';
+
+    if (data.imageFile) {
+        try {
+            const imageId = uuidv4();
+            const storageRef = ref(storage, `products/${user.uid}/${imageId}`);
+            await uploadBytes(storageRef, data.imageFile);
+            imageUrl = await getDownloadURL(storageRef);
+        } catch (error) {
+            console.error("Image upload failed:", error);
+            toast({
+                variant: "destructive",
+                title: "Image Upload Failed",
+                description: "Could not upload the new image. Please try again.",
+            });
+            return;
+        }
+    }
+
+
+    const productData = {
         name: data.name,
         description: data.description,
         price: data.price,
         category: data.category,
         showPrice: data.showPrice,
-        imageUrl: data.imageUrl,
+        imageUrl: imageUrl,
     };
     
     try {
@@ -185,23 +225,27 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="imageUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Product Image URL</FormLabel>
-              <FormControl>
-                 <Input 
-                    placeholder="https://example.com/image.png" 
-                    {...field}
-                    disabled={isSubmitting}
-                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+         <FormItem>
+          <FormLabel>Product Image</FormLabel>
+          {imagePreview && (
+            <div className="mt-2 relative w-full h-48 rounded-md overflow-hidden border">
+              <Image src={imagePreview} alt="Image Preview" layout="fill" objectFit="cover" />
+            </div>
           )}
-        />
+          <FormControl>
+            <Input 
+                type="file" 
+                accept="image/*" 
+                onChange={handleImageChange} 
+                disabled={isSubmitting} 
+                className="file:text-foreground"
+            />
+          </FormControl>
+          <FormDescription>
+            Upload an image from your computer. This will replace any existing image.
+          </FormDescription>
+          <FormMessage />
+        </FormItem>
         <FormField
           control={form.control}
           name="showPrice"

@@ -8,7 +8,8 @@ import { ShoppingCart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import Image from 'next/image';
 
 interface ProductCardProps {
   product: Product;
@@ -19,10 +20,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const { toast } = useToast();
   
   const fallbackImage = "https://placehold.co/600x600/EEE/31343C?text=Image+Not+Available";
-
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    e.currentTarget.src = fallbackImage;
-  };
+  const [currentSrc, setCurrentSrc] = useState(product.imageUrl || fallbackImage);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -43,11 +41,12 @@ export function ProductCard({ product }: ProductCardProps) {
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group bg-card">
       <CardHeader className="p-0 border-b">
         <div className="relative w-full aspect-square overflow-hidden">
-            <img
-              src={product.imageUrl || fallbackImage}
+            <Image
+              src={currentSrc}
               alt={product.name}
-              className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
-              onError={handleImageError}
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              onError={() => setCurrentSrc(fallbackImage)}
             />
         </div>
       </CardHeader>
@@ -61,8 +60,8 @@ export function ProductCard({ product }: ProductCardProps) {
           <p className="text-xl font-bold text-primary">{formatPrice(product.price)}</p>
         ) : (
           <div className="text-sm text-muted-foreground">
-            <p>Price available</p>
-            <p>on request</p>
+            <p className="whitespace-nowrap">Price available</p>
+            <p className="whitespace-nowrap">on request</p>
           </div>
         )}
         <Button onClick={handleAddToCart} size="icon" className="md:w-auto md:px-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
