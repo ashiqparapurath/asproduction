@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { useFirestore, useAuth } from '@/firebase';
+import { useFirestore, useAuth, useUser } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import type { Product } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
@@ -30,6 +30,7 @@ import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/no
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useState } from 'react';
 import { Progress } from '@/components/ui/progress';
+import type { User } from 'firebase/auth';
 
 
 const formSchema = z.object({
@@ -48,9 +49,40 @@ interface ProductFormProps {
   onFinished: () => void;
 }
 
+const uploadImage = (file: File, user: User): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!user) {
+        return reject(new Error("User not authenticated for upload. Please sign in again."));
+      }
+
+      const storage = getStorage();
+      const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          // This state update is handled by the component using the promise
+        },
+        (error) => {
+          console.error('Upload failed:', error);
+          if (error.code === 'storage/unauthorized') {
+            reject(new Error('Permission denied. You might not have the rights to upload to this location.'));
+          } else {
+            reject(error);
+          }
+        },
+        () => {
+          getDownloadURL(uploadTask.snapshot.ref).then(resolve).catch(reject);
+        }
+      );
+    });
+  };
+
 export function ProductForm({ product, onFinished }: ProductFormProps) {
   const firestore = useFirestore();
-  const auth = useAuth();
+  const { user } = useUser();
   const { toast } = useToast();
   const isEditMode = !!product;
 
@@ -75,60 +107,61 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         },
   });
 
-  const uploadImage = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      if (!auth || !auth.currentUser) {
-        return reject(new Error("User not authenticated for upload. Please sign in again."));
-      }
-
-      const storage = getStorage();
-      const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on(
-        'state_changed',
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploadProgress(progress);
-        },
-        (error) => {
-          console.error('Upload failed:', error);
-          setUploadProgress(null);
-          // Provide more context on permission errors
-          if (error.code === 'storage/unauthorized') {
-            reject(new Error('Permission denied. You might not have the rights to upload to this location.'));
-          } else {
-            reject(error);
-          }
-        },
-        () => {
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            setUploadProgress(null);
-            resolve(downloadURL);
-          });
-        }
-      );
-    });
-  };
-
-
   const onSubmit = async (data: ProductFormValues) => {
-    if (!firestore || !auth) return;
+    if (!firestore || !user) {
+        toast({
+            variant: 'destructive',
+            title: 'Authentication Error',
+            description: 'You must be signed in to create or update products.',
+        });
+        return;
+    }
     
-    let imageUrl = product?.imageUrl; // Keep existing image URL if not changed
+    let imageUrl = product?.imageUrl; 
 
     const imageFile = data.image?.[0];
     if (imageFile) {
-      try {
-        imageUrl = await uploadImage(imageFile);
-      } catch (error: any) {
-        toast({
-          variant: 'destructive',
-          title: 'Image Upload Failed',
-          description: error.message || 'Could not upload the image. Please try again.',
-        });
-        return; // Stop submission if upload fails
-      }
+        setUploadProgress(0);
+        try {
+            const storage = getStorage();
+            const storageRef = ref(storage, `products/${Date.now()}_${imageFile.name}`);
+            const uploadTask = uploadBytesResumable(storageRef, imageFile);
+            
+            await new Promise<void>((resolve, reject) => {
+                 uploadTask.on(
+                    'state_changed',
+                    (snapshot) => {
+                      const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                      setUploadProgress(progress);
+                    },
+                    (error) => {
+                      console.error('Upload failed:', error);
+                      setUploadProgress(null);
+                      reject(error);
+                    },
+                    async () => {
+                      try {
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                        imageUrl = downloadURL;
+                        resolve();
+                      } catch (error) {
+                        reject(error);
+                      }
+                    }
+                );
+            });
+
+        } catch (error: any) {
+            toast({
+            variant: 'destructive',
+            title: 'Image Upload Failed',
+            description: error.message || 'Could not upload the image. Please try again.',
+            });
+            setUploadProgress(null);
+            return; 
+        } finally {
+            setUploadProgress(null);
+        }
     }
 
     if (!isEditMode && !imageUrl) {
@@ -145,7 +178,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         imageUrl,
     };
     // @ts-ignore
-    delete productData.image; // Remove file data before saving to Firestore
+    delete productData.image; 
 
 
     if (isEditMode && product) {
