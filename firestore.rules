@@ -1,0 +1,87 @@
+/**
+ * @fileoverview Firestore Security Rules for the e-commerce application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict admin-only access model for managing products and categories. Only users with a designated admin role can create, read, update, or delete data in these collections. User data (not yet defined in the schema) would be isolated from this admin-controlled data.
+ *
+ * Data Structure:
+ * - /products/{productId}: Stores product information.
+ * - /categories/{categoryId}: Stores category information.
+ * - /roles_admin/{uid}: Indicates admin privileges; presence of a document for a user grants admin rights.
+ *
+ * Key Security Decisions:
+ * - Admin-only access: All operations on /products and /categories are restricted to admin users.
+ * - No public listing: Neither products nor categories can be listed by non-admins or unauthenticated users.
+ * - Authorization Independence: Admin status is determined solely by the existence of a document in /roles_admin/{uid}, avoiding costly `get()` calls.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Checks if the current user is signed in.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Verified Identity: Ensures that all authorization decisions are based on a verified user identity.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the current user is an admin.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Role-Based Access Control: Only users with an admin role can access certain resources.
+     */
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    /**
+     * @description Rules for the /products collection.
+     * @path /products/{productId}
+     * @allow (create) An admin creates a new product.
+     * @deny (create) A non-admin attempts to create a product.
+     * @principle Role-Based Access Control: Restricts product management to admin users only.
+     */
+    match /products/{productId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * @description Rules for the /categories collection.
+     * @path /categories/{categoryId}
+     * @allow (create) An admin creates a new category.
+     * @deny (create) A non-admin attempts to create a category.
+     * @principle Role-Based Access Control: Restricts category management to admin users only.
+     */
+    match /categories/{categoryId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * @description Rules for the /roles_admin collection.
+     * @path /roles_admin/{uid}
+     * @allow (create) An admin role can be created
+     * @deny (create) A non-admin attempts to create an admin role.
+     */
+    match /roles_admin/{uid} {
+        allow get: if isAdmin();
+        allow list: if isAdmin();
+        allow create: if isAdmin();
+        allow update: if isAdmin();
+        allow delete: if isAdmin();
+    }
+  }
+}

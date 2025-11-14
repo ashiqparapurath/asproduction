@@ -1,0 +1,129 @@
+{
+  "entities": {
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Represents a product in the e-commerce application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the product."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the product."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the product."
+        },
+        "price": {
+          "type": "number",
+          "description": "Price of the product."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the product's image.",
+          "format": "uri"
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Reference to Category. (Relationship: Category 1:N Product)"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "price",
+        "imageUrl",
+        "categoryId"
+      ]
+    },
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Category",
+      "type": "object",
+      "description": "Represents a category of products.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the category."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the category."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the category."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Stores product information.  Only admins can create, read, update, and delete products. Relates to Category entity via categoryId.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "The unique identifier for the product."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/categories/{categoryId}",
+        "definition": {
+          "entityName": "Category",
+          "schema": {
+            "$ref": "#/backend/entities/Category"
+          },
+          "description": "Stores category information. Only admins can create, read, update, and delete categories.",
+          "params": [
+            {
+              "name": "categoryId",
+              "description": "The unique identifier for the category."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{uid}",
+        "definition": {
+          "entityName": "adminRole",
+          "schema": {
+            "$ref": "#/backend/entities/Category"
+          },
+          "description": "Collection to store admin roles. Existence of a document with the user's UID in this collection grants admin privileges.",
+          "params": [
+            {
+              "name": "uid",
+              "description": "The unique identifier for the admin user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to segregate admin-managed data from user data, ensuring clear authorization boundaries and supporting the application's features. The design emphasizes authorization independence by leveraging dedicated admin role documents and avoiding `get()` calls in security rules.\n\n**Admin-Managed Data:**\n\n*   `/products`: This collection stores product information and can only be created and modified by admins. The admin role is verified using the `/roles_admin/{uid}` document. This segregation ensures that regular users cannot modify product data. The `categoryId` field establishes the relationship with the Category entity.\n*   `/categories`: This collection stores product category information and is also exclusively managed by admins. This separation simplifies data management and authorization rules.\n*   `/roles_admin/{uid}`: Dedicated collection to store admin roles. Authorization checks for admin functionality will verify the existence of a document in this collection for the requesting user's UID. This ensures only authorized admins can add and edit products.\n\n**Authorization Independence:**\n\n*   Admin roles are verified using the existence of a document in the `/roles_admin/{uid}` collection, removing the need to retrieve user roles from other collections and enabling atomic transactions.\n\n**QAPs Support:**\n\n*   Secure `list` operations are supported for products and categories because access control is based on the admin role, and the rules are not filters. Only admins can list all documents in `/products` and `/categories`."
+  }
+}
