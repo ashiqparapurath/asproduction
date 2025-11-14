@@ -8,7 +8,7 @@ import { ShoppingCart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ProductCardProps {
   product: Product;
@@ -19,6 +19,19 @@ export function ProductCard({ product }: ProductCardProps) {
   const { toast } = useToast();
   const [imgSrc, setImgSrc] = useState(product.imageUrl);
   const [imgError, setImgError] = useState(false);
+
+  const fallbackImage = "https://placehold.co/600x600/EEE/31343C?text=Image+Not+Available";
+
+  useEffect(() => {
+    // Reset state when product changes
+    setImgSrc(product.imageUrl);
+    setImgError(false);
+
+    // Specifically check for non-image hosting URLs
+    if (product.imageUrl.includes('drive.google.com')) {
+      setImgError(true);
+    }
+  }, [product.imageUrl]);
 
 
   const formatPrice = (price: number) => {
@@ -35,8 +48,6 @@ export function ProductCard({ product }: ProductCardProps) {
       description: `${product.name} has been added to your cart.`,
     });
   };
-
-  const fallbackImage = "https://placehold.co/600x600/EEE/31343C?text=Image+Not+Available";
 
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group bg-card">
