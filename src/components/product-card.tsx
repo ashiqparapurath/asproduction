@@ -3,7 +3,7 @@ import type { Product } from '@/lib/products';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Send } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface ProductCardProps {
@@ -48,7 +48,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <p className="text-xl font-bold text-primary">{formatPrice(product.price)}</p>
         <Button asChild size="icon" className="md:w-auto md:px-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
           <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-            <Send className="h-4 w-4 md:mr-2" />
+            <ShoppingCart className="h-4 w-4 md:mr-2" />
             <span className="sr-only md:not-sr-only">Order</span>
           </a>
         </Button>
