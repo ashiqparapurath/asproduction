@@ -92,7 +92,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         try {
             imageUrl = await new Promise<string>((resolve, reject) => {
                 const storage = getStorage();
-                const storageRef = ref(storage, `products/${Date.now()}_${imageFile.name}`);
+                const storageRef = ref(storage, `products/${user.uid}/${Date.now()}_${imageFile.name}`);
                 const uploadTask = uploadBytesResumable(storageRef, imageFile);
                 
                 uploadTask.on(
@@ -280,7 +280,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={isSubmitting} className="w-full">
+        <Button type="submit" disabled={isSubmitting || !user} className="w-full">
            {uploadProgress !== null
             ? `Uploading... ${Math.round(uploadProgress)}%`
             : isSubmitting
