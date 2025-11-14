@@ -28,7 +28,7 @@ function AdminContent() {
   const handleSignOut = async () => {
     if (auth) {
         await auth.signOut();
-        router.push('/login');
+        router.push('/');
     }
   };
 
