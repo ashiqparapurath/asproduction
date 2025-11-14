@@ -91,7 +91,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
       };
       reader.readAsDataURL(file);
       form.setValue('imageFile', file, { shouldValidate: true });
-      form.setValue('imageUrl', '');
+      form.setValue('imageUrl', ''); // Clear imageUrl when a new file is selected
     }
   };
 
@@ -106,13 +106,20 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         return;
     }
     
+    form.control.register('name', { disabled: true });
+
     let finalImageUrl = product?.imageUrl || '';
+
+    // Manually trigger form submission state
+    form.control.register('name', { disabled: true });
+
 
     if (data.imageFile) {
         try {
             const reader = new FileReader();
-            const fileAsDataURL = await new Promise<string>((resolve) => {
+            const fileAsDataURL = await new Promise<string>((resolve, reject) => {
                 reader.onloadend = () => resolve(reader.result as string);
+                reader.onerror = reject;
                 reader.readAsDataURL(data.imageFile!);
             });
             
@@ -135,7 +142,8 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                 title: "Image Upload Failed",
                 description: "Could not upload the new image. Please try again.",
             });
-            return; // Stop execution if image upload fails
+            form.control.register('name', { disabled: false }); // Re-enable on error
+            return;
         }
     }
 
@@ -174,6 +182,8 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             title: 'Failed to save product',
             description: error.message || 'An unexpected error occurred.',
         });
+    } finally {
+        form.control.register('name', { disabled: false }); // Re-enable form after completion
     }
   };
 

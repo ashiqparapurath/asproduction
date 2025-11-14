@@ -38,9 +38,6 @@ export function CartDrawer() {
     window.open(whatsappUrl, '_blank');
   };
 
-  const fallbackImage = "https://placehold.co/600x600/EEE/31343C?text=Image+Not+Available";
-
-
   return (
     <div className="flex flex-col h-full">
       {cartItems.length === 0 ? (
