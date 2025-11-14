@@ -27,16 +27,14 @@ import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import type { Product } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useState } from 'react';
-import { Progress } from '@/components/ui/progress';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   price: z.coerce.number().positive('Price must be a positive number.'),
   category: z.enum(['Electronics', 'Apparel', 'Books']),
-  image: z.any().optional(),
+  imageUrl: z.string().url('Please enter a valid URL.'),
   showPrice: z.boolean().default(true),
 });
 
@@ -53,8 +51,6 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
   const { toast } = useToast();
   const isEditMode = !!product;
 
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: product
@@ -63,6 +59,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
           description: product.description,
           price: product.price,
           category: product.category,
+          imageUrl: product.imageUrl,
           showPrice: product.showPrice,
         }
       : {
@@ -70,6 +67,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
           description: '',
           price: 0,
           category: 'Apparel',
+          imageUrl: '',
           showPrice: true,
         },
   });
@@ -84,66 +82,13 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         return;
     }
     
-    let imageUrl = product?.imageUrl; 
-    const imageFile = data.image?.[0];
-
-    if (imageFile) {
-        setUploadProgress(0);
-        try {
-            imageUrl = await new Promise<string>((resolve, reject) => {
-                const storage = getStorage();
-                const storageRef = ref(storage, `products/${user.uid}/${Date.now()}_${imageFile.name}`);
-                const uploadTask = uploadBytesResumable(storageRef, imageFile);
-                
-                uploadTask.on(
-                    'state_changed',
-                    (snapshot) => {
-                      const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                      setUploadProgress(progress);
-                    },
-                    (error) => {
-                      console.error('Upload failed:', error);
-                      reject(error);
-                    },
-                    async () => {
-                      try {
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        resolve(downloadURL);
-                      } catch (error) {
-                        reject(error);
-                      }
-                    }
-                );
-            });
-        } catch (error: any) {
-            toast({
-                variant: 'destructive',
-                title: 'Image Upload Failed',
-                description: error.message || 'Could not upload the image. Please try again.',
-            });
-            setUploadProgress(null);
-            return; 
-        } finally {
-            setUploadProgress(null);
-        }
-    }
-
-    if (!isEditMode && !imageUrl) {
-        toast({
-          variant: 'destructive',
-          title: 'Image Required',
-          description: 'Please select an image for the new product.',
-        });
-        return;
-    }
-
     const productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'categoryId'> & { imageUrl: string; category: string } = {
         name: data.name,
         description: data.description,
         price: data.price,
         category: data.category,
         showPrice: data.showPrice,
-        imageUrl: imageUrl as string,
+        imageUrl: data.imageUrl,
     };
     
     try {
@@ -174,7 +119,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     }
   };
 
-  const isSubmitting = form.formState.isSubmitting || uploadProgress !== null;
+  const { isSubmitting } = form.formState;
 
   return (
     <Form {...form}>
@@ -186,7 +131,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input placeholder="Product Name" {...field} />
+                <Input placeholder="Product Name" {...field} disabled={isSubmitting} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -199,7 +144,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea placeholder="Product description..." {...field} />
+                <Textarea placeholder="Product description..." {...field} disabled={isSubmitting} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -212,7 +157,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             <FormItem>
               <FormLabel>Price</FormLabel>
               <FormControl>
-                <Input type="number" placeholder="99.99" {...field} />
+                <Input type="number" placeholder="99.99" {...field} disabled={isSubmitting} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -224,7 +169,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
@@ -242,15 +187,14 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         />
         <FormField
           control={form.control}
-          name="image"
+          name="imageUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Product Image</FormLabel>
+              <FormLabel>Product Image URL</FormLabel>
               <FormControl>
                  <Input 
-                    type="file" 
-                    accept="image/*"
-                    onChange={(e) => field.onChange(e.target.files)}
+                    placeholder="https://example.com/image.png" 
+                    {...field}
                     disabled={isSubmitting}
                  />
               </FormControl>
@@ -258,9 +202,6 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             </FormItem>
           )}
         />
-         {uploadProgress !== null && (
-          <Progress value={uploadProgress} className="w-full" />
-        )}
         <FormField
           control={form.control}
           name="showPrice"
@@ -281,13 +222,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
           )}
         />
         <Button type="submit" disabled={isSubmitting || !user} className="w-full">
-           {uploadProgress !== null
-            ? `Uploading... ${Math.round(uploadProgress)}%`
-            : isSubmitting
-            ? 'Saving...'
-            : !user
-            ? 'Authenticating...'
-            : 'Save Product'}
+           {isSubmitting ? 'Saving...' : !user ? 'Authenticating...' : 'Save Product'}
         </Button>
       </form>
     </Form>
