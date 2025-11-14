@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { Store, ShoppingCart } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 
 export function Header() {
   return (
@@ -8,7 +9,7 @@ export function Header() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2">
-            <Store className="h-7 w-7 text-primary" />
+            <Image src="/logo.png" alt="AS PRODUCTION Logo" width={32} height={32} className="h-8 w-8" />
             <span className="text-xl font-bold text-foreground tracking-tight">
               AS PRODUCTION
             </span>

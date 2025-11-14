@@ -9,6 +9,9 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 export const metadata: Metadata = {
   title: 'AS PRODUCTION',
   description: 'An e-commerce platform for showcasing products.',
+  icons: {
+    icon: '/logo.png',
+  },
 };
 
 export default function RootLayout({
