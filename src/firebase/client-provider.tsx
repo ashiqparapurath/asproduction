@@ -22,6 +22,7 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
 
   useEffect(() => {
     // This effect runs only on the client, after the initial render.
+    // It's safe to initialize Firebase here.
     if (typeof window !== 'undefined') {
        setFirebaseServices(initializeClientFirebase());
     }
@@ -29,7 +30,7 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
 
   // Always render the FirebaseProvider.
   // On the server and initial client render, the values will be null.
-  // After the useEffect runs on the client, the provider will be updated with the actual services.
+  // After the useEffect runs on the client, the provider will be re-rendered with the actual services.
   return (
     <FirebaseProvider
       firebaseApp={firebaseServices?.firebaseApp || null}

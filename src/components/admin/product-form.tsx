@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -24,7 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { useFirebase, useUser } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import type { Product } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
@@ -44,8 +43,8 @@ const formSchema = z.object({
   showPrice: z.boolean().default(true),
 })
 .refine(data => {
-    // If we are editing and an imageUrl already exists, imageFile is optional.
-    // In all other cases (creating, or editing without an imageUrl), imageFile is required.
+    // If we are editing (product exists) and no new imageFile is provided, it's valid.
+    // If we are creating, imageFile is required.
     return !!data.imageUrl || !!data.imageFile;
 }, {
     message: "An image file must be provided.",
@@ -61,7 +60,7 @@ interface ProductFormProps {
 }
 
 export function ProductForm({ product, onFinished }: ProductFormProps) {
-  const { firestore } = useFirebase();
+  const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
   const isEditMode = !!product;
@@ -146,7 +145,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                  toast({
                     variant: "destructive",
                     title: "Image Upload Failed",
-                    description: "Could not upload the new image. Please try again.",
+                    description: error.message || "Could not upload the new image. Please try again.",
                 });
             }
             setIsSubmitting(false);
@@ -215,7 +214,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>Description</_FormLabel>
               <FormControl>
                 <Textarea placeholder="Product description..." {...field} disabled={isSubmitting} />
               </FormControl>

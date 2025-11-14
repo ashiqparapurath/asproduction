@@ -11,23 +11,16 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
-
-// Re-import server-only dependencies here
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 
-// Create a dedicated, server-safe initialization function
+// Server-side Firebase initialization
 function initializeServerFirebase() {
-  if (typeof window === 'undefined') {
-    // Check if an app is already initialized. If so, use it; otherwise, initialize a new one.
-    // This is the standard pattern for preventing re-initialization errors in serverless environments.
-    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-    return { firebaseApp: app, storage: getStorage(app) };
+  if (getApps().length === 0) {
+    return initializeApp(firebaseConfig);
   }
-  // This function should never be called on the client.
-  throw new Error("Attempted to call server-side Firebase initialization on the client.");
+  return getApp();
 }
-
 
 const UploadImageInputSchema = z.object({
   fileDataUri: z
@@ -56,8 +49,8 @@ const uploadImageFlow = ai.defineFlow(
     outputSchema: UploadImageOutputSchema,
   },
   async (input) => {
-    // Use the server-specific initializeFirebase function
-    const { storage } = initializeServerFirebase();
+    const app = initializeServerFirebase();
+    const storage = getStorage(app);
     
     // Extract file extension and generate a unique name
     const fileExtension = input.fileName.split('.').pop() || 'jpg';
