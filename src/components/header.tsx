@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Box, ShoppingCart } from 'lucide-react';
+import { Store, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function Header() {
@@ -8,7 +8,7 @@ export function Header() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2">
-            <Box className="h-7 w-7 text-primary" />
+            <Store className="h-7 w-7 text-primary" />
             <span className="text-xl font-bold text-foreground tracking-tight">
               AS PRODUCTION
             </span>
