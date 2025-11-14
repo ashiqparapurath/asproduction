@@ -27,8 +27,8 @@ export function ProductCard({ product }: ProductCardProps) {
     setImgSrc(product.imageUrl);
     setImgError(false);
 
-    // Specifically check for non-image hosting URLs
-    if (product.imageUrl.includes('drive.google.com')) {
+    // Specifically check for non-image hosting URLs like Google Drive
+    if (product.imageUrl && product.imageUrl.includes('drive.google.com')) {
       setImgError(true);
     }
   }, [product.imageUrl]);
