@@ -5,6 +5,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Button } from '@/components/ui/button';
 import { ShoppingCart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useCart } from '@/context/cart-context';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProductCardProps {
   product: Product;
@@ -12,6 +14,9 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const image = PlaceHolderImages.find((img) => img.id === product.imageId);
+  const { addToCart } = useCart();
+  const { toast } = useToast();
+
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -20,9 +25,13 @@ export function ProductCard({ product }: ProductCardProps) {
     }).format(price);
   };
 
-  const WHATSAPP_NUMBER = "15551234567"; // Replace with your WhatsApp number
-  const message = `Hello, I am interested in the product: ${product.name} - Price: ${formatPrice(product.price)}`;
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  const handleAddToCart = () => {
+    addToCart(product);
+    toast({
+      title: "Added to cart",
+      description: `${product.name} has been added to your cart.`,
+    });
+  };
 
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group bg-card">
@@ -46,11 +55,9 @@ export function ProductCard({ product }: ProductCardProps) {
       </CardContent>
       <CardFooter className="p-4 pt-0 flex justify-between items-center">
         <p className="text-xl font-bold text-primary">{formatPrice(product.price)}</p>
-        <Button asChild size="icon" className="md:w-auto md:px-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+        <Button onClick={handleAddToCart} size="icon" className="md:w-auto md:px-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
             <ShoppingCart className="h-4 w-4 md:mr-2" />
-            <span className="sr-only md:not-sr-only">Order</span>
-          </a>
+            <span className="sr-only md:not-sr-only">Add to Cart</span>
         </Button>
       </CardFooter>
     </Card>
