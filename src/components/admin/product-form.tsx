@@ -39,7 +39,7 @@ const formSchema = z.object({
   price: z.coerce.number().positive('Price must be a positive number.'),
   category: z.enum(['Electronics', 'Apparel', 'Books']),
   imageFile: z.instanceof(File).optional(),
-  imageUrl: z.string().url('Please enter a valid URL.').optional(),
+  imageUrl: z.string().url('Please enter a valid URL.').optional().or(z.literal('')),
   showPrice: z.boolean().default(true),
 })
 .refine(data => data.imageUrl || data.imageFile, {
@@ -76,6 +76,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
       showPrice: product?.showPrice ?? true,
       imageFile: undefined,
     },
+     mode: 'onChange',
   });
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,7 +88,9 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
       };
       reader.readAsDataURL(file);
       form.setValue('imageFile', file);
+      form.setValue('imageUrl', ''); // Clear imageUrl if a file is selected
       form.clearErrors('imageFile'); 
+      form.clearErrors('imageUrl');
     }
   };
 
@@ -102,7 +105,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         return;
     }
     
-    let imageUrl = product?.imageUrl || '';
+    let imageUrl = data.imageUrl || product?.imageUrl || '';
 
     if (data.imageFile) {
         try {
@@ -242,7 +245,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             />
           </FormControl>
           <FormDescription>
-            Upload an image from your computer. This will replace any existing image.
+            Upload an image from your computer. This will replace any existing image url.
           </FormDescription>
           <FormMessage />
         </FormItem>
