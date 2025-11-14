@@ -59,7 +59,7 @@ export function ProductCard({ product }: ProductCardProps) {
         {product.showPrice ? (
           <p className="text-xl font-bold text-primary">{formatPrice(product.price)}</p>
         ) : (
-          <p className="text-sm text-muted-foreground">Price available on request</p>
+          <p className="text-sm text-muted-foreground whitespace-nowrap">Price available on request</p>
         )}
         <Button onClick={handleAddToCart} size="icon" className="md:w-auto md:px-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
             <ShoppingCart className="h-4 w-4 md:mr-2" />
