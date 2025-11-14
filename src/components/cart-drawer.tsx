@@ -5,6 +5,7 @@ import { useCart } from '@/context/cart-context';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Trash2, Plus, Minus, Send, ShoppingCart } from 'lucide-react';
+import Image from 'next/image';
 
 export function CartDrawer() {
   const { cartItems, removeFromCart, updateQuantity, clearCart } = useCart();
@@ -16,16 +17,20 @@ export function CartDrawer() {
     }).format(price);
   };
 
-  const totalAmount = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+  const itemsWithPrice = cartItems.filter(item => item.showPrice);
+  const totalAmount = itemsWithPrice.reduce((total, item) => total + item.price * item.quantity, 0);
 
   const handleSendEnquiry = () => {
     const businessPhoneNumber = '97430147881'; // Replace with your business WhatsApp number
     
-    const messageParts = cartItems.map(item => 
-      `${item.name} (x${item.quantity}) - ${formatPrice(item.price * item.quantity)}`
-    );
+    const messageParts = cartItems.map(item => {
+      const priceString = item.showPrice ? ` - ${formatPrice(item.price * item.quantity)}` : '';
+      return `${item.name} (x${item.quantity})${priceString}`;
+    });
+
+    const totalString = totalAmount > 0 ? `\n\nTotal: ${formatPrice(totalAmount)}` : '';
     
-    const enquiryMessage = `Hello AS PRODUCTION, I'd like to enquire about the following items:\n\n${messageParts.join('\n')}\n\nTotal: ${formatPrice(totalAmount)}`;
+    const enquiryMessage = `Hello AS PRODUCTION, I'd like to enquire about the following items:\n\n${messageParts.join('\n')}${totalString}`;
     
     const whatsappUrl = `https://wa.me/${businessPhoneNumber}?text=${encodeURIComponent(enquiryMessage)}`;
     
@@ -85,10 +90,12 @@ export function CartDrawer() {
             </div>
           </ScrollArea>
           <div className="border-t mt-auto -mx-6 px-6 pt-4">
-            <div className="flex justify-between font-bold text-lg">
-              <p>Total</p>
-              <p>{formatPrice(totalAmount)}</p>
-            </div>
+            {totalAmount > 0 && (
+                <div className="flex justify-between font-bold text-lg">
+                <p>Total</p>
+                <p>{formatPrice(totalAmount)}</p>
+                </div>
+            )}
              <Button onClick={handleSendEnquiry} className="w-full mt-4">
               Send Enquiry via WhatsApp
               <Send className="ml-2 h-4 w-4" />
