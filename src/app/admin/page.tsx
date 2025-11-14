@@ -17,6 +17,7 @@ function AdminContent() {
   const router = useRouter();
   const firestore = useFirestore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
@@ -27,6 +28,7 @@ function AdminContent() {
 
   const handleSignOut = async () => {
     if (auth) {
+        setIsSigningOut(true);
         await auth.signOut();
         router.push('/');
     }
@@ -73,7 +75,9 @@ function AdminContent() {
             >
               <Button onClick={() => setIsDialogOpen(true)}>Add New Product</Button>
           </ProductDialog>
-          <Button onClick={handleSignOut} variant="outline">Sign Out</Button>
+          <Button onClick={handleSignOut} variant="outline" disabled={isSigningOut}>
+            {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+          </Button>
         </div>
       </div>
       <ProductList />
@@ -86,11 +90,15 @@ export default function AdminPage() {
   const router = useRouter();
 
   useEffect(() => {
+    // This effect handles the case where a non-logged-in user tries to access the page directly.
+    // It will redirect them to the login page.
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
 
+  // While checking auth state, show a loading skeleton.
+  // Also, if the user is null but we haven't redirected yet, we still show loading.
   if (isUserLoading || !user) {
     return (
         <div className="flex flex-col min-h-screen">
@@ -107,6 +115,7 @@ export default function AdminPage() {
     );
   }
 
+  // If we have a user, render the admin content.
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
