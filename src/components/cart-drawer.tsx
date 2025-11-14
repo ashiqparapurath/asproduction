@@ -1,7 +1,6 @@
 
 'use client';
 
-import Image from 'next/image';
 import { useCart } from '@/context/cart-context';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -33,6 +32,12 @@ export function CartDrawer() {
     window.open(whatsappUrl, '_blank');
   };
 
+  const fallbackImage = "https://placehold.co/600x600/EEE/31343C?text=Image+Not+Available";
+
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    e.currentTarget.src = fallbackImage;
+  };
+
   return (
     <div className="flex flex-col h-full">
       {cartItems.length === 0 ? (
@@ -49,11 +54,11 @@ export function CartDrawer() {
                 <div key={item.id} className="flex items-start gap-4">
                    <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0">
                     {item.imageUrl && (
-                      <Image
+                      <img
                         src={item.imageUrl}
                         alt={item.name}
-                        fill
-                        className="object-cover"
+                        className="object-cover w-full h-full"
+                        onError={handleImageError}
                       />
                     )}
                   </div>
