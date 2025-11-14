@@ -53,6 +53,24 @@
       "description": "A colorful cookbook with delicious recipes.",
       "imageUrl": "https://images.unsplash.com/photo-1612072588338-d1ac5f4baaec?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxib29rJTIwY29va2luZ3xlbnwwfHx8fDE3NjMxNDA4OTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "book cooking"
+    },
+    {
+      "id": "banner_img_1",
+      "description": "Promotional banner for a sale on apparel.",
+      "imageUrl": "https://images.unsplash.com/photo-1626413146731-d9d6017df5d0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzYWxlJTIwZmFzaGlvbnxlbnwwfHx8fDE3NjMxNDE0MjZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sale fashion"
+    },
+    {
+      "id": "banner_img_2",
+      "description": "Promotional banner for new electronics.",
+      "imageUrl": "https://images.unsplash.com/photo-1632017734927-48988a0efae7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxuZXclMjBhcnJpdmFscyUyMGVsZWN0cm9uaWNzfGVufDB8fHx8MTc2MzE0MTQyNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "new arrivals electronics"
+    },
+    {
+      "id": "banner_img_3",
+      "description": "Promotional banner for bestselling books.",
+      "imageUrl": "https://images.unsplash.com/photo-1656266724419-333cd2502487?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxiZXN0c2VsbGluZyUyMGJvb2tzfGVufDB8fHx8MTc2MzE0MTQyNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "bestselling books"
     }
   ]
 }
