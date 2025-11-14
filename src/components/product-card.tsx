@@ -21,6 +21,11 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const fallbackImage = "https://placehold.co/600x600/EEE/31343C?text=Image+Not+Available";
 
+  // Preemptively check for invalid URLs that Next/Image cannot process.
+  const isInvalidUrl = product.imageUrl && product.imageUrl.includes("drive.google.com");
+
+  const currentSrc = imgError || isInvalidUrl || !product.imageUrl ? fallbackImage : product.imageUrl;
+
   // Reset error state when the product prop changes
   useEffect(() => {
     setImgError(false);
@@ -40,8 +45,6 @@ export function ProductCard({ product }: ProductCardProps) {
       description: `${product.name} has been added to your cart.`,
     });
   };
-
-  const currentSrc = imgError || !product.imageUrl ? fallbackImage : product.imageUrl;
 
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group bg-card">
