@@ -59,7 +59,7 @@ export function ProductGrid({ products }: ProductGridProps) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search products... or type 'adm'"
+            placeholder="Search products..."
             className="pl-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
