@@ -42,8 +42,13 @@ const formSchema = z.object({
   imageUrl: z.string().url('Please enter a valid URL.').optional().or(z.literal('')),
   showPrice: z.boolean().default(true),
 })
-.refine(data => data.imageUrl || data.imageFile, {
-    message: "Either an image URL or an image file must be provided.",
+.refine(data => {
+    // If editing, and there's an existing imageUrl, then imageFile is not required.
+    if (data.imageUrl) return true;
+    // If creating, or if imageUrl is empty, then imageFile is required.
+    return !!data.imageFile;
+}, {
+    message: "An image file must be provided.",
     path: ["imageFile"],
 });
 
@@ -96,12 +101,16 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
 
 
   const onSubmit = async (data: ProductFormValues) => {
+    // Manually trigger the submitting state.
+    form.control.register('isSubmitting' as any, { value: true });
+
     if (!firestore || !user || !storage) {
         toast({
             variant: 'destructive',
             title: 'Authentication or Storage Error',
             description: 'You must be signed in and storage must be available.',
         });
+        form.reset(data); // Reset form state
         return;
     }
     
@@ -120,6 +129,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                 title: "Image Upload Failed",
                 description: "Could not upload the new image. Please try again.",
             });
+            form.reset(data); // Reset form state
             return;
         }
     }
@@ -159,6 +169,9 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             title: 'Failed to save product',
             description: error.message || 'An unexpected error occurred.',
         });
+    } finally {
+        // Explicitly set isSubmitting to false when everything is done.
+        form.reset(form.getValues());
     }
   };
 
