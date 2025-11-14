@@ -10,7 +10,7 @@ export function Header() {
           <Link href="/" className="flex items-center gap-2">
             <Box className="h-7 w-7 text-primary" />
             <span className="text-xl font-bold text-foreground tracking-tight">
-              PRODUCTION
+              AS PRODUCTION
             </span>
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium">

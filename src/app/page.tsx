@@ -13,7 +13,7 @@ export default function Home() {
           <div className="container text-center">
             <Badge variant="outline" className="mb-4">Now available</Badge>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter mb-4">
-              The Production Collection
+              The AS Production Collection
             </h1>
             <p className="max-w-2xl mx-auto text-muted-foreground md:text-xl mb-8">
               Discover our curated selection of high-quality products. Built to last, designed to inspire.
@@ -27,7 +27,7 @@ export default function Home() {
       </main>
       <footer className="py-8 bg-background text-center text-sm text-muted-foreground border-t">
         <div className="container flex flex-col md:flex-row justify-between items-center gap-4">
-          <p>© {new Date().getFullYear()} PRODUCTION. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} AS PRODUCTION. All rights reserved.</p>
           <div className="flex gap-4">
             <Link href="#" className="hover:text-primary transition-colors">Terms of Service</Link>
             <Link href="#" className="hover:text-primary transition-colors">Privacy Policy</Link>
