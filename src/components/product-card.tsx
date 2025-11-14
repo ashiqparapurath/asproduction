@@ -8,6 +8,7 @@ import { ShoppingCart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 interface ProductCardProps {
   product: Product;
@@ -16,6 +17,8 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const [imgSrc, setImgSrc] = useState(product.imageUrl);
+  const [imgError, setImgError] = useState(false);
 
 
   const formatPrice = (price: number) => {
@@ -33,16 +36,28 @@ export function ProductCard({ product }: ProductCardProps) {
     });
   };
 
+  const fallbackImage = "https://placehold.co/600x600/EEE/31343C?text=Image+Not+Available";
+
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group bg-card">
       <CardHeader className="p-0 border-b">
         <div className="relative w-full aspect-square overflow-hidden">
-          {product.imageUrl && (
+          {product.imageUrl && !imgError ? (
             <Image
-              src={product.imageUrl}
+              src={imgSrc}
               alt={product.name}
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
+              onError={() => {
+                setImgError(true);
+              }}
+            />
+          ) : (
+             <Image
+              src={fallbackImage}
+              alt="Image not available"
+              fill
+              className="object-cover"
             />
           )}
         </div>
