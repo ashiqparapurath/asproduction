@@ -2,16 +2,16 @@
  * @fileoverview Firestore Security Rules for the e-commerce application.
  *
  * Core Philosophy:
- * This ruleset enforces a strict admin-only access model for managing products and categories. Only users with a designated admin role can create, read, update, or delete data in these collections. User data (not yet defined in the schema) would be isolated from this admin-controlled data.
+ * This ruleset enforces a strict admin-only access model for managing products and categories. Only users with a designated admin role can create, update, or delete data in these collections. Product and category data is publicly readable to all users.
  *
  * Data Structure:
- * - /products/{productId}: Stores product information.
- * - /categories/{categoryId}: Stores category information.
+ * - /products/{productId}: Stores product information. Publicly readable.
+ * - /categories/{categoryId}: Stores category information. Publicly readable.
  * - /roles_admin/{uid}: Indicates admin privileges; presence of a document for a user grants admin rights.
  *
  * Key Security Decisions:
- * - Admin-only access: All operations on /products and /categories are restricted to admin users.
- * - No public listing: Neither products nor categories can be listed by non-admins or unauthenticated users.
+ * - Public read access: All users (authenticated or not) can read products and categories.
+ * - Admin-only write access: All write operations on /products and /categories are restricted to admin users.
  * - Authorization Independence: Admin status is determined solely by the existence of a document in /roles_admin/{uid}, avoiding costly `get()` calls.
  */
 rules_version = '2';
@@ -43,31 +43,27 @@ service cloud.firestore {
     /**
      * @description Rules for the /products collection.
      * @path /products/{productId}
-     * @allow (create) An admin creates a new product.
-     * @deny (create) A non-admin attempts to create a product.
-     * @principle Role-Based Access Control: Restricts product management to admin users only.
+     * @allow (read) Anyone can view products.
+     * @allow (write) An admin can manage products.
+     * @deny (write) A non-admin attempts to manage a product.
+     * @principle Public Read, Admin Write: Allows public visibility of products while securing management.
      */
     match /products/{productId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     /**
      * @description Rules for the /categories collection.
      * @path /categories/{categoryId}
-     * @allow (create) An admin creates a new category.
-     * @deny (create) A non-admin attempts to create a category.
-     * @principle Role-Based Access Control: Restricts category management to admin users only.
+     * @allow (read) Anyone can view categories.
+     * @allow (write) An admin can manage categories.
+     * @deny (write) A non-admin attempts to manage a category.
+     * @principle Public Read, Admin Write: Allows public visibility of categories while securing management.
      */
     match /categories/{categoryId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     /**
