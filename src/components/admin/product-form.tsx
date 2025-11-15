@@ -31,8 +31,9 @@ import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/no
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useUser } from '@/firebase';
-import { uploadImage } from '@/ai/flows/upload-image-flow';
 import { Progress } from '@/components/ui/progress';
+
+const MAX_FILE_SIZE = 1024 * 1024; // 1 MB
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -42,10 +43,21 @@ const formSchema = z.object({
   image: z.any().optional(),
   imageUrl: z.string().optional(),
   showPrice: z.boolean().default(true),
-}).refine(data => data.image || data.imageUrl, {
-  message: "Either an image upload or an image URL is required.",
+})
+.refine(data => data.image || data.imageUrl, {
+  message: "An image is required.",
+  path: ["image"],
+})
+.refine(data => {
+  if (data.image && data.image instanceof File) {
+    return data.image.size <= MAX_FILE_SIZE;
+  }
+  return true;
+}, {
+  message: `Image must be less than 1MB.`,
   path: ["image"],
 });
+
 
 type ProductFormValues = z.infer<typeof formSchema>;
 
@@ -60,7 +72,6 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
   const isEditMode = !!product;
   const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(product?.imageUrl || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -80,13 +91,19 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        form.setError("image", { type: "manual", message: "Image must be less than 1MB." });
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+        const result = reader.result as string;
+        setImagePreview(result);
+        form.setValue('imageUrl', result, { shouldValidate: true });
+        form.setValue('image', file); // Keep file for validation if needed
+        form.clearErrors('image');
       };
       reader.readAsDataURL(file);
-      form.setValue('image', file);
-      form.clearErrors('image');
     }
   };
 
@@ -109,36 +126,19 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         return;
     }
 
-    setIsSubmitting(true);
-    setUploadProgress(null);
+    if (!data.imageUrl) {
+        toast({
+            variant: "destructive",
+            title: "Validation Error",
+            description: "An image is required to save the product.",
+        });
+        return;
+    }
 
-    let finalImageUrl = product?.imageUrl || '';
+    setIsSubmitting(true);
 
     try {
-      const imageFile = data.image as File | undefined;
-      if (imageFile) {
-        setUploadProgress(0); // Indicate that upload is starting
-        const reader = new FileReader();
-        reader.readAsDataURL(imageFile);
-        reader.onloadend = async () => {
-          const base64data = reader.result as string;
-          try {
-            finalImageUrl = await uploadImage({ 
-              fileDataUri: base64data,
-              fileName: imageFile.name,
-              userId: user.uid,
-              // Simple progress tracking
-              onProgress: (p) => setUploadProgress(p)
-            });
-            await saveProduct(data, finalImageUrl);
-          } catch(e: any) {
-            handleUploadError(e);
-          }
-        }
-      } else {
-         // No new image, just save the other product data
-         await saveProduct(data, finalImageUrl);
-      }
+        await saveProduct(data, data.imageUrl);
     } catch (error: any) {
         console.error("Product form submission error:", error);
         toast({
@@ -147,19 +147,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             description: error.message || 'An unexpected error occurred.',
         });
         setIsSubmitting(false);
-        setUploadProgress(null);
     }
-  };
-
-  const handleUploadError = (error: any) => {
-    console.error("Image upload failed:", error);
-    toast({
-      variant: 'destructive',
-      title: 'Image Upload Failed',
-      description: 'Could not upload the image. Please ensure your project has billing enabled for Firebase Storage.',
-    });
-    setIsSubmitting(false);
-    setUploadProgress(null);
   };
   
   const saveProduct = async (data: ProductFormValues, imageUrl: string) => {
@@ -170,7 +158,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
       price: data.price,
       category: data.category,
       showPrice: data.showPrice,
-      imageUrl: imageUrl,
+      imageUrl: imageUrl, // This is the Base64 data URI
     };
 
     if (isEditMode && product) {
@@ -192,7 +180,6 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     }
     onFinished();
     setIsSubmitting(false);
-    setUploadProgress(null);
   };
 
   return (
@@ -282,9 +269,8 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                  />
               </FormControl>
               <FormDescription>
-                Upload an image for the product.
+                Upload an image for the product. Max size: 1MB.
               </FormDescription>
-              {uploadProgress !== null && <Progress value={uploadProgress} className="w-full mt-2" />}
               <FormMessage />
             </FormItem>
           )}
@@ -310,7 +296,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
           )}
         />
         <Button type="submit" disabled={isSubmitting || !form.formState.isValid} className="w-full">
-          {isSubmitting ? (uploadProgress !== null ? `Uploading: ${uploadProgress.toFixed(0)}%` : 'Saving...' ) : 'Save Product'}
+          {isSubmitting ? 'Saving...' : 'Save Product'}
         </Button>
       </form>
     </Form>
