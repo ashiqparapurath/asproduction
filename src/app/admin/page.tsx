@@ -14,6 +14,7 @@ import { BannerList } from '@/components/admin/banner-list';
 import { BannerDialog } from '@/components/admin/banner-dialog';
 import { CategoryList } from '@/components/admin/category-list';
 import { CategoryDialog } from '@/components/admin/category-dialog';
+import { LifeBuoy } from 'lucide-react';
 
 function AdminContent() {
   const { user } = useUser();
@@ -44,6 +45,14 @@ function AdminContent() {
         setIsSigningOut(false);
       }
     }
+  };
+
+  const handleContactDeveloper = () => {
+    // Replace with your actual WhatsApp number, including the country code without '+'
+    const developerPhoneNumber = '919743014788'; 
+    const message = encodeURIComponent("Hello, I need assistance with the AS PRODUCTION admin panel.");
+    const whatsappUrl = `https://wa.me/${developerPhoneNumber}?text=${message}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   if (isAdminLoading) {
@@ -106,9 +115,15 @@ function AdminContent() {
             Manage your store's content here.
           </p>
         </div>
-        <Button onClick={handleSignOut} variant="outline" disabled={isSigningOut}>
-          {isSigningOut ? 'Signing Out...' : 'Sign Out'}
-        </Button>
+        <div className="flex items-center gap-2">
+           <Button onClick={handleContactDeveloper} variant="outline" size="sm">
+            <LifeBuoy className="mr-2 h-4 w-4" />
+            Contact Developer
+          </Button>
+          <Button onClick={handleSignOut} variant="outline" size="sm" disabled={isSigningOut}>
+            {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="products">
