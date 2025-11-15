@@ -2,10 +2,38 @@
 
 import React, { useState, useEffect, type ReactNode } from 'react';
 import { FirebaseProvider } from '@/firebase/provider';
-import { initializeClientFirebase } from '@/firebase';
-import type { FirebaseApp } from 'firebase/app';
-import type { Auth } from 'firebase/auth';
-import type { Firestore } from 'firebase/firestore';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
+
+// This is a public configuration and is safe to be in client-side code.
+// Security is enforced by Firebase Security Rules, not by hiding these keys.
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
+function initializeClientFirebase() {
+  if (firebaseConfig.apiKey) {
+    let app: FirebaseApp;
+    if (!getApps().length) {
+      app = initializeApp(firebaseConfig);
+    } else {
+      app = getApp();
+    }
+    return {
+      firebaseApp: app,
+      auth: getAuth(app),
+      firestore: getFirestore(app),
+    };
+  }
+  return null;
+}
+
 
 interface FirebaseClientProviderProps {
   children: ReactNode;
@@ -24,13 +52,11 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
     // This effect runs only on the client, after the initial render.
     // It's safe to initialize Firebase here.
     if (typeof window !== 'undefined') {
-       setFirebaseServices(initializeClientFirebase());
+       const services = initializeClientFirebase();
+       setFirebaseServices(services);
     }
   }, []);
 
-  // Always render the FirebaseProvider.
-  // On the server and initial client render, the values will be null.
-  // After the useEffect runs on the client, the provider will be re-rendered with the actual services.
   return (
     <FirebaseProvider
       firebaseApp={firebaseServices?.firebaseApp || null}
