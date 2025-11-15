@@ -35,8 +35,6 @@ export default function RootLayout({
           </CartProvider>
         </FirebaseClientProvider>
         <Toaster />
-        <footer className="py-4 bg-background text-center text-sm text-muted-foreground border-t">
-        </footer>
       </body>
     </html>
   );
