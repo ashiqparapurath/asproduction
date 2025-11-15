@@ -13,6 +13,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  useFormField,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -60,6 +61,46 @@ type Category = {
   name: string;
 }
 
+function ImageUploader() {
+    const { isSubmitting, imagePreviews, fileInputRef, handleImageChange } = useProductFormContext();
+    const { formItemId } = useFormField();
+
+    return (
+        <>
+            <div
+                className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-muted transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+            >
+                <UploadCloud className="w-10 h-10 text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">
+                    <span className="font-semibold">Click to upload</span> or drag and drop
+                </p>
+                <p className="text-xs text-muted-foreground">PNG, JPG (MAX 1MB each)</p>
+                <Input
+                    type="file"
+                    accept="image/png, image/jpeg"
+                    multiple
+                    onChange={handleImageChange}
+                    ref={fileInputRef}
+                    className="sr-only"
+                    id={formItemId}
+                    disabled={isSubmitting || imagePreviews.length >= MAX_IMAGES}
+                />
+            </div>
+        </>
+    )
+}
+
+const ProductFormContext = React.createContext<any>(null);
+
+function useProductFormContext() {
+    const context = React.useContext(ProductFormContext);
+    if (!context) {
+        throw new Error('useProductFormContext must be used within a ProductFormContextProvider');
+    }
+    return context;
+}
+
 export function ProductForm({ product, onFinished }: ProductFormProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -83,7 +124,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
       name: product?.name || '',
       description: product?.description || '',
       price: product?.price || 0,
-      category: product?.category || '',
+      category: product?.categoryId || '',
       imageUrls: product?.imageUrls || [],
       showPrice: product?.showPrice ?? true,
     },
@@ -178,11 +219,14 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
   
   const saveProduct = async (data: ProductFormValues) => {
     if (!firestore) return;
+    const categoryDoc = categories?.find(c => c.id === data.category);
+
     const productData = {
       name: data.name,
       description: data.description,
       price: data.price,
-      category: data.category,
+      categoryId: data.category,
+      category: categoryDoc?.name, // Denormalize category name
       showPrice: data.showPrice,
       imageUrls: data.imageUrls,
     };
@@ -207,170 +251,165 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     onFinished();
     setIsSubmitting(false);
   };
+  
+  const contextValue = {
+      isSubmitting,
+      imagePreviews,
+      fileInputRef,
+      handleImageChange,
+      form,
+      removeImage
+  };
+
 
   return (
     <>
-    <CategoryDialog isOpen={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen} />
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="space-y-6">
-          <FormField
-              control={form.control}
-              name="imageUrls"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Product Images</FormLabel>
-                   <FormControl>
-                     <div
-                      className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-muted transition-colors"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <UploadCloud className="w-10 h-10 text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">
-                        <span className="font-semibold">Click to upload</span> or drag and drop
-                      </p>
-                      <p className="text-xs text-muted-foreground">PNG, JPG (MAX 1MB each)</p>
-                      <Input 
-                        type="file" 
-                        accept="image/png, image/jpeg" 
-                        multiple
-                        onChange={handleImageChange}
-                        ref={fileInputRef}
-                        className="sr-only"
-                        disabled={isSubmitting || imagePreviews.length >= MAX_IMAGES}
+    <ProductFormContext.Provider value={contextValue}>
+      <CategoryDialog isOpen={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen} />
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="space-y-6">
+            <FormField
+                control={form.control}
+                name="imageUrls"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>Product Images</FormLabel>
+                     <FormControl>
+                        <ImageUploader />
+                    </FormControl>
+                    <FormDescription>
+                      You can upload between 1 and {MAX_IMAGES} images.
+                    </FormDescription>
+                    
+                    {imagePreviews.length > 0 && (
+                      <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                        {imagePreviews.map((previewUrl, index) => (
+                          <div key={index} className="relative w-full aspect-square rounded-md overflow-hidden border">
+                            <img src={previewUrl} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
+                            <Button 
+                              type="button" 
+                              variant="destructive" 
+                              size="icon" 
+                              className="absolute top-1 right-1 h-6 w-6"
+                              onClick={() => removeImage(index)}
+                              disabled={isSubmitting}
+                            >
+                              <X className="h-4 w-4"/>
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Product Name" {...field} disabled={isSubmitting} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                   <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Price</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="99.99" {...field} disabled={isSubmitting} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        {isLoadingCategories ? (
+                          <Skeleton className="h-10 w-full" />
+                        ) : (
+                          <div className="flex gap-2">
+                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select a category" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {categories && categories.length > 0 ? (
+                                  categories.map((category) => (
+                                    <SelectItem key={category.id} value={category.id}>
+                                      {category.name}
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <div className="p-4 text-sm text-muted-foreground">No categories found.</div>
+                                )}
+                              </SelectContent>
+                            </Select>
+                            <Button type="button" variant="outline" size="icon" onClick={() => setIsCategoryDialogOpen(true)}>
+                                <PlusCircle className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+              </div>
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Product description..." {...field} disabled={isSubmitting} rows={5} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="showPrice"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                      <FormLabel>Show Price</FormLabel>
+                       <FormDescription>Display the product price on the store.</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isSubmitting}
                       />
-                    </div>
-                  </FormControl>
-                  <FormDescription>
-                    You can upload between 1 and {MAX_IMAGES} images.
-                  </FormDescription>
-                  
-                  {imagePreviews.length > 0 && (
-                    <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                      {imagePreviews.map((previewUrl, index) => (
-                        <div key={index} className="relative w-full aspect-square rounded-md overflow-hidden border">
-                          <img src={previewUrl} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
-                          <Button 
-                            type="button" 
-                            variant="destructive" 
-                            size="icon" 
-                            className="absolute top-1 right-1 h-6 w-6"
-                            onClick={() => removeImage(index)}
-                          >
-                            <X className="h-4 w-4"/>
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Product Name" {...field} disabled={isSubmitting} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                 <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="99.99" {...field} disabled={isSubmitting} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      {isLoadingCategories ? (
-                        <Skeleton className="h-10 w-full" />
-                      ) : (
-                        <div className="flex gap-2">
-                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a category" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {categories && categories.length > 0 ? (
-                                categories.map((category) => (
-                                  <SelectItem key={category.id} value={category.name}>
-                                    {category.name}
-                                  </SelectItem>
-                                ))
-                              ) : (
-                                <div className="p-4 text-sm text-muted-foreground">No categories found.</div>
-                              )}
-                            </SelectContent>
-                          </Select>
-                          <Button type="button" variant="outline" size="icon" onClick={() => setIsCategoryDialogOpen(true)}>
-                              <PlusCircle className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-            </div>
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Product description..." {...field} disabled={isSubmitting} rows={5} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="showPrice"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                  <div className="space-y-0.5">
-                    <FormLabel>Show Price</FormLabel>
-                     <FormDescription>Display the product price on the store.</FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      disabled={isSubmitting}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-        </div>
-        
-        <Button type="submit" disabled={isSubmitting || !form.formState.isValid} className="w-full">
-          {isSubmitting ? 'Saving...' : 'Save Product'}
-        </Button>
-      </form>
-    </Form>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+          </div>
+          
+          <Button type="submit" disabled={isSubmitting || !form.formState.isValid} className="w-full">
+            {isSubmitting ? 'Saving...' : 'Save Product'}
+          </Button>
+        </form>
+      </Form>
+    </ProductFormContext.Provider>
     </>
   );
 }
