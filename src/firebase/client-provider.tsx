@@ -18,10 +18,9 @@ const firebaseConfig = {
 };
 
 function initializeClientFirebase() {
-  // Check if all required config values are present.
   // This check is important because process.env variables are undefined at build time on the client.
-  // Next.js replaces them with actual values.
-  if (firebaseConfig.apiKey) {
+  // Next.js replaces them with actual values if they are prefixed with NEXT_PUBLIC_.
+  if (firebaseConfig.apiKey && firebaseConfig.projectId) {
     let app: FirebaseApp;
     if (!getApps().length) {
       app = initializeApp(firebaseConfig);
