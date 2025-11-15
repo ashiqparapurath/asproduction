@@ -2,16 +2,17 @@
  * @fileoverview Firestore Security Rules for the e-commerce application.
  *
  * Core Philosophy:
- * This ruleset enforces a strict admin-only access model for managing products and categories. Only users with a designated admin role can create, update, or delete data in these collections. Product and category data is publicly readable to all users.
+ * This ruleset enforces a strict admin-only access model for managing products, categories, and banners. Only users with a designated admin role can create, update, or delete data in these collections. Product, category, and banner data is publicly readable to all users.
  *
  * Data Structure:
  * - /products/{productId}: Stores product information. Publicly readable.
  * - /categories/{categoryId}: Stores category information. Publicly readable.
+ * - /banners/{bannerId}: Stores promotional banner information. Publicly readable.
  * - /roles_admin/{uid}: Indicates admin privileges; presence of a document for a user grants admin rights.
  *
  * Key Security Decisions:
- * - Public read access: All users (authenticated or not) can read products and categories.
- * - Admin-only write access: All write operations on /products and /categories are restricted to admin users.
+ * - Public read access: All users (authenticated or not) can read products, categories, and banners.
+ * - Admin-only write access: All write operations on /products, /categories, and /banners are restricted to admin users.
  * - Authorization Independence: Admin status is determined solely by the existence of a document in /roles_admin/{uid}, avoiding costly `get()` calls.
  */
 rules_version = '2';
@@ -62,6 +63,19 @@ service cloud.firestore {
      * @principle Public Read, Admin Write: Allows public visibility of categories while securing management.
      */
     match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    /**
+     * @description Rules for the /banners collection.
+     * @path /banners/{bannerId}
+     * @allow (read) Anyone can view banners.
+     * @allow (write) An admin can manage banners.
+     * @deny (write) A non-admin attempts to manage a banner.
+     * @principle Public Read, Admin Write: Allows public visibility of banners while securing management.
+     */
+    match /banners/{bannerId} {
       allow read: if true;
       allow write: if isAdmin();
     }

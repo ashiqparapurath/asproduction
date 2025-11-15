@@ -73,6 +73,51 @@
         "name",
         "description"
       ]
+    },
+    "Banner": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Banner",
+      "type": "object",
+      "description": "Represents a promotional banner for the homepage.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the banner."
+        },
+        "title": {
+          "type": "string",
+          "description": "The main heading for the banner."
+        },
+        "subtitle": {
+          "type": "string",
+          "description": "The sub-heading or descriptive text."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "The Base64 encoded data URI for the banner image."
+        },
+        "buttonText": {
+          "type": "string",
+          "description": "The text displayed on the call-to-action button."
+        },
+        "buttonLink": {
+          "type": "string",
+          "description": "The URL the button links to."
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Controls whether the banner is currently visible on the homepage."
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "subtitle",
+        "imageUrl",
+        "buttonText",
+        "buttonLink",
+        "isActive"
+      ]
     }
   },
   "auth": {
@@ -116,6 +161,22 @@
         }
       },
       {
+        "path": "/banners/{bannerId}",
+        "definition": {
+          "entityName": "Banner",
+          "schema": {
+            "$ref": "#/backend/entities/Banner"
+          },
+          "description": "Stores promotional banner information. Only admins can create, read, update, and delete banners. Publicly readable.",
+          "params": [
+            {
+              "name": "bannerId",
+              "description": "The unique identifier for the banner."
+            }
+          ]
+        }
+      },
+      {
         "path": "/roles_admin/{uid}",
         "definition": {
           "entityName": "adminRole",
@@ -132,6 +193,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to segregate admin-managed data from user data, ensuring clear authorization boundaries and supporting the application's features. The design emphasizes authorization independence by leveraging dedicated admin role documents and avoiding `get()` calls in security rules.\n\n**Admin-Managed Data:**\n\n*   `/products`: This collection stores product information and can only be created and modified by admins. The admin role is verified using the `/roles_admin/{uid}` document. This segregation ensures that regular users cannot modify product data. The `categoryId` field establishes the relationship with the Category entity.\n*   `/categories`: This collection stores product category information and is also exclusively managed by admins. This separation simplifies data management and authorization rules.\n*   `/roles_admin/{uid}`: Dedicated collection to store admin roles. Authorization checks for admin functionality will verify the existence of a document in this collection for the requesting user's UID. This ensures only authorized admins can add and edit products.\n\n**Authorization Independence:**\n\n*   Admin roles are verified using the existence of a document in the `/roles_admin/{uid}` collection, removing the need to retrieve user roles from other collections and enabling atomic transactions.\n\n**QAPs Support:**\n\n*   Secure `list` operations are supported for products and categories because access control is based on the admin role, and the rules are not filters. Only admins can list all documents in `/products` and `/categories`."
+    "reasoning": "The Firestore structure is designed to segregate admin-managed data from user data, ensuring clear authorization boundaries and supporting the application's features. The design emphasizes authorization independence by leveraging dedicated admin role documents and avoiding `get()` calls in security rules.\n\n**Admin-Managed Data:**\n\n*   `/products`: This collection stores product information and can only be created and modified by admins. The admin role is verified using the `/roles_admin/{uid}` document. This segregation ensures that regular users cannot modify product data. The `categoryId` field establishes the relationship with the Category entity.\n*   `/categories`: This collection stores product category information and is also exclusively managed by admins. This separation simplifies data management and authorization rules.\n*   `/banners`: This collection stores promotional banner information and is also exclusively managed by admins.\n*   `/roles_admin/{uid}`: Dedicated collection to store admin roles. Authorization checks for admin functionality will verify the existence of a document in this collection for the requesting user's UID. This ensures only authorized admins can add and edit products.\n\n**Authorization Independence:**\n\n*   Admin roles are verified using the existence of a document in the `/roles_admin/{uid}` collection, removing the need to retrieve user roles from other collections and enabling atomic transactions.\n\n**QAPs Support:**\n\n*   Secure `list` operations are supported for products and categories because access control is based on the admin role, and the rules are not filters. Only admins can list all documents in `/products` and `/categories`."
   }
 }

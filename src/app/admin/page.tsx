@@ -7,19 +7,22 @@ import { Button } from '@/components/ui/button';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProductList } from '@/components/admin/product-list';
 import { ProductDialog } from '@/components/admin/product-dialog';
+import { BannerList } from '@/components/admin/banner-list';
+import { BannerDialog } from '@/components/admin/banner-dialog';
 
 function AdminContent() {
   const { user } = useUser();
   const auth = useAuth();
   const router = useRouter();
   const firestore = useFirestore();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  const [isBannerDialogOpen, setIsBannerDialogOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const adminRoleRef = useMemoFirebase(() => {
-    // This check is crucial: only create the ref if user and firestore are available.
     if (!user || !firestore) return null;
     return doc(firestore, 'roles_admin', user.uid);
   }, [user, firestore]);
@@ -31,7 +34,6 @@ function AdminContent() {
       setIsSigningOut(true);
       try {
         await auth.signOut();
-        // Directly navigating to the home page upon sign-out.
         router.push('/');
       } catch (error) {
         console.error("Sign out failed:", error);
@@ -40,7 +42,6 @@ function AdminContent() {
     }
   };
 
-  // While checking for the admin role, show a skeleton.
   if (isAdminLoading) {
     return (
       <div className="space-y-4">
@@ -51,7 +52,6 @@ function AdminContent() {
     );
   }
 
-  // If the user has no admin role document, deny access.
   if (!adminRole) {
     return (
       <div>
@@ -66,7 +66,6 @@ function AdminContent() {
     );
   }
 
-  // If the user is an admin, show the full admin panel.
   return (
     <div className="space-y-6 w-full">
       <div className="flex justify-between items-center">
@@ -75,19 +74,36 @@ function AdminContent() {
             Admin Panel
           </h1>
           <p className="text-lg text-muted-foreground">
-            Manage your products here.
+            Manage your store's content here.
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <ProductDialog isOpen={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <Button onClick={() => setIsDialogOpen(true)}>Add New Product</Button>
-          </ProductDialog>
-          <Button onClick={handleSignOut} variant="outline" disabled={isSigningOut}>
-            {isSigningOut ? 'Signing Out...' : 'Sign Out'}
-          </Button>
-        </div>
+        <Button onClick={handleSignOut} variant="outline" disabled={isSigningOut}>
+          {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+        </Button>
       </div>
-      <ProductList />
+
+      <Tabs defaultValue="products">
+        <div className="flex justify-between items-end mb-4">
+          <TabsList>
+            <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="banners">Banners</TabsTrigger>
+          </TabsList>
+           <div className="flex items-center gap-4">
+             <ProductDialog isOpen={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
+                <Button onClick={() => setIsProductDialogOpen(true)}>Add New Product</Button>
+              </ProductDialog>
+             <BannerDialog isOpen={isBannerDialogOpen} onOpenChange={setIsBannerDialogOpen}>
+                <Button onClick={() => setIsBannerDialogOpen(true)}>Add New Banner</Button>
+              </BannerDialog>
+          </div>
+        </div>
+        <TabsContent value="products">
+          <ProductList />
+        </TabsContent>
+        <TabsContent value="banners">
+          <BannerList />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
@@ -97,13 +113,11 @@ export default function AdminPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // If auth state is resolved and there's no user, redirect to login.
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
 
-  // While checking auth state or if there's no user (before redirect), show loading.
   if (isUserLoading || !user) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -120,7 +134,6 @@ export default function AdminPage() {
     );
   }
 
-  // If a user is logged in, render the content which will then check for admin role.
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
