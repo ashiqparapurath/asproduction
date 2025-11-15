@@ -3,16 +3,17 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, initializeFirestore } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 
 // This function is for CLIENT-SIDE USE ONLY.
 export function initializeClientFirebase() {
   if (typeof window !== 'undefined') {
+    let app: FirebaseApp;
     if (!getApps().length) {
-      const app = initializeApp(firebaseConfig);
-      return getSdks(app);
+      app = initializeApp(firebaseConfig);
+    } else {
+      app = getApp();
     }
-    const app = getApp();
     return getSdks(app);
   }
   // This error should not be reachable when used correctly inside a 'use client' component.
@@ -20,12 +21,10 @@ export function initializeClientFirebase() {
 }
 
 function getSdks(firebaseApp: FirebaseApp) {
-  // Pass an empty object to ensure it connects to the cloud instance, not an emulator.
-  const firestore = initializeFirestore(firebaseApp, {});
   return {
     firebaseApp,
     auth: getAuth(firebaseApp),
-    firestore: firestore,
+    firestore: getFirestore(firebaseApp),
   };
 }
 
