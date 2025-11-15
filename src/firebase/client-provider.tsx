@@ -9,12 +9,12 @@ import { getFirestore, Firestore } from 'firebase/firestore';
 // This is a public configuration and is safe to be in client-side code.
 // Security is enforced by Firebase Security Rules, not by hiding these keys.
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyDdWh68ZLTE_chcIZWrbCBIpxW9RBPRmdw",
+  authDomain: "studio-3363182495-f6f10.firebaseapp.com",
+  projectId: "studio-3363182495-f6f10",
+  storageBucket: "studio-3363182495-f6f10.firebasestorage.app",
+  messagingSenderId: "416904916684",
+  appId: "1:416904916684:web:eaaec339c5f7a888275c69"
 };
 
 function initializeClientFirebase() {
