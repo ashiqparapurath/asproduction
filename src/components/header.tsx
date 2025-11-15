@@ -71,8 +71,7 @@ export function Header() {
           
            <div className="md:hidden">
              <Link href="/" className="flex items-center gap-2">
-                <Image src="/logo.png" alt="AS PRODUCTION Logo" width={28} height={28} className="h-7 w-7" />
-                 <span className="text-lg font-bold text-foreground tracking-tight">AS PROD</span>
+                <Image src="/logo.png" alt="AS PRODUCTION Logo" width={32} height={32} className="h-8 w-8" />
              </Link>
           </div>
 
