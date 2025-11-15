@@ -12,6 +12,8 @@ import { ProductList } from '@/components/admin/product-list';
 import { ProductDialog } from '@/components/admin/product-dialog';
 import { BannerList } from '@/components/admin/banner-list';
 import { BannerDialog } from '@/components/admin/banner-dialog';
+import { CategoryList } from '@/components/admin/category-list';
+import { CategoryDialog } from '@/components/admin/category-dialog';
 
 function AdminContent() {
   const { user } = useUser();
@@ -20,6 +22,7 @@ function AdminContent() {
   const firestore = useFirestore();
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [isBannerDialogOpen, setIsBannerDialogOpen] = useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [activeTab, setActiveTab] = useState('products');
 
@@ -67,6 +70,31 @@ function AdminContent() {
     );
   }
 
+  const renderAddButton = () => {
+    switch(activeTab) {
+      case 'products':
+        return (
+          <ProductDialog isOpen={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
+            <Button onClick={() => setIsProductDialogOpen(true)}>Add New Product</Button>
+          </ProductDialog>
+        );
+      case 'banners':
+        return (
+          <BannerDialog isOpen={isBannerDialogOpen} onOpenChange={setIsBannerDialogOpen}>
+            <Button onClick={() => setIsBannerDialogOpen(true)}>Add New Banner</Button>
+          </BannerDialog>
+        );
+      case 'categories':
+        return (
+           <CategoryDialog isOpen={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+            <Button onClick={() => setIsCategoryDialogOpen(true)}>Add New Category</Button>
+          </CategoryDialog>
+        );
+      default:
+        return null;
+    }
+  }
+
   return (
     <div className="space-y-6 w-full">
       <div className="flex justify-between items-center">
@@ -87,22 +115,18 @@ function AdminContent() {
         <div className="flex justify-between items-end mb-4">
           <TabsList>
             <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="banners">Banners</TabsTrigger>
           </TabsList>
            <div className="flex items-center gap-4">
-              {activeTab === 'products' ? (
-                <ProductDialog isOpen={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
-                  <Button onClick={() => setIsProductDialogOpen(true)}>Add New Product</Button>
-                </ProductDialog>
-              ) : (
-                <BannerDialog isOpen={isBannerDialogOpen} onOpenChange={setIsBannerDialogOpen}>
-                  <Button onClick={() => setIsBannerDialogOpen(true)}>Add New Banner</Button>
-                </BannerDialog>
-              )}
+              {renderAddButton()}
           </div>
         </div>
         <TabsContent value="products">
           <ProductList />
+        </TabsContent>
+        <TabsContent value="categories">
+          <CategoryList />
         </TabsContent>
         <TabsContent value="banners">
           <BannerList />
