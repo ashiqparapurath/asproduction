@@ -30,7 +30,6 @@ import type { Product } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useState, useRef } from 'react';
-import Image from 'next/image';
 import { useUser } from '@/firebase';
 import { X, UploadCloud, PlusCircle } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
@@ -250,7 +249,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                     <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
                       {imagePreviews.map((previewUrl, index) => (
                         <div key={index} className="relative w-full aspect-square rounded-md overflow-hidden border">
-                          <Image src={previewUrl} alt={`Preview ${index + 1}`} fill objectFit="cover" />
+                          <img src={previewUrl} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
                           <Button 
                             type="button" 
                             variant="destructive" 
