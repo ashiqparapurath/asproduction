@@ -22,10 +22,13 @@
           "type": "number",
           "description": "Price of the product."
         },
-        "imageUrl": {
-          "type": "string",
-          "description": "URL of the product's image.",
-          "format": "uri"
+        "imageUrls": {
+          "type": "array",
+          "description": "URLs of the product's images.",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
         },
         "categoryId": {
           "type": "string",
@@ -41,7 +44,7 @@
         "name",
         "description",
         "price",
-        "imageUrl",
+        "imageUrls",
         "categoryId",
         "showPrice"
       ]

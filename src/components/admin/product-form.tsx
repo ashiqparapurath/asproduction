@@ -31,30 +31,21 @@ import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/no
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useUser } from '@/firebase';
+import { X } from 'lucide-react';
 
 const MAX_FILE_SIZE = 1024 * 1024; // 1 MB
+const MAX_IMAGES = 5;
+
+const fileSchema = z.instanceof(File).refine(file => file.size <= MAX_FILE_SIZE, `Image must be less than 1MB.`);
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   price: z.coerce.number().positive('Price must be a positive number.'),
   category: z.enum(['Electronics', 'Apparel', 'Books']),
-  image: z.any().optional(),
-  imageUrl: z.string().optional(),
+  images: z.array(z.any()).optional(),
+  imageUrls: z.array(z.string()).min(1, "At least one image is required.").max(MAX_IMAGES, `You can upload a maximum of ${MAX_IMAGES} images.`),
   showPrice: z.boolean().default(true),
-})
-.refine(data => data.image || data.imageUrl, {
-  message: "An image is required.",
-  path: ["image"],
-})
-.refine(data => {
-  if (data.image && data.image instanceof File) {
-    return data.image.size <= MAX_FILE_SIZE;
-  }
-  return true;
-}, {
-  message: `Image must be less than 1MB.`,
-  path: ["image"],
 });
 
 
@@ -71,7 +62,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
   const isEditMode = !!product;
   const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(product?.imageUrl || null);
+  const [imagePreviews, setImagePreviews] = useState<string[]>(product?.imageUrls || []);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ProductFormValues>({
@@ -81,30 +72,55 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
       description: product?.description || '',
       price: product?.price || 0,
       category: product?.category || 'Apparel',
-      imageUrl: product?.imageUrl || '',
+      imageUrls: product?.imageUrls || [],
       showPrice: product?.showPrice ?? true,
     },
     mode: 'onChange',
   });
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
+    const files = event.target.files;
+    if (!files) return;
+
+    const currentImageCount = imagePreviews.length;
+    if (currentImageCount + files.length > MAX_IMAGES) {
+      form.setError("imageUrls", { type: "manual", message: `You can only upload a total of ${MAX_IMAGES} images.`});
+      return;
+    }
+
+    const newPreviews: string[] = [];
+    const newImageUrls = form.getValues('imageUrls') || [];
+    
+    Array.from(files).forEach(file => {
       if (file.size > MAX_FILE_SIZE) {
-        form.setError("image", { type: "manual", message: "Image must be less than 1MB." });
+        form.setError("imageUrls", { type: "manual", message: `File "${file.name}" is too large (max 1MB).` });
         return;
       }
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
-        setImagePreview(result);
-        form.setValue('imageUrl', result, { shouldValidate: true });
-        form.setValue('image', file); // Keep file for validation if needed
-        form.clearErrors('image');
+        newPreviews.push(result);
+        newImageUrls.push(result);
+        if (newPreviews.length === files.length) {
+            setImagePreviews(prev => [...prev, ...newPreviews]);
+            form.setValue('imageUrls', newImageUrls, { shouldValidate: true });
+        }
       };
       reader.readAsDataURL(file);
+    });
+
+    // Clear the file input so the user can select the same file again if they remove it
+    if(fileInputRef.current) {
+        fileInputRef.current.value = "";
     }
   };
+
+  const removeImage = (index: number) => {
+    const newImagePreviews = [...imagePreviews];
+    newImagePreviews.splice(index, 1);
+    setImagePreviews(newImagePreviews);
+    form.setValue('imageUrls', newImagePreviews, { shouldValidate: true });
+  }
 
   const onSubmit = async (data: ProductFormValues) => {
     if (!firestore) {
@@ -125,11 +141,11 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         return;
     }
 
-    if (!data.imageUrl) {
+    if (!data.imageUrls || data.imageUrls.length === 0) {
         toast({
             variant: "destructive",
             title: "Validation Error",
-            description: "An image is required to save the product.",
+            description: "At least one image is required to save the product.",
         });
         return;
     }
@@ -137,7 +153,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     setIsSubmitting(true);
 
     try {
-        await saveProduct(data, data.imageUrl);
+        await saveProduct(data);
     } catch (error: any) {
         console.error("Product form submission error:", error);
         toast({
@@ -149,7 +165,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     }
   };
   
-  const saveProduct = async (data: ProductFormValues, imageUrl: string) => {
+  const saveProduct = async (data: ProductFormValues) => {
     if (!firestore) return;
     const productData = {
       name: data.name,
@@ -157,7 +173,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
       price: data.price,
       category: data.category,
       showPrice: data.showPrice,
-      imageUrl: imageUrl, // This is the Base64 data URI
+      imageUrls: data.imageUrls, // This is the array of Base64 data URIs
     };
 
     if (isEditMode && product) {
@@ -248,27 +264,43 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
        
         <FormField
           control={form.control}
-          name="image"
+          name="imageUrls"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Product Image</FormLabel>
-              {imagePreview && (
-                <div className="mt-2 relative w-full h-48 rounded-md overflow-hidden border">
-                  <Image src={imagePreview} alt="Image Preview" layout="fill" objectFit="cover" />
+              <FormLabel>Product Images</FormLabel>
+              
+              {imagePreviews.length > 0 && (
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {imagePreviews.map((previewUrl, index) => (
+                     <div key={index} className="relative w-full h-24 rounded-md overflow-hidden border">
+                       <Image src={previewUrl} alt={`Preview ${index + 1}`} layout="fill" objectFit="cover" />
+                       <Button 
+                         type="button" 
+                         variant="destructive" 
+                         size="icon" 
+                         className="absolute top-1 right-1 h-6 w-6"
+                         onClick={() => removeImage(index)}
+                        >
+                         <X className="h-4 w-4"/>
+                       </Button>
+                     </div>
+                  ))}
                 </div>
               )}
+
               <FormControl>
                  <Input 
                    type="file" 
                    accept="image/*" 
+                   multiple
                    onChange={handleImageChange}
                    ref={fileInputRef} 
-                   disabled={isSubmitting}
+                   disabled={isSubmitting || imagePreviews.length >= MAX_IMAGES}
                    className="file:text-foreground"
                  />
               </FormControl>
               <FormDescription>
-                Upload an image for the product. Max size: 1MB.
+                Upload up to {MAX_IMAGES} images. Max size per image: 1MB.
               </FormDescription>
               <FormMessage />
             </FormItem>

@@ -4,7 +4,7 @@ export type Product = {
   description: string;
   price: number;
   category: 'Electronics' | 'Apparel' | 'Books';
-  imageUrl: string; 
+  imageUrls: string[]; 
   showPrice: boolean;
   createdAt?: any;
   updatedAt?: any;

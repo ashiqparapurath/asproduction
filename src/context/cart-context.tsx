@@ -3,13 +3,16 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import type { Product } from '@/lib/products';
 
-interface CartItem extends Product {
+// The imageUrl in CartItem is optional because the base Product type might change.
+// We only need one image for the cart display.
+interface CartItem extends Omit<Product, 'imageUrls'> {
   quantity: number;
+  imageUrl: string; // The single image URL for the cart
 }
 
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (product: Product) => void;
+  addToCart: (product: Product & { imageUrl?: string }) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -29,7 +32,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prevItems, { ...product, quantity: 1 }];
+      // When adding, use the first image from the array as the display image for the cart.
+      const cartImage = product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : "https://placehold.co/600x600/EEE/31343C?text=Image+Not+Available";
+      const { imageUrls, ...restOfProduct } = product;
+      return [...prevItems, { ...restOfProduct, quantity: 1, imageUrl: cartImage }];
     });
   };
 

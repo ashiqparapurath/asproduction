@@ -4,7 +4,7 @@
 import type { Product } from '@/lib/products';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
@@ -18,9 +18,13 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
   const { toast } = useToast();
-  
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
   const fallbackImage = "https://placehold.co/600x600/EEE/31343C?text=Image+Not+Available";
-  const [currentSrc, setCurrentSrc] = useState(product.imageUrl || fallbackImage);
+  
+  const images = product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls : [fallbackImage];
+
+  const [currentSrc, setCurrentSrc] = useState(images[0]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -30,12 +34,33 @@ export function ProductCard({ product }: ProductCardProps) {
   };
 
   const handleAddToCart = () => {
-    addToCart(product);
+    const productWithPrimaryImage = {
+        ...product,
+        imageUrl: images[0] // Ensure we add the primary image to the cart
+    };
+    addToCart(productWithPrimaryImage);
     toast({
       title: "Added to cart",
       description: `${product.name} has been added to your cart.`,
     });
   };
+
+  const nextImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const newIndex = (currentImageIndex + 1) % images.length;
+    setCurrentImageIndex(newIndex);
+    setCurrentSrc(images[newIndex]);
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const newIndex = (currentImageIndex - 1 + images.length) % images.length;
+    setCurrentImageIndex(newIndex);
+    setCurrentSrc(images[newIndex]);
+  };
+
 
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group bg-card">
@@ -48,6 +73,31 @@ export function ProductCard({ product }: ProductCardProps) {
               className="object-cover transition-transform duration-500 group-hover:scale-105"
               onError={() => setCurrentSrc(fallbackImage)}
             />
+            {images.length > 1 && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute left-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/30 text-white hover:bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={prevImage}
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/30 text-white hover:bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={nextImage}
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+                    {images.map((_, index) => (
+                        <div key={index} className={`w-2 h-2 rounded-full ${index === currentImageIndex ? 'bg-white' : 'bg-white/50'}`} />
+                    ))}
+                </div>
+              </>
+            )}
         </div>
       </CardHeader>
       <CardContent className="p-4 flex-grow flex flex-col">
