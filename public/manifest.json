@@ -2,6 +2,10 @@
   "name": "AS PRODUCTION",
   "short_name": "AS PROD",
   "description": "An e-commerce platform for showcasing products.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F0F4EF",
+  "theme_color": "#293462",
   "icons": [
     {
       "src": "/logo.png",
@@ -13,10 +17,5 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ],
-  "theme_color": "#F0F4EF",
-  "background_color": "#F0F4EF",
-  "start_url": "/",
-  "display": "standalone",
-  "orientation": "portrait"
+  ]
 }
