@@ -45,7 +45,6 @@ export function CategoryList() {
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const handleEdit = (category: Category) => {
     setCategoryToEdit(category);
@@ -88,10 +87,6 @@ export function CategoryList() {
 
   return (
     <>
-      <div className="flex justify-end mb-4">
-          <Button onClick={() => { setCategoryToEdit(null); setIsCreateOpen(true); }}>Add New Category</Button>
-      </div>
-
       {/* Mobile View */}
       <div className="grid gap-4 md:hidden">
         {categories && categories.length > 0 ? (
@@ -162,11 +157,16 @@ export function CategoryList() {
         </Table>
       </div>
 
-      <CategoryDialog
-        isOpen={isCreateOpen || isEditOpen}
-        onOpenChange={isEditOpen ? setIsEditOpen : setIsCreateOpen}
-        category={categoryToEdit || undefined}
-       />
+      {categoryToEdit && (
+        <CategoryDialog
+          isOpen={isEditOpen}
+          onOpenChange={(open) => {
+            setIsEditOpen(open);
+            if (!open) setCategoryToEdit(null);
+          }}
+          category={categoryToEdit}
+        />
+      )}
 
       <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
         <AlertDialogContent>

@@ -146,7 +146,7 @@ export function BannerForm({ banner, onFinished }: BannerFormProps) {
            <FormField
             control={form.control}
             name="imageUrl"
-            render={() => (
+            render={({ field }) => (
               <FormItem>
                 <FormLabel>Banner Image</FormLabel>
                  <FormControl>
@@ -167,6 +167,7 @@ export function BannerForm({ banner, onFinished }: BannerFormProps) {
                           onChange={handleImageChange}
                           ref={fileInputRef}
                           className="sr-only"
+                          id={field.name}
                           disabled={isSubmitting}
                         />
                       </div>

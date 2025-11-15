@@ -12,6 +12,7 @@ import { ProductList } from '@/components/admin/product-list';
 import { ProductDialog } from '@/components/admin/product-dialog';
 import { BannerList } from '@/components/admin/banner-list';
 import { BannerDialog } from '@/components/admin/banner-dialog';
+import { CategoryList } from '@/components/admin/category-list';
 import { CategoryDialog } from '@/components/admin/category-dialog';
 
 function AdminContent() {
@@ -111,10 +112,11 @@ function AdminContent() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="products">
-        <div className="flex justify-between items-end mb-4">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-4 mb-4">
           <TabsList>
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="banners">Banners</TabsTrigger>
+            <TabsTrigger value="categories">Categories</TabsTrigger>
           </TabsList>
            <div className="flex items-center gap-4">
               {renderAddButton()}
@@ -125,6 +127,9 @@ function AdminContent() {
         </TabsContent>
         <TabsContent value="banners">
           <BannerList />
+        </TabsContent>
+        <TabsContent value="categories">
+          <CategoryList />
         </TabsContent>
       </Tabs>
     </div>

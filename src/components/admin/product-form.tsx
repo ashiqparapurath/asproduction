@@ -1,7 +1,7 @@
 
 'use client';
 
-import * as React from 'react';
+import React, { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -14,7 +14,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  useFormField,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,7 +30,6 @@ import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import type { Product } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { useState, useRef } from 'react';
 import { useUser } from '@/firebase';
 import { X, UploadCloud, PlusCircle } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
@@ -60,46 +58,6 @@ interface ProductFormProps {
 type Category = {
   id: string;
   name: string;
-}
-
-function ImageUploader() {
-    const { isSubmitting, imagePreviews, fileInputRef, handleImageChange } = useProductFormContext();
-    const { formItemId } = useFormField();
-
-    return (
-        <>
-            <div
-                className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-muted transition-colors"
-                onClick={() => fileInputRef.current?.click()}
-            >
-                <UploadCloud className="w-10 h-10 text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">
-                    <span className="font-semibold">Click to upload</span> or drag and drop
-                </p>
-                <p className="text-xs text-muted-foreground">PNG, JPG (MAX 1MB each)</p>
-                <Input
-                    type="file"
-                    accept="image/png, image/jpeg"
-                    multiple
-                    onChange={handleImageChange}
-                    ref={fileInputRef}
-                    className="sr-only"
-                    id={formItemId}
-                    disabled={isSubmitting || imagePreviews.length >= MAX_IMAGES}
-                />
-            </div>
-        </>
-    )
-}
-
-const ProductFormContext = React.createContext<any>(null);
-
-function useProductFormContext() {
-    const context = React.useContext(ProductFormContext);
-    if (!context) {
-        throw new Error('useProductFormContext must be used within a ProductFormContextProvider');
-    }
-    return context;
 }
 
 export function ProductForm({ product, onFinished }: ProductFormProps) {
@@ -253,19 +211,8 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     setIsSubmitting(false);
   };
   
-  const contextValue = {
-      isSubmitting,
-      imagePreviews,
-      fileInputRef,
-      handleImageChange,
-      form,
-      removeImage
-  };
-
-
   return (
     <>
-    <ProductFormContext.Provider value={contextValue}>
       <CategoryDialog isOpen={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen} />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -273,11 +220,30 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             <FormField
                 control={form.control}
                 name="imageUrls"
-                render={() => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Product Images</FormLabel>
                      <FormControl>
-                        <ImageUploader />
+                        <div
+                          className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-muted transition-colors"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                            <UploadCloud className="w-10 h-10 text-muted-foreground mb-2" />
+                            <p className="text-sm text-muted-foreground">
+                                <span className="font-semibold">Click to upload</span> or drag and drop
+                            </p>
+                            <p className="text-xs text-muted-foreground">PNG, JPG (MAX 1MB each)</p>
+                            <Input
+                                type="file"
+                                accept="image/png, image/jpeg"
+                                multiple
+                                onChange={handleImageChange}
+                                ref={fileInputRef}
+                                className="sr-only"
+                                id={field.name}
+                                disabled={isSubmitting || imagePreviews.length >= MAX_IMAGES}
+                            />
+                        </div>
                     </FormControl>
                     <FormDescription>
                       You can upload between 1 and {MAX_IMAGES} images.
@@ -345,7 +311,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                           <div className="flex gap-2">
                             <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
                               <FormControl>
-                                <SelectTrigger>
+                                <SelectTrigger id={field.name}>
                                   <SelectValue placeholder="Select a category" />
                                 </SelectTrigger>
                               </FormControl>
@@ -410,7 +376,6 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
           </Button>
         </form>
       </Form>
-    </ProductFormContext.Provider>
     </>
   );
 }
