@@ -31,7 +31,6 @@ import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/no
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useUser } from '@/firebase';
-import { Progress } from '@/components/ui/progress';
 
 const MAX_FILE_SIZE = 1024 * 1024; // 1 MB
 
@@ -164,7 +163,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     if (isEditMode && product) {
       const docRef = doc(firestore, 'products', product.id);
       const updatedData = { ...productData, updatedAt: serverTimestamp() };
-      await updateDocumentNonBlocking(docRef, updatedData);
+      updateDocumentNonBlocking(docRef, updatedData);
       toast({
         title: 'Product Updated',
         description: `${data.name} has been successfully updated.`,
@@ -172,7 +171,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     } else {
       const collectionRef = collection(firestore, 'products');
       const newData = { ...productData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
-      await addDocumentNonBlocking(collectionRef, newData);
+      addDocumentNonBlocking(collectionRef, newData);
       toast({
         title: 'Product Added',
         description: `${data.name} has been successfully added.`,
