@@ -21,6 +21,7 @@ function AdminContent() {
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [isBannerDialogOpen, setIsBannerDialogOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [activeTab, setActiveTab] = useState('products');
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
@@ -82,19 +83,22 @@ function AdminContent() {
         </Button>
       </div>
 
-      <Tabs defaultValue="products">
+      <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="products">
         <div className="flex justify-between items-end mb-4">
           <TabsList>
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="banners">Banners</TabsTrigger>
           </TabsList>
            <div className="flex items-center gap-4">
-             <ProductDialog isOpen={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
-                <Button onClick={() => setIsProductDialogOpen(true)}>Add New Product</Button>
-              </ProductDialog>
-             <BannerDialog isOpen={isBannerDialogOpen} onOpenChange={setIsBannerDialogOpen}>
-                <Button onClick={() => setIsBannerDialogOpen(true)}>Add New Banner</Button>
-              </BannerDialog>
+              {activeTab === 'products' ? (
+                <ProductDialog isOpen={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
+                  <Button onClick={() => setIsProductDialogOpen(true)}>Add New Product</Button>
+                </ProductDialog>
+              ) : (
+                <BannerDialog isOpen={isBannerDialogOpen} onOpenChange={setIsBannerDialogOpen}>
+                  <Button onClick={() => setIsBannerDialogOpen(true)}>Add New Banner</Button>
+                </BannerDialog>
+              )}
           </div>
         </div>
         <TabsContent value="products">

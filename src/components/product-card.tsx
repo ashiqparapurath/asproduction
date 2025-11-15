@@ -114,7 +114,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <p>on request</p>
           </div>
         )}
-        <Button onClick={handleAddToCart} size="icon" className="md:w-auto md:px-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+        <Button onClick={handleAddToCart} size="icon" className="md:w-auto md:px-3 rounded-full md:rounded-md opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
             <ShoppingCart className="h-4 w-4 md:mr-2" />
             <span className="sr-only md:not-sr-only">Add to Cart</span>
         </Button>

@@ -14,7 +14,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, limit } from 'firebase/firestore';
 import type { Product, Banner } from '@/lib/products';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -23,7 +23,7 @@ function HomePageContent() {
   const firestore = useFirestore();
   const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return collection(firestore, 'products');
+    return query(collection(firestore, 'products'), limit(8));
   }, [firestore]);
 
   const { data: products, isLoading } = useCollection<Product>(productsQuery);
@@ -34,7 +34,7 @@ function HomePageContent() {
         {Array.from({ length: 8 }).map((_, i) => (
           <Card key={i}>
             <CardContent className="p-0">
-              <Skeleton className="w-full h-48" />
+              <Skeleton className="w-full h-64" />
             </CardContent>
             <CardContent className="p-4 space-y-2">
               <Skeleton className="h-4 w-2/3" />
@@ -43,7 +43,7 @@ function HomePageContent() {
             </CardContent>
             <CardContent className="p-4 pt-0 flex justify-between items-center">
               <Skeleton className="h-6 w-1/3" />
-              <Skeleton className="h-10 w-10" />
+              <Skeleton className="h-10 w-10 rounded-full" />
             </CardContent>
           </Card>
         ))}
