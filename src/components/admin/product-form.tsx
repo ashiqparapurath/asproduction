@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -274,7 +275,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                 name="imageUrls"
                 render={() => (
                   <FormItem>
-                    <FormLabel>Product Images</FormLabel>
+                    <FormLabel id="imageUrls-label">Product Images</FormLabel>
                      <FormControl>
                         <ImageUploader />
                     </FormControl>
@@ -337,14 +338,14 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                     name="category"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Category</FormLabel>
+                        <FormLabel id="category-label">Category</FormLabel>
                         {isLoadingCategories ? (
                           <Skeleton className="h-10 w-full" />
                         ) : (
                           <div className="flex gap-2">
                             <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
                               <FormControl>
-                                <SelectTrigger>
+                                <SelectTrigger aria-labelledby="category-label">
                                   <SelectValue placeholder="Select a category" />
                                 </SelectTrigger>
                               </FormControl>
