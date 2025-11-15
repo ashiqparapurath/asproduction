@@ -103,7 +103,7 @@ export function CategoryForm({ category, onFinished }: CategoryFormProps) {
             <FormItem>
               <FormLabel>Category Name</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Electronics" {...field} disabled={isSubmitting} />
+                <Input id="name" placeholder="e.g., Electronics" {...field} disabled={isSubmitting} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -116,7 +116,7 @@ export function CategoryForm({ category, onFinished }: CategoryFormProps) {
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea placeholder="A short description of the category." {...field} disabled={isSubmitting} />
+                <Textarea id="description" placeholder="A short description of the category." {...field} disabled={isSubmitting} />
               </FormControl>
               <FormMessage />
             </FormItem>
