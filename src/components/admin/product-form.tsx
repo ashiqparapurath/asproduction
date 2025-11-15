@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -23,7 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { useFirestore } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import type { Product } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
@@ -32,6 +33,7 @@ import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useUser } from '@/firebase';
 import { X, UploadCloud } from 'lucide-react';
+import { Skeleton } from '../ui/skeleton';
 
 const MAX_FILE_SIZE = 1024 * 1024; // 1 MB
 const MAX_IMAGES = 5;
@@ -40,7 +42,7 @@ const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   price: z.coerce.number().positive('Price must be a positive number.'),
-  category: z.enum(['Electronics', 'Apparel', 'Books']),
+  category: z.string().min(1, 'Please select a category.'),
   imageUrls: z.array(z.string()).min(1, "At least one image is required.").max(MAX_IMAGES, `You can upload a maximum of ${MAX_IMAGES} images.`),
   showPrice: z.boolean().default(true),
 });
@@ -53,6 +55,11 @@ interface ProductFormProps {
   onFinished: () => void;
 }
 
+type Category = {
+  id: string;
+  name: string;
+}
+
 export function ProductForm({ product, onFinished }: ProductFormProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -62,13 +69,20 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
   const [imagePreviews, setImagePreviews] = useState<string[]>(product?.imageUrls || []);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const categoriesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'categories');
+  }, [firestore]);
+
+  const { data: categories, isLoading: isLoadingCategories } = useCollection<Category>(categoriesQuery);
+
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: product?.name || '',
       description: product?.description || '',
       price: product?.price || 0,
-      category: product?.category || 'Apparel',
+      category: product?.category || '',
       imageUrls: product?.imageUrls || [],
       showPrice: product?.showPrice ?? true,
     },
@@ -225,24 +239,34 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                 </FormItem>
               )}
             />
-            <FormField
+             <FormField
               control={form.control}
               name="category"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Electronics">Electronics</SelectItem>
-                      <SelectItem value="Apparel">Apparel</SelectItem>
-                      <SelectItem value="Books">Books</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {isLoadingCategories ? (
+                    <Skeleton className="h-10 w-full" />
+                  ) : (
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories && categories.length > 0 ? (
+                          categories.map((category) => (
+                            <SelectItem key={category.id} value={category.name}>
+                              {category.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="disabled" disabled>No categories found</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
