@@ -31,7 +31,7 @@ import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/no
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useUser } from '@/firebase';
-import { X } from 'lucide-react';
+import { X, UploadCloud } from 'lucide-react';
 
 const MAX_FILE_SIZE = 1024 * 1024; // 1 MB
 const MAX_IMAGES = 5;
@@ -141,7 +141,6 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     setIsSubmitting(true);
 
     try {
-        // The zod schema already validates this, but an extra check doesn't hurt.
         if (data.imageUrls.length === 0 || data.imageUrls.length > MAX_IMAGES) {
              toast({
                 variant: "destructive",
@@ -248,6 +247,19 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Product description..." {...field} disabled={isSubmitting} rows={5} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
              <FormField
               control={form.control}
               name="showPrice"
@@ -272,43 +284,40 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
           <div className="space-y-4">
             <FormField
               control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Product description..." {...field} disabled={isSubmitting} rows={5} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
               name="imageUrls"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Product Images</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="file" 
-                      accept="image/*" 
-                      multiple
-                      onChange={handleImageChange}
-                      ref={fileInputRef} 
-                      disabled={isSubmitting || imagePreviews.length >= MAX_IMAGES}
-                      className="file:text-foreground"
-                    />
+                   <FormControl>
+                     <div
+                      className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-muted transition-colors"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <UploadCloud className="w-10 h-10 text-muted-foreground mb-2" />
+                      <p className="text-sm text-muted-foreground">
+                        <span className="font-semibold">Click to upload</span> or drag and drop
+                      </p>
+                      <p className="text-xs text-muted-foreground">PNG, JPG (MAX 1MB each)</p>
+                      <Input 
+                        type="file" 
+                        accept="image/png, image/jpeg" 
+                        multiple
+                        onChange={handleImageChange}
+                        ref={fileInputRef}
+                        className="sr-only"
+                        disabled={isSubmitting || imagePreviews.length >= MAX_IMAGES}
+                      />
+                    </div>
                   </FormControl>
                   <FormDescription>
-                    You can upload between 1 and {MAX_IMAGES} images (max 1MB each).
+                    You can upload between 1 and {MAX_IMAGES} images.
                   </FormDescription>
                   
                   {imagePreviews.length > 0 && (
                     <div className="mt-2 grid grid-cols-3 gap-2">
                       {imagePreviews.map((previewUrl, index) => (
                         <div key={index} className="relative w-full h-20 rounded-md overflow-hidden border">
-                          <Image src={previewUrl} alt={`Preview ${index + 1}`} layout="fill" objectFit="cover" />
+                          <Image src={previewUrl} alt={`Preview ${index + 1}`} fill objectFit="cover" />
                           <Button 
                             type="button" 
                             variant="destructive" 
@@ -336,5 +345,3 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     </Form>
   );
 }
-
-    
