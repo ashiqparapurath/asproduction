@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: 'AS PRODUCTION',
   description: 'An e-commerce platform for showcasing products.',
   icons: {
-    icon: '/logo.png',
+    icon: '/favicon.png',
   },
 };
 
