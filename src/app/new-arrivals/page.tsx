@@ -1,12 +1,13 @@
 'use client';
 import { Header } from '@/components/header';
-import { ProductGrid } from '@/components/product-grid';
+import { ProductGridContainer } from '@/components/product-grid';
 import Link from 'next/link';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, limit, orderBy, query } from 'firebase/firestore';
 import type { Product } from '@/lib/products';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
+import { Suspense } from 'react';
 
 function NewArrivalsContent() {
   const firestore = useFirestore();
@@ -48,8 +49,7 @@ function NewArrivalsContent() {
     )
   }
 
-
-  return <ProductGrid products={newArrivals} />;
+  return <ProductGridContainer products={newArrivals} />;
 }
 
 
@@ -65,7 +65,9 @@ export default function NewArrivalsPage() {
               Check out the latest additions to our collection. Fresh finds, just for you.
             </p>
           </div>
-          <NewArrivalsContent />
+          <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+            <NewArrivalsContent />
+          </Suspense>
         </div>
       </main>
       <footer className="py-8 bg-background text-center text-sm text-muted-foreground border-t">

@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { Header } from '@/components/header';
-import { ProductGrid } from '@/components/product-grid';
+import { ProductGridContainer } from '@/components/product-grid';
 import Link from 'next/link';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
@@ -41,7 +41,7 @@ function ProductsPageContent() {
       </div>
     )
   }
-  return <ProductGrid products={products || []} />;
+  return <ProductGridContainer products={products || []} />;
 }
 
 export default function ProductsPage() {
@@ -50,7 +50,7 @@ export default function ProductsPage() {
       <Header />
       <main className="flex-1 py-8">
         <div className="container">
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense fallback={<Skeleton className="h-96 w-full" />}>
             <ProductsPageContent />
           </Suspense>
         </div>

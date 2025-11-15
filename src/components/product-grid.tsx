@@ -8,29 +8,27 @@ import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-interface ProductGridProps {
+interface ProductGridContainerProps {
   products: Product[];
 }
 
-export function ProductGrid({ products }: ProductGridProps) {
+interface ProductGridProps {
+  products: Product[];
+  categories: string[];
+  initialCategory: string | null;
+}
+
+function ProductGrid({ products, categories, initialCategory }: ProductGridProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const initialCategory = searchParams.get('category');
-  
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(initialCategory || 'All');
 
   useEffect(() => {
-    const category = searchParams.get('category');
-    if (category) {
-      setSelectedCategory(category);
+    if (initialCategory) {
+      setSelectedCategory(initialCategory);
     }
-  }, [searchParams]);
+  }, [initialCategory]);
 
-  const categories = useMemo(() => {
-    if (!products || products.length === 0) return ['All'];
-    return ['All', ...Array.from(new Set(products.map((p) => p.category)))];
-  }, [products]);
 
   const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && searchTerm.toLowerCase() === 'adm') {
@@ -90,10 +88,22 @@ export function ProductGrid({ products }: ProductGridProps) {
         <div className="text-center py-16">
           <h2 className="text-2xl font-semibold mb-2">No Products Found</h2>
           <p className="text-muted-foreground">
-            The database is currently empty. Use the admin panel to add products.
+            Try adjusting your search or filters.
           </p>
         </div>
       )}
     </div>
   );
+}
+
+export function ProductGridContainer({ products }: ProductGridContainerProps) {
+  const searchParams = useSearchParams();
+  const initialCategory = searchParams.get('category');
+
+  const categories = useMemo(() => {
+    if (!products || products.length === 0) return ['All'];
+    return ['All', ...Array.from(new Set(products.map((p) => p.category)))];
+  }, [products]);
+  
+  return <ProductGrid products={products} categories={categories} initialCategory={initialCategory} />
 }

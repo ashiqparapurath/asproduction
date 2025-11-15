@@ -1,6 +1,6 @@
 'use client';
 import { Header } from '@/components/header';
-import { ProductGrid } from '@/components/product-grid';
+import { ProductGridContainer } from '@/components/product-grid';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -17,6 +17,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
 import type { Product, Banner } from '@/lib/products';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Suspense } from 'react';
 
 
 function HomePageContent() {
@@ -51,7 +52,7 @@ function HomePageContent() {
     )
   }
 
-  return <ProductGrid products={products || []} />;
+  return <ProductGridContainer products={products || []} />;
 }
 
 function BannerCarousel() {
@@ -132,7 +133,9 @@ export default function Home() {
         </section>
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <HomePageContent />
+          <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+            <HomePageContent />
+          </Suspense>
         </div>
       </main>
       <footer className="py-8 bg-background text-center text-sm text-muted-foreground border-t">
