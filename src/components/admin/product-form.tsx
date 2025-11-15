@@ -36,14 +36,11 @@ import { X } from 'lucide-react';
 const MAX_FILE_SIZE = 1024 * 1024; // 1 MB
 const MAX_IMAGES = 5;
 
-const fileSchema = z.instanceof(File).refine(file => file.size <= MAX_FILE_SIZE, `Image must be less than 1MB.`);
-
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   price: z.coerce.number().positive('Price must be a positive number.'),
   category: z.enum(['Electronics', 'Apparel', 'Books']),
-  images: z.array(z.any()).optional(),
   imageUrls: z.array(z.string()).min(1, "At least one image is required.").max(MAX_IMAGES, `You can upload a maximum of ${MAX_IMAGES} images.`),
   showPrice: z.boolean().default(true),
 });
@@ -141,18 +138,19 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         return;
     }
 
-    if (!data.imageUrls || data.imageUrls.length === 0) {
-        toast({
-            variant: "destructive",
-            title: "Validation Error",
-            description: "At least one image is required to save the product.",
-        });
-        return;
-    }
-
     setIsSubmitting(true);
 
     try {
+        // The zod schema already validates this, but an extra check doesn't hurt.
+        if (data.imageUrls.length === 0 || data.imageUrls.length > MAX_IMAGES) {
+             toast({
+                variant: "destructive",
+                title: "Validation Error",
+                description: `You must upload between 1 and ${MAX_IMAGES} images.`,
+            });
+            setIsSubmitting(false);
+            return;
+        }
         await saveProduct(data);
     } catch (error: any) {
         console.error("Product form submission error:", error);
@@ -173,7 +171,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
       price: data.price,
       category: data.category,
       showPrice: data.showPrice,
-      imageUrls: data.imageUrls, // This is the array of Base64 data URIs
+      imageUrls: data.imageUrls,
     };
 
     if (isEditMode && product) {
@@ -303,7 +301,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                     />
                   </FormControl>
                   <FormDescription>
-                    Upload up to {MAX_IMAGES} images (max 1MB each).
+                    You can upload between 1 and {MAX_IMAGES} images (max 1MB each).
                   </FormDescription>
                   
                   {imagePreviews.length > 0 && (
@@ -338,3 +336,5 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     </Form>
   );
 }
+
+    
