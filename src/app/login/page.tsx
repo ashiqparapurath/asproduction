@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/firebase';
+import { useAuth, useUser } from '@/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,14 +12,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
+  
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      router.replace('/admin');
+    }
+  }, [user, isUserLoading, router]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +46,7 @@ export default function LoginPage() {
         title: 'Login Successful',
         description: 'Redirecting to admin panel...',
       });
-      router.push('/admin');
+      // The useEffect will handle the redirect
     } catch (error: any) {
       console.error(error);
       toast({
@@ -50,6 +58,20 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+
+  if (isUserLoading || user) {
+     return (
+      <div className="flex min-h-screen items-center justify-center bg-secondary/40 p-4">
+        <div className="flex flex-col items-center gap-4">
+            <Skeleton className="h-12 w-12 rounded-full" />
+            <div className="space-y-2 text-center">
+                <Skeleton className="h-4 w-[250px]" />
+                <Skeleton className="h-4 w-[200px]" />
+            </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary/40 p-4">

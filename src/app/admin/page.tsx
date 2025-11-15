@@ -39,7 +39,7 @@ function AdminContent() {
       setIsSigningOut(true);
       try {
         await auth.signOut();
-        router.push('/');
+        router.replace('/');
       } catch (error) {
         console.error("Sign out failed:", error);
         setIsSigningOut(false);
@@ -157,7 +157,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!isUserLoading && !user) {
-      router.push('/login');
+      router.replace('/login');
     }
   }, [user, isUserLoading, router]);
 
