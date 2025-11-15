@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, LogIn, User as UserIcon } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import {
@@ -15,11 +15,9 @@ import {
 import { useCart } from '@/context/cart-context';
 import { CartDrawer } from './cart-drawer';
 import { Badge } from '@/components/ui/badge';
-import { useUser } from '@/firebase';
 
 export function Header() {
   const { cartCount } = useCart();
-  const { user, isUserLoading } = useUser();
 
   return (
     <header className="bg-background/80 border-b sticky top-0 z-20 backdrop-blur-sm">
@@ -60,21 +58,6 @@ export function Header() {
                   <CartDrawer />
                 </SheetContent>
               </Sheet>
-              {!isUserLoading && (
-                <Button asChild variant="ghost" size="icon">
-                  {user ? (
-                    <Link href="/admin">
-                      <UserIcon className="h-5 w-5" />
-                      <span className="sr-only">Admin</span>
-                    </Link>
-                  ) : (
-                    <Link href="/login">
-                      <LogIn className="h-5 w-5" />
-                       <span className="sr-only">Login</span>
-                    </Link>
-                  )}
-                </Button>
-              )}
             </div>
           </div>
         </div>
