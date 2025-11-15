@@ -26,7 +26,7 @@ export function Header() {
     <header className="bg-background/80 border-b sticky top-0 z-20 backdrop-blur-sm">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-2">
+          <div className="flex-1 flex items-center justify-start">
             <div className="md:hidden">
                 <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                     <SheetTrigger asChild>
@@ -69,20 +69,20 @@ export function Header() {
             </Link>
           </div>
           
-           <div className="md:hidden">
+           <div className="md:hidden flex-1 flex justify-center">
              <Link href="/" className="flex items-center gap-2">
                 <Image src="/logo.png" alt="AS PRODUCTION Logo" width={32} height={32} className="h-8 w-8" priority />
              </Link>
           </div>
 
-          <nav className="hidden md:flex items-center justify-center gap-6 text-sm font-medium">
+          <nav className="hidden md:flex flex-1 items-center justify-center gap-6 text-sm font-medium">
             <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">Home</Link>
             <Link href="/products" className="text-muted-foreground hover:text-foreground transition-colors">Shop</Link>
             <Link href="/new-arrivals" className="text-muted-foreground hover:text-foreground transition-colors">New Arrivals</Link>
             <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
           </nav>
 
-          <div className="flex justify-end">
+          <div className="flex-1 flex items-center justify-end">
             <div className="flex items-center gap-2">
               <Sheet>
                 <SheetTrigger asChild>
