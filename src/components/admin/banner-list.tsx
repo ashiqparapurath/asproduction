@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc } from 'firebase/firestore';
 import type { Banner } from '@/lib/products';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { BannerDialog } from './banner-dialog';
@@ -30,6 +31,7 @@ import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase
 import { format } from 'date-fns';
 import { Switch } from '@/components/ui/switch';
 import Image from 'next/image';
+import { serverTimestamp } from 'firebase/firestore';
 
 export function BannerList() {
   const firestore = useFirestore();
@@ -87,24 +89,70 @@ export function BannerList() {
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
+      <div className="space-y-4">
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
       </div>
     );
   }
 
   return (
     <>
-      <div className="rounded-lg border">
+      {/* Mobile View */}
+       <div className="grid gap-4 md:hidden">
+        {banners && banners.length > 0 ? (
+          banners.map((banner) => (
+            <Card key={banner.id}>
+              <CardHeader>
+                 <div className="flex gap-4 items-start">
+                   <div className="relative w-24 h-14 rounded-md overflow-hidden flex-shrink-0">
+                      <Image src={banner.imageUrl} alt={banner.title} fill className="object-cover" />
+                  </div>
+                  <div className="flex-1">
+                     <CardTitle className="text-lg leading-tight">{banner.title}</CardTitle>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Switch
+                            checked={banner.isActive}
+                            onCheckedChange={() => handleToggleActive(banner)}
+                            aria-label="Toggle banner status"
+                        />
+                        <span className="text-sm text-muted-foreground">{banner.isActive ? "Active" : "Inactive"}</span>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+               <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Created: {formatDate(banner.createdAt)}
+                </p>
+              </CardContent>
+              <CardFooter className="flex gap-2">
+                <Button variant="outline" size="sm" className="w-full" onClick={() => handleEdit(banner)}>
+                  Edit
+                </Button>
+                <Button variant="destructive" size="sm" className="w-full" onClick={() => handleDelete(banner)}>
+                  Delete
+                </Button>
+              </CardFooter>
+            </Card>
+          ))
+        ) : (
+          <div className="text-center py-10">
+            <p className="text-muted-foreground">No banners found. Add one to get started!</p>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop View */}
+      <div className="rounded-lg border hidden md:block">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-[80px]">Image</TableHead>
               <TableHead>Title</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="hidden md:table-cell">Created At</TableHead>
+              <TableHead>Created At</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -128,7 +176,7 @@ export function BannerList() {
                         <span className="text-sm">{banner.isActive ? "Active" : "Inactive"}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">{formatDate(banner.createdAt)}</TableCell>
+                  <TableCell>{formatDate(banner.createdAt)}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm" onClick={() => handleEdit(banner)}>
                       Edit

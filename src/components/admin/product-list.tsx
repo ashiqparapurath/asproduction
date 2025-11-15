@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc, deleteDoc } from 'firebase/firestore';
+import { collection, doc } from 'firebase/firestore';
 import type { Product } from '@/lib/products';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,11 +23,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { ProductDialog } from './product-dialog';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { format } from 'date-fns';
+import { Badge } from '../ui/badge';
+import Image from 'next/image';
 
 export function ProductList() {
   const firestore = useFirestore();
@@ -76,31 +79,71 @@ export function ProductList() {
 
   const formatDate = (timestamp: any) => {
     if (!timestamp) return 'N/A';
-    // Firestore timestamps can be seconds/nanoseconds or a Date object
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return format(date, 'PPpp');
   }
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
+      <div className="space-y-4">
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
       </div>
     );
   }
 
   return (
     <>
-      <div className="rounded-lg border">
+      {/* Mobile View */}
+      <div className="grid gap-4 md:hidden">
+        {products && products.length > 0 ? (
+          products.map((product) => (
+            <Card key={product.id}>
+              <CardHeader>
+                <div className="flex gap-4">
+                   <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0">
+                    <Image src={product.imageUrls[0]} alt={product.name} fill className="object-cover" />
+                  </div>
+                  <div className="flex-1">
+                     <CardTitle className="text-lg">{product.name}</CardTitle>
+                     <CardDescription>{formatPrice(product.price)}</CardDescription>
+                     <Badge variant="secondary" className="mt-2 capitalize">{product.category}</Badge>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Created: {formatDate(product.createdAt)}
+                </p>
+              </CardContent>
+              <CardFooter className="flex gap-2">
+                <Button variant="outline" size="sm" className="w-full" onClick={() => handleEdit(product)}>
+                  Edit
+                </Button>
+                <Button variant="destructive" size="sm" className="w-full" onClick={() => handleDelete(product)}>
+                  Delete
+                </Button>
+              </CardFooter>
+            </Card>
+          ))
+        ) : (
+          <div className="text-center py-10">
+            <p className="text-muted-foreground">No products found. Add one to get started!</p>
+          </div>
+        )}
+      </div>
+      
+      {/* Desktop View */}
+      <div className="rounded-lg border hidden md:block">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[80px]">Image</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Price</TableHead>
-              <TableHead className="hidden md:table-cell">Created At</TableHead>
+              <TableHead>Created At</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -108,10 +151,15 @@ export function ProductList() {
             {products && products.length > 0 ? (
               products.map((product) => (
                 <TableRow key={product.id}>
+                   <TableCell>
+                     <div className="relative w-16 h-16 rounded-md overflow-hidden border">
+                        <Image src={product.imageUrls[0]} alt={product.name} fill className="object-cover" />
+                    </div>
+                  </TableCell>
                   <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>{product.category}</TableCell>
+                  <TableCell className="capitalize">{product.category}</TableCell>
                   <TableCell>{formatPrice(product.price)}</TableCell>
-                  <TableCell className="hidden md:table-cell">{formatDate(product.createdAt)}</TableCell>
+                  <TableCell>{formatDate(product.createdAt)}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm" onClick={() => handleEdit(product)}>
                       Edit
@@ -124,7 +172,7 @@ export function ProductList() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={6} className="h-24 text-center">
                   No products found. Add one to get started!
                 </TableCell>
               </TableRow>
