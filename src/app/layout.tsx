@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { cn } from '@/lib/utils';
 import { CartProvider } from '@/context/cart-context';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { HostUrl } from '@/components/host-url';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -34,6 +35,9 @@ export default function RootLayout({
           </CartProvider>
         </FirebaseClientProvider>
         <Toaster />
+        <footer className="py-4 bg-background text-center text-sm text-muted-foreground border-t">
+          <HostUrl />
+        </footer>
       </body>
     </html>
   );
