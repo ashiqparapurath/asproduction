@@ -32,8 +32,9 @@ import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/no
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useUser } from '@/firebase';
-import { X, UploadCloud } from 'lucide-react';
+import { X, UploadCloud, PlusCircle } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
+import { CategoryDialog } from './category-dialog';
 
 const MAX_FILE_SIZE = 1024 * 1024; // 1 MB
 const MAX_IMAGES = 5;
@@ -68,6 +69,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<string[]>(product?.imageUrls || []);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
 
   const categoriesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -208,6 +210,8 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
   };
 
   return (
+    <>
+    <CategoryDialog isOpen={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen} />
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-6">
@@ -300,24 +304,29 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                       {isLoadingCategories ? (
                         <Skeleton className="h-10 w-full" />
                       ) : (
-                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a category" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {categories && categories.length > 0 ? (
-                              categories.map((category) => (
-                                <SelectItem key={category.id} value={category.name}>
-                                  {category.name}
-                                </SelectItem>
-                              ))
-                            ) : (
-                              <SelectItem value="disabled" disabled>No categories found</SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
+                        <div className="flex gap-2">
+                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a category" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {categories && categories.length > 0 ? (
+                                categories.map((category) => (
+                                  <SelectItem key={category.id} value={category.name}>
+                                    {category.name}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <div className="p-4 text-sm text-muted-foreground">No categories found.</div>
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <Button type="button" variant="outline" size="icon" onClick={() => setIsCategoryDialogOpen(true)}>
+                              <PlusCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
                       )}
                       <FormMessage />
                     </FormItem>
@@ -363,5 +372,6 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         </Button>
       </form>
     </Form>
+    </>
   );
 }
