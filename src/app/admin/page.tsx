@@ -49,7 +49,7 @@ function AdminContent() {
 
   const handleContactDeveloper = () => {
     // Replace with your actual WhatsApp number, including the country code without '+'
-    const developerPhoneNumber = '919743014788'; 
+    const developerPhoneNumber = '97430147881'; 
     const message = encodeURIComponent("Hello, I need assistance with the AS PRODUCTION admin panel.");
     const whatsappUrl = `https://wa.me/${developerPhoneNumber}?text=${message}`;
     window.open(whatsappUrl, '_blank');
