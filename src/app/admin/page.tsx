@@ -12,7 +12,7 @@ import { ProductList } from '@/components/admin/product-list';
 import { ProductDialog } from '@/components/admin/product-dialog';
 import { BannerList } from '@/components/admin/banner-list';
 import { BannerDialog } from '@/components/admin/banner-dialog';
-import { CategoryList } from '@/components/admin/category-list';
+import { CategoryDialog } from '@/components/admin/category-dialog';
 
 function AdminContent() {
   const { user } = useUser();
@@ -21,6 +21,7 @@ function AdminContent() {
   const firestore = useFirestore();
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [isBannerDialogOpen, setIsBannerDialogOpen] = useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [activeTab, setActiveTab] = useState('products');
 
@@ -84,7 +85,9 @@ function AdminContent() {
         );
       case 'categories':
         return (
-           <CategoryList />
+           <CategoryDialog isOpen={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+            <Button onClick={() => setIsCategoryDialogOpen(true)}>Add New Category</Button>
+          </CategoryDialog>
         );
       default:
         return null;
@@ -112,7 +115,6 @@ function AdminContent() {
           <TabsList>
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="banners">Banners</TabsTrigger>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
           </TabsList>
            <div className="flex items-center gap-4">
               {renderAddButton()}
@@ -123,9 +125,6 @@ function AdminContent() {
         </TabsContent>
         <TabsContent value="banners">
           <BannerList />
-        </TabsContent>
-         <TabsContent value="categories">
-          <CategoryList />
         </TabsContent>
       </Tabs>
     </div>
