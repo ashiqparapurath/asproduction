@@ -127,13 +127,13 @@ function AdminContent() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="products">
-        <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
           <TabsList>
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="banners">Banners</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
           </TabsList>
-           <div className="flex items-center gap-4">
+           <div className="flex items-center">
               {renderAddButton()}
           </div>
         </div>

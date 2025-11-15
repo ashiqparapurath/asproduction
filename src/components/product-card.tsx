@@ -34,11 +34,7 @@ export function ProductCard({ product }: ProductCardProps) {
   };
 
   const handleAddToCart = () => {
-    const productWithPrimaryImage = {
-        ...product,
-        imageUrl: images[0] // Ensure we add the primary image to the cart
-    };
-    addToCart(productWithPrimaryImage);
+    addToCart(product);
     toast({
       title: "Added to cart",
       description: `${product.name} has been added to your cart.`,
