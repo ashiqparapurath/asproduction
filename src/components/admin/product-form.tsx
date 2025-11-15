@@ -28,17 +28,23 @@ import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import type { Product } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useUser } from '@/firebase';
+import { uploadImage } from '@/ai/flows/upload-image-flow';
+import { Progress } from '@/components/ui/progress';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   price: z.coerce.number().positive('Price must be a positive number.'),
   category: z.enum(['Electronics', 'Apparel', 'Books']),
-  imageUrl: z.string().url('Please enter a valid URL.'),
+  image: z.any().optional(),
+  imageUrl: z.string().optional(),
   showPrice: z.boolean().default(true),
+}).refine(data => data.image || data.imageUrl, {
+  message: "Either an image upload or an image URL is required.",
+  path: ["image"],
 });
 
 type ProductFormValues = z.infer<typeof formSchema>;
@@ -53,8 +59,10 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
   const { toast } = useToast();
   const isEditMode = !!product;
   const { user } = useUser();
-
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(product?.imageUrl || null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
@@ -68,8 +76,19 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     },
     mode: 'onChange',
   });
-  
-  const imageUrlValue = form.watch('imageUrl');
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      form.setValue('image', file);
+      form.clearErrors('image');
+    }
+  };
 
   const onSubmit = async (data: ProductFormValues) => {
     if (!firestore) {
@@ -91,36 +110,35 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     }
 
     setIsSubmitting(true);
+    setUploadProgress(null);
+
+    let finalImageUrl = product?.imageUrl || '';
 
     try {
-        const productData = {
-          name: data.name,
-          description: data.description,
-          price: data.price,
-          category: data.category,
-          showPrice: data.showPrice,
-          imageUrl: data.imageUrl,
-        };
-
-        if (isEditMode && product) {
-            const docRef = doc(firestore, 'products', product.id);
-            const updatedData = { ...productData, updatedAt: serverTimestamp() };
-            updateDocumentNonBlocking(docRef, updatedData);
-            toast({
-                title: 'Product Updated',
-                description: `${data.name} has been successfully updated.`,
+      const imageFile = data.image as File | undefined;
+      if (imageFile) {
+        setUploadProgress(0); // Indicate that upload is starting
+        const reader = new FileReader();
+        reader.readAsDataURL(imageFile);
+        reader.onloadend = async () => {
+          const base64data = reader.result as string;
+          try {
+            finalImageUrl = await uploadImage({ 
+              fileDataUri: base64data,
+              fileName: imageFile.name,
+              userId: user.uid,
+              // Simple progress tracking
+              onProgress: (p) => setUploadProgress(p)
             });
-        } else {
-            const collectionRef = collection(firestore, 'products');
-            const newData = { ...productData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
-            addDocumentNonBlocking(collectionRef, newData);
-            toast({
-                title: 'Product Added',
-                description: `${data.name} has been successfully added.`,
-            });
+            await saveProduct(data, finalImageUrl);
+          } catch(e: any) {
+            handleUploadError(e);
+          }
         }
-        onFinished();
-
+      } else {
+         // No new image, just save the other product data
+         await saveProduct(data, finalImageUrl);
+      }
     } catch (error: any) {
         console.error("Product form submission error:", error);
         toast({
@@ -128,9 +146,53 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             title: 'Failed to save product',
             description: error.message || 'An unexpected error occurred.',
         });
-    } finally {
-      setIsSubmitting(false);
+        setIsSubmitting(false);
+        setUploadProgress(null);
     }
+  };
+
+  const handleUploadError = (error: any) => {
+    console.error("Image upload failed:", error);
+    toast({
+      variant: 'destructive',
+      title: 'Image Upload Failed',
+      description: 'Could not upload the image. Please ensure your project has billing enabled for Firebase Storage.',
+    });
+    setIsSubmitting(false);
+    setUploadProgress(null);
+  };
+  
+  const saveProduct = async (data: ProductFormValues, imageUrl: string) => {
+    if (!firestore) return;
+    const productData = {
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      category: data.category,
+      showPrice: data.showPrice,
+      imageUrl: imageUrl,
+    };
+
+    if (isEditMode && product) {
+      const docRef = doc(firestore, 'products', product.id);
+      const updatedData = { ...productData, updatedAt: serverTimestamp() };
+      await updateDocumentNonBlocking(docRef, updatedData);
+      toast({
+        title: 'Product Updated',
+        description: `${data.name} has been successfully updated.`,
+      });
+    } else {
+      const collectionRef = collection(firestore, 'products');
+      const newData = { ...productData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
+      await addDocumentNonBlocking(collectionRef, newData);
+      toast({
+        title: 'Product Added',
+        description: `${data.name} has been successfully added.`,
+      });
+    }
+    onFinished();
+    setIsSubmitting(false);
+    setUploadProgress(null);
   };
 
   return (
@@ -200,21 +262,29 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
        
         <FormField
           control={form.control}
-          name="imageUrl"
+          name="image"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Product Image URL</FormLabel>
-               {imageUrlValue && (
+              <FormLabel>Product Image</FormLabel>
+              {imagePreview && (
                 <div className="mt-2 relative w-full h-48 rounded-md overflow-hidden border">
-                  <Image src={imageUrlValue} alt="Image Preview" layout="fill" objectFit="cover" onError={(e) => e.currentTarget.src = 'https://placehold.co/600x400/EEE/31343C?text=Invalid+URL'} />
+                  <Image src={imagePreview} alt="Image Preview" layout="fill" objectFit="cover" />
                 </div>
               )}
               <FormControl>
-                 <Input placeholder="https://example.com/image.png" {...field} disabled={isSubmitting} />
+                 <Input 
+                   type="file" 
+                   accept="image/*" 
+                   onChange={handleImageChange}
+                   ref={fileInputRef} 
+                   disabled={isSubmitting}
+                   className="file:text-foreground"
+                 />
               </FormControl>
               <FormDescription>
-                Paste a URL to an image from the web.
+                Upload an image for the product.
               </FormDescription>
+              {uploadProgress !== null && <Progress value={uploadProgress} className="w-full mt-2" />}
               <FormMessage />
             </FormItem>
           )}
@@ -240,7 +310,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
           )}
         />
         <Button type="submit" disabled={isSubmitting || !form.formState.isValid} className="w-full">
-          {isSubmitting ? 'Saving...' : 'Save Product'}
+          {isSubmitting ? (uploadProgress !== null ? `Uploading: ${uploadProgress.toFixed(0)}%` : 'Saving...' ) : 'Save Product'}
         </Button>
       </form>
     </Form>
