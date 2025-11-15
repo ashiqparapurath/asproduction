@@ -16,14 +16,16 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { useFirestore, useUser } from '@/firebase';
+import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
-import type { Banner } from '@/lib/products';
+import type { Banner, Category } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { X, UploadCloud } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '../ui/skeleton';
 
 const MAX_FILE_SIZE = 1024 * 1024; // 1 MB
 
@@ -31,7 +33,7 @@ const formSchema = z.object({
   title: z.string().min(2, 'Title must be at least 2 characters.'),
   subtitle: z.string().min(2, 'Subtitle must be at least 2 characters.'),
   buttonText: z.string().min(2, 'Button text must be at least 2 characters.'),
-  buttonLink: z.string().url('Please enter a valid URL.').or(z.string().startsWith('/', { message: "Internal links must start with a /" })),
+  buttonLink: z.string().min(1, 'Please select a category link.'),
   imageUrl: z.string().min(1, "An image is required."),
   isActive: z.boolean().default(true),
 });
@@ -51,6 +53,13 @@ export function BannerForm({ banner, onFinished }: BannerFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(banner?.imageUrl || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const categoriesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'categories');
+  }, [firestore]);
+
+  const { data: categories, isLoading: isLoadingCategories } = useCollection<Category>(categoriesQuery);
 
   const form = useForm<BannerFormValues>({
     resolver: zodResolver(formSchema),
@@ -236,9 +245,25 @@ export function BannerForm({ banner, onFinished }: BannerFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Button Link</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., /products?category=Apparel" {...field} disabled={isSubmitting} />
-                </FormControl>
+                  {isLoadingCategories ? (
+                    <Skeleton className="h-10 w-full" />
+                  ) : (
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category page to link to" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="/products">All Products</SelectItem>
+                        {categories?.map((category) => (
+                          <SelectItem key={category.id} value={`/products?category=${category.name}`}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 <FormMessage />
               </FormItem>
             )}
