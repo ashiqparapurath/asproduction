@@ -66,3 +66,28 @@
     @apply bg-background text-foreground font-sans;
   }
 }
+
+@layer utilities {
+  .smooth-scrollbar {
+    scrollbar-width: thin; /* For Firefox */
+    scrollbar-color: hsl(var(--border)) transparent; /* For Firefox */
+  }
+  .smooth-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .smooth-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .smooth-scrollbar::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 10px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+  }
+  .smooth-scrollbar:hover::-webkit-scrollbar-thumb {
+    opacity: 1;
+  }
+}
