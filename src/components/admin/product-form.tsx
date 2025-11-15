@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -24,34 +23,22 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { useFirestore, useUser } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import type { Product } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useState } from 'react';
 import Image from 'next/image';
-import { uploadImage } from '@/ai/flows/upload-image-flow';
-
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   price: z.coerce.number().positive('Price must be a positive number.'),
   category: z.enum(['Electronics', 'Apparel', 'Books']),
-  imageFile: z.instanceof(File).optional(),
-  imageUrl: z.string().url('Please enter a valid URL.').optional().or(z.literal('')),
+  imageUrl: z.string().url('Please enter a valid URL.'),
   showPrice: z.boolean().default(true),
-})
-.refine(data => {
-    // If we are editing (product exists) and no new imageFile is provided, it's valid.
-    // If we are creating, imageFile is required.
-    return !!data.imageUrl || !!data.imageFile;
-}, {
-    message: "An image file must be provided.",
-    path: ["imageFile"],
 });
-
 
 type ProductFormValues = z.infer<typeof formSchema>;
 
@@ -62,13 +49,10 @@ interface ProductFormProps {
 
 export function ProductForm({ product, onFinished }: ProductFormProps) {
   const firestore = useFirestore();
-  const { user } = useUser();
   const { toast } = useToast();
   const isEditMode = !!product;
 
-  const [imagePreview, setImagePreview] = useState<string | null>(product?.imageUrl || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
@@ -79,118 +63,60 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
       category: product?.category || 'Apparel',
       imageUrl: product?.imageUrl || '',
       showPrice: product?.showPrice ?? true,
-      imageFile: undefined,
     },
-     mode: 'onChange',
+    mode: 'onChange',
   });
-
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-      form.setValue('imageFile', file, { shouldValidate: true });
-      form.setValue('imageUrl', ''); // Clear imageUrl when a new file is selected
-    }
-  };
-
+  
+  const imageUrlValue = form.watch('imageUrl');
 
   const onSubmit = async (data: ProductFormValues) => {
-    if (!firestore || !user) {
-        toast({
-            variant: 'destructive',
-            title: 'Authentication Error',
-            description: 'You must be signed in to save a product.',
-        });
-        return;
+    if (!firestore) {
+      toast({
+        variant: 'destructive',
+        title: 'Firestore Error',
+        description: 'Firestore is not available. Please try again later.',
+      });
+      return;
     }
-    
+
     setIsSubmitting(true);
 
-    let finalImageUrl = product?.imageUrl || '';
-
-    if (data.imageFile) {
-        try {
-            const reader = new FileReader();
-            const fileAsDataURL = await new Promise<string>((resolve, reject) => {
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.onerror = reject;
-                reader.readAsDataURL(data.imageFile!);
-            });
-            
-            const result = await uploadImage({
-                fileDataUri: fileAsDataURL,
-                fileName: data.imageFile.name,
-                userId: user.uid,
-            });
-
-            if (result.downloadUrl) {
-                finalImageUrl = result.downloadUrl;
-            } else {
-                throw new Error("Image upload failed to return a URL.");
-            }
-
-        } catch (error: any) {
-            console.error("Image upload failed:", error);
-            if (error.message?.includes('storage/unknown')) {
-                toast({
-                    variant: "destructive",
-                    title: "Firebase Storage Not Ready",
-                    description: "Your storage bucket may not be enabled. Please go to the Firebase Console, navigate to Storage, and complete the setup.",
-                    duration: 10000,
-                });
-            } else {
-                 toast({
-                    variant: "destructive",
-                    title: "Image Upload Failed",
-                    description: error.message || "Could not upload the new image. Please try again.",
-                });
-            }
-            setIsSubmitting(false);
-            return;
-        }
-    }
-
-
     const productData = {
-        name: data.name,
-        description: data.description,
-        price: data.price,
-        category: data.category,
-        showPrice: data.showPrice,
-        imageUrl: finalImageUrl,
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      category: data.category,
+      showPrice: data.showPrice,
+      imageUrl: data.imageUrl,
     };
-    
+
     try {
-        if (isEditMode && product) {
-          const docRef = doc(firestore, 'products', product.id);
-          const updatedData = { ...productData, updatedAt: serverTimestamp() };
-          updateDocumentNonBlocking(docRef, updatedData);
-          toast({
-            title: 'Product Updated',
-            description: `${data.name} has been successfully updated.`,
-          });
-        } else {
-          const collectionRef = collection(firestore, 'products');
-          const newData = { ...productData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
-          addDocumentNonBlocking(collectionRef, newData);
-          toast({
-            title: 'Product Added',
-            description: `${data.name} has been successfully added.`,
-          });
-        }
-        onFinished();
-    } catch (error: any) {
-         toast({
-            variant: 'destructive',
-            title: 'Failed to save product',
-            description: error.message || 'An unexpected error occurred.',
+      if (isEditMode && product) {
+        const docRef = doc(firestore, 'products', product.id);
+        const updatedData = { ...productData, updatedAt: serverTimestamp() };
+        updateDocumentNonBlocking(docRef, updatedData);
+        toast({
+          title: 'Product Updated',
+          description: `${data.name} has been successfully updated.`,
         });
+      } else {
+        const collectionRef = collection(firestore, 'products');
+        const newData = { ...productData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
+        addDocumentNonBlocking(collectionRef, newData);
+        toast({
+          title: 'Product Added',
+          description: `${data.name} has been successfully added.`,
+        });
+      }
+      onFinished();
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to save product',
+        description: error.message || 'An unexpected error occurred.',
+      });
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -259,31 +185,25 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
           )}
         />
         <FormField
-            control={form.control}
-            name="imageFile"
-            render={() => (
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
             <FormItem>
-            <FormLabel>Product Image</FormLabel>
-            {imagePreview && (
+              <FormLabel>Product Image URL</FormLabel>
+               {imageUrlValue && form.getFieldState('imageUrl').invalid === false && (
                 <div className="mt-2 relative w-full h-48 rounded-md overflow-hidden border">
-                <Image src={imagePreview} alt="Image Preview" layout="fill" objectFit="cover" />
+                  <Image src={imageUrlValue} alt="Image Preview" layout="fill" objectFit="cover" />
                 </div>
-            )}
-            <FormControl>
-                <Input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleImageChange} 
-                    disabled={isSubmitting} 
-                    className="file:text-foreground"
-                />
-            </FormControl>
-            <FormDescription>
-                Upload an image from your computer.
-            </FormDescription>
-            <FormMessage />
+              )}
+              <FormControl>
+                <Input placeholder="https://example.com/image.png" {...field} disabled={isSubmitting} />
+              </FormControl>
+              <FormDescription>
+                Paste the URL of an image from the web.
+              </FormDescription>
+              <FormMessage />
             </FormItem>
-        )}
+          )}
         />
 
         <FormField
@@ -306,7 +226,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
           )}
         />
         <Button type="submit" disabled={isSubmitting || !form.formState.isValid} className="w-full">
-           {isSubmitting ? 'Saving...' : 'Save Product'}
+          {isSubmitting ? 'Saving...' : 'Save Product'}
         </Button>
       </form>
     </Form>
