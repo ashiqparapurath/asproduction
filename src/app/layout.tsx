@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: 'AS PRODUCTION',
   description: 'An e-commerce platform for showcasing products.',
   icons: {
-    icon: '/favicon.ico',
+    icon: '/logo.png',
   },
 };
 
@@ -24,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
        <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/logo.png" sizes="any" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#F0F4EF" />
       </head>
