@@ -159,6 +159,7 @@ export function BannerForm({ banner, onFinished }: BannerFormProps) {
                           <p className="text-sm text-muted-foreground">
                             <span className="font-semibold">Click to upload</span>
                           </p>
+                          <p className="text-xs text-muted-foreground">Recommended: 1280x720px (16:9)</p>
                           <p className="text-xs text-muted-foreground">PNG, JPG (MAX 1MB)</p>
                           <Input 
                             type="file" 
