@@ -39,7 +39,7 @@ export function Header() {
                         <SheetHeader>
                         <SheetTitle>
                              <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
-                                <Image src="/logo.png" alt="AS PRODUCTION Logo" width={24} height={24} />
+                                <Image src="/logo.png" alt="AS PRODUCTION Logo" width={24} height={24} priority />
                                 <span className="text-lg font-bold">AS PRODUCTION</span>
                             </Link>
                         </SheetTitle>
@@ -62,7 +62,7 @@ export function Header() {
                 </Sheet>
             </div>
              <Link href="/" className="hidden md:flex items-center gap-2">
-              <Image src="/logo.png" alt="AS PRODUCTION Logo" width={32} height={32} className="h-8 w-8" />
+              <Image src="/logo.png" alt="AS PRODUCTION Logo" width={32} height={32} className="h-8 w-8" priority />
               <span className="text-xl font-bold text-foreground tracking-tight">
                 AS PRODUCTION
               </span>
@@ -71,7 +71,7 @@ export function Header() {
           
            <div className="md:hidden">
              <Link href="/" className="flex items-center gap-2">
-                <Image src="/logo.png" alt="AS PRODUCTION Logo" width={32} height={32} className="h-8 w-8" />
+                <Image src="/logo.png" alt="AS PRODUCTION Logo" width={32} height={32} className="h-8 w-8" priority />
              </Link>
           </div>
 

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -54,7 +55,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-secondary/40 p-4">
        <div className="absolute top-8 left-8">
          <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.png" alt="AS PRODUCTION Logo" width={32} height={32} />
+            <Image src="/logo.png" alt="AS PRODUCTION Logo" width={32} height={32} priority />
             <span className="text-xl font-bold">AS PRODUCTION</span>
           </Link>
        </div>
