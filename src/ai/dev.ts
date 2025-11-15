@@ -1,2 +1,1 @@
-// Flows will be imported for their side effects in this file.
-import './flows/upload-image-flow';
+// This file is intentionally left blank as there are no flows to register.
