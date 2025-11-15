@@ -3,7 +3,7 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore } from 'firebase/firestore';
 
 // This function is for CLIENT-SIDE USE ONLY.
 export function initializeClientFirebase() {
@@ -20,10 +20,12 @@ export function initializeClientFirebase() {
 }
 
 function getSdks(firebaseApp: FirebaseApp) {
+  // Pass an empty object to ensure it connects to the cloud instance, not an emulator.
+  const firestore = initializeFirestore(firebaseApp, {});
   return {
     firebaseApp,
     auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp)
+    firestore: firestore,
   };
 }
 
