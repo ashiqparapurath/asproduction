@@ -120,7 +120,6 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
       reader.readAsDataURL(file);
     });
 
-    // Clear the file input so the user can select the same file again if they remove it
     if(fileInputRef.current) {
         fileInputRef.current.value = "";
     }
@@ -210,103 +209,9 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Product Name" {...field} disabled={isSubmitting} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Price</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="99.99" {...field} disabled={isSubmitting} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  {isLoadingCategories ? (
-                    <Skeleton className="h-10 w-full" />
-                  ) : (
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories && categories.length > 0 ? (
-                          categories.map((category) => (
-                            <SelectItem key={category.id} value={category.name}>
-                              {category.name}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value="disabled" disabled>No categories found</SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Product description..." {...field} disabled={isSubmitting} rows={5} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="showPrice"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                  <div className="space-y-0.5">
-                    <FormLabel>Show Price</FormLabel>
-                    <FormMessage />
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      disabled={isSubmitting}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="space-y-4">
-            <FormField
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="space-y-6">
+          <FormField
               control={form.control}
               name="imageUrls"
               render={({ field }) => (
@@ -338,9 +243,9 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                   </FormDescription>
                   
                   {imagePreviews.length > 0 && (
-                    <div className="mt-2 grid grid-cols-3 gap-2">
+                    <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
                       {imagePreviews.map((previewUrl, index) => (
-                        <div key={index} className="relative w-full h-20 rounded-md overflow-hidden border">
+                        <div key={index} className="relative w-full aspect-square rounded-md overflow-hidden border">
                           <Image src={previewUrl} alt={`Preview ${index + 1}`} fill objectFit="cover" />
                           <Button 
                             type="button" 
@@ -359,7 +264,98 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                 </FormItem>
               )}
             />
-          </div>
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Product Name" {...field} disabled={isSubmitting} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                 <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="99.99" {...field} disabled={isSubmitting} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category</FormLabel>
+                      {isLoadingCategories ? (
+                        <Skeleton className="h-10 w-full" />
+                      ) : (
+                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories && categories.length > 0 ? (
+                              categories.map((category) => (
+                                <SelectItem key={category.id} value={category.name}>
+                                  {category.name}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="disabled" disabled>No categories found</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Product description..." {...field} disabled={isSubmitting} rows={5} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="showPrice"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel>Show Price</FormLabel>
+                     <FormDescription>Display the product price on the store.</FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isSubmitting}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
         </div>
         
         <Button type="submit" disabled={isSubmitting || !form.formState.isValid} className="w-full">

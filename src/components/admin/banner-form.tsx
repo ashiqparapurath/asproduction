@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -140,130 +141,126 @@ export function BannerForm({ banner, onFinished }: BannerFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-             <FormField
-              control={form.control}
-              name="imageUrl"
-              render={() => (
-                <FormItem>
-                  <FormLabel>Banner Image</FormLabel>
-                   <FormControl>
-                     {!imagePreview ? (
-                        <div
-                          className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-muted transition-colors"
-                          onClick={() => fileInputRef.current?.click()}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="space-y-6">
+           <FormField
+            control={form.control}
+            name="imageUrl"
+            render={() => (
+              <FormItem>
+                <FormLabel>Banner Image</FormLabel>
+                 <FormControl>
+                   {!imagePreview ? (
+                      <div
+                        className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-muted transition-colors"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <UploadCloud className="w-10 h-10 text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground">
+                          <span className="font-semibold">Click to upload</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">Recommended: 1280x720px (16:9)</p>
+                        <p className="text-xs text-muted-foreground">PNG, JPG (MAX 1MB)</p>
+                        <Input 
+                          type="file" 
+                          accept="image/png, image/jpeg" 
+                          onChange={handleImageChange}
+                          ref={fileInputRef}
+                          className="sr-only"
+                          disabled={isSubmitting}
+                        />
+                      </div>
+                   ) : (
+                      <div className="relative w-full aspect-video rounded-md overflow-hidden border">
+                        <Image src={imagePreview} alt="Banner preview" fill objectFit="cover" />
+                        <Button 
+                          type="button" 
+                          variant="destructive" 
+                          size="icon" 
+                          className="absolute top-2 right-2 h-7 w-7"
+                          onClick={removeImage}
                         >
-                          <UploadCloud className="w-10 h-10 text-muted-foreground mb-2" />
-                          <p className="text-sm text-muted-foreground">
-                            <span className="font-semibold">Click to upload</span>
-                          </p>
-                          <p className="text-xs text-muted-foreground">Recommended: 1280x720px (16:9)</p>
-                          <p className="text-xs text-muted-foreground">PNG, JPG (MAX 1MB)</p>
-                          <Input 
-                            type="file" 
-                            accept="image/png, image/jpeg" 
-                            onChange={handleImageChange}
-                            ref={fileInputRef}
-                            className="sr-only"
-                            disabled={isSubmitting}
-                          />
-                        </div>
-                     ) : (
-                        <div className="relative w-full h-48 rounded-md overflow-hidden border">
-                          <Image src={imagePreview} alt="Banner preview" fill objectFit="cover" />
-                          <Button 
-                            type="button" 
-                            variant="destructive" 
-                            size="icon" 
-                            className="absolute top-2 right-2 h-7 w-7"
-                            onClick={removeImage}
-                          >
-                            <X className="h-4 w-4"/>
-                          </Button>
-                        </div>
-                     )}
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="isActive"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                  <div className="space-y-0.5">
-                    <FormLabel>Activate Banner</FormLabel>
-                    <FormDescription>Make this banner visible on the homepage.</FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      disabled={isSubmitting}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
+                          <X className="h-4 w-4"/>
+                        </Button>
+                      </div>
+                   )}
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-          <div className="space-y-4">
-             <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Mid-Season Sale" {...field} disabled={isSubmitting} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="subtitle"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Subtitle</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Up to 30% off" {...field} disabled={isSubmitting} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="buttonText"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Button Text</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Shop Now" {...field} disabled={isSubmitting} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="buttonLink"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Button Link</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., /products?category=Apparel" {...field} disabled={isSubmitting} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Title</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., Mid-Season Sale" {...field} disabled={isSubmitting} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="subtitle"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Subtitle</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., Up to 30% off" {...field} disabled={isSubmitting} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="buttonText"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Button Text</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., Shop Now" {...field} disabled={isSubmitting} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="buttonLink"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Button Link</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., /products?category=Apparel" {...field} disabled={isSubmitting} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="isActive"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                <div className="space-y-0.5">
+                  <FormLabel>Activate Banner</FormLabel>
+                  <FormDescription>Make this banner visible on the homepage.</FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={isSubmitting}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
         </div>
         
         <Button type="submit" disabled={isSubmitting || !form.formState.isValid} className="w-full">
