@@ -59,8 +59,8 @@ export default function ProductsPage() {
         <div className="container flex flex-col md:flex-row justify-between items-center gap-4">
           <p>© {new Date().getFullYear()} AS PRODUCTION. All rights reserved.</p>
           <div className="flex gap-4">
-            <Link href="#" className="hover:text-primary transition-colors">Terms of Service</Link>
-            <Link href="#" className="hover:text-primary transition-colors">Privacy Policy</Link>
+            <Link href="/terms-of-service" className="hover:text-primary transition-colors">Terms of Service</Link>
+            <Link href="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>
           </div>
         </div>
       </footer>
