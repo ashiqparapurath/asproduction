@@ -1,13 +1,8 @@
 'use client';
 
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-
-// This function is for CLIENT-SIDE USE ONLY.
-export function initializeClientFirebase() {
-  throw new Error("initializeClientFirebase should not be called directly. It is handled by FirebaseClientProvider.");
-}
+// This file is intentionally left with minimal code.
+// The client-side Firebase initialization is now self-contained within FirebaseClientProvider.
+// This prevents circular dependencies and ensures a clean separation of concerns.
 
 export * from './provider';
 export * from './client-provider';
