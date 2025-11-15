@@ -275,7 +275,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                 name="imageUrls"
                 render={() => (
                   <FormItem>
-                    <FormLabel id="imageUrls-label">Product Images</FormLabel>
+                    <FormLabel>Product Images</FormLabel>
                      <FormControl>
                         <ImageUploader />
                     </FormControl>
@@ -338,14 +338,14 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                     name="category"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel id="category-label">Category</FormLabel>
+                        <FormLabel>Category</FormLabel>
                         {isLoadingCategories ? (
                           <Skeleton className="h-10 w-full" />
                         ) : (
                           <div className="flex gap-2">
                             <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
                               <FormControl>
-                                <SelectTrigger aria-labelledby="category-label">
+                                <SelectTrigger>
                                   <SelectValue placeholder="Select a category" />
                                 </SelectTrigger>
                               </FormControl>
