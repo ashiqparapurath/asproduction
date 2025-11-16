@@ -1,5 +1,14 @@
-# Firebase Studio
+# AS PRODUCTION
 
-This is a NextJS starter in Firebase Studio.
+An e-commerce platform for showcasing products.
 
-To get started, take a look at src/app/page.tsx.
+---
+
+### Created & Maintained by
+
+- **Ashiq A.S**
+- Instagram: [@mrashiq._](https://www.instagram.com/mrashiq._)
+
+---
+
+© 2024 AS PRODUCTION. All Rights Reserved.
