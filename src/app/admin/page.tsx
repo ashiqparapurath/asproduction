@@ -15,7 +15,15 @@ import { BannerDialog } from '@/components/admin/banner-dialog';
 import { CategoryList } from '@/components/admin/category-list';
 import { CategoryDialog } from '@/components/admin/category-dialog';
 import { EnquirySettingsForm } from '@/components/admin/enquiry-settings-form';
-import { LifeBuoy } from 'lucide-react';
+import { LifeBuoy, Instagram, MessageSquare } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 function AdminContent() {
   const { user } = useUser();
@@ -48,13 +56,20 @@ function AdminContent() {
     }
   };
 
-  const handleContactDeveloper = () => {
-    // Replace with your actual WhatsApp number, including the country code without '+'
+  const handleContact = (platform: 'whatsapp' | 'instagram') => {
     const developerPhoneNumber = '97430147881'; 
+    const instagramUrl = 'https://www.instagram.com/mrashiq._';
     const message = encodeURIComponent("Hello, I need assistance with the AS PRODUCTION admin panel.");
-    const whatsappUrl = `https://wa.me/${developerPhoneNumber}?text=${message}`;
-    window.open(whatsappUrl, '_blank');
+
+    let url;
+    if (platform === 'whatsapp') {
+      url = `https://wa.me/${developerPhoneNumber}?text=${message}`;
+    } else {
+      url = instagramUrl;
+    }
+    window.open(url, '_blank');
   };
+
 
   if (isAdminLoading) {
     return (
@@ -117,10 +132,33 @@ function AdminContent() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-           <Button onClick={handleContactDeveloper} variant="outline" size="sm">
-            <LifeBuoy className="mr-2 h-4 w-4" />
-            Contact Developer
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <LifeBuoy className="mr-2 h-4 w-4" />
+                Contact Developer
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-xs">
+              <DialogHeader>
+                <DialogTitle>Contact Developer</DialogTitle>
+                <DialogDescription>
+                  Need help? Reach out via WhatsApp or Instagram.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col gap-3 pt-4">
+                <Button onClick={() => handleContact('whatsapp')} className="justify-start">
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  <span>WhatsApp</span>
+                </Button>
+                 <Button onClick={() => handleContact('instagram')} variant="secondary" className="justify-start">
+                  <Instagram className="mr-2 h-4 w-4" />
+                  <span>Instagram</span>
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <Button onClick={handleSignOut} variant="outline" size="sm" disabled={isSigningOut}>
             {isSigningOut ? 'Signing Out...' : 'Sign Out'}
           </Button>

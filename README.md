@@ -6,7 +6,7 @@ An e-commerce platform for showcasing products.
 
 ### Created & Maintained by
 
-- **Ashiq A.S**
+- **Ashiq**
 - Instagram: [@mrashiq._](https://www.instagram.com/mrashiq._)
 
 ---
