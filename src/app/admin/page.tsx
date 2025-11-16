@@ -14,6 +14,7 @@ import { BannerList } from '@/components/admin/banner-list';
 import { BannerDialog } from '@/components/admin/banner-dialog';
 import { CategoryList } from '@/components/admin/category-list';
 import { CategoryDialog } from '@/components/admin/category-dialog';
+import { EnquirySettingsForm } from '@/components/admin/enquiry-settings-form';
 import { LifeBuoy } from 'lucide-react';
 
 function AdminContent() {
@@ -112,7 +113,7 @@ function AdminContent() {
             Admin Panel
           </h1>
           <p className="text-lg text-muted-foreground">
-            Manage your store's content here.
+            Manage your store's content and settings here.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -132,6 +133,7 @@ function AdminContent() {
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="banners">Banners</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
            <div className="flex items-center">
               {renderAddButton()}
@@ -145,6 +147,9 @@ function AdminContent() {
         </TabsContent>
         <TabsContent value="categories">
           <CategoryList />
+        </TabsContent>
+        <TabsContent value="settings">
+          <EnquirySettingsForm />
         </TabsContent>
       </Tabs>
     </div>

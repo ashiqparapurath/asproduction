@@ -7,9 +7,21 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Trash2, Plus, Minus, Send, ShoppingCart } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import type { EnquirySettings } from '@/lib/products';
+import { doc } from 'firebase/firestore';
+import { Skeleton } from './ui/skeleton';
 
 export function CartDrawer() {
   const { cartItems, removeFromCart, updateQuantity, clearCart } = useCart();
+  const firestore = useFirestore();
+
+  const settingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'settings', 'enquiry');
+  }, [firestore]);
+
+  const { data: enquirySettings, isLoading: isLoadingSettings } = useDoc<EnquirySettings>(settingsRef);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -22,18 +34,27 @@ export function CartDrawer() {
   const totalAmount = itemsWithPrice.reduce((total, item) => total + item.price * item.quantity, 0);
 
   const handleSendEnquiry = () => {
-    const businessPhoneNumber = '97430147881'; // Replace with your business WhatsApp number
+    if (!enquirySettings) {
+      alert("Enquiry service is not configured. Please contact support.");
+      return;
+    }
+
+    const businessPhoneNumber = enquirySettings.whatsappNumber || '97430147881';
     
-    const messageParts = cartItems.map(item => {
+    const itemStrings = cartItems.map(item => {
       const priceString = item.showPrice ? ` - ${formatPrice(item.price * item.quantity)}` : '';
       return `${item.name} (x${item.quantity})${priceString}`;
     });
+    
+    const itemsList = itemStrings.join('\n');
+    const totalString = totalAmount > 0 ? formatPrice(totalAmount) : 'N/A';
 
-    const totalString = totalAmount > 0 ? `\n\nTotal: ${formatPrice(totalAmount)}` : '';
+    let message = enquirySettings.prefilledText || "Hello AS PRODUCTION, I'd like to enquire about the following items:\n\n{{items}}\n\nTotal: {{total}}";
     
-    const enquiryMessage = `Hello AS PRODUCTION, I'd like to enquire about the following items:\n\n${messageParts.join('\n')}${totalString}`;
+    message = message.replace('{{items}}', itemsList);
+    message = message.replace('{{total}}', totalString);
     
-    const whatsappUrl = `https://wa.me/${businessPhoneNumber}?text=${encodeURIComponent(enquiryMessage)}`;
+    const whatsappUrl = `https://wa.me/${businessPhoneNumber}?text=${encodeURIComponent(message)}`;
     
     window.open(whatsappUrl, '_blank');
   };
@@ -84,10 +105,14 @@ export function CartDrawer() {
                 <p>{formatPrice(totalAmount)}</p>
                 </div>
             )}
-             <Button onClick={handleSendEnquiry} className="w-full mt-4">
-              Send Enquiry via WhatsApp
-              <Send className="ml-2 h-4 w-4" />
-            </Button>
+             {isLoadingSettings ? (
+                <Skeleton className="h-10 w-full mt-4" />
+             ) : (
+                <Button onClick={handleSendEnquiry} className="w-full mt-4" disabled={!enquirySettings?.whatsappNumber}>
+                    Send Enquiry via WhatsApp
+                    <Send className="ml-2 h-4 w-4" />
+                </Button>
+             )}
             <Button variant="outline" onClick={clearCart} className="w-full mt-2">Clear Cart</Button>
           </div>
         </>

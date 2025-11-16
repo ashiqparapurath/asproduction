@@ -118,6 +118,25 @@
         "buttonLink",
         "isActive"
       ]
+    },
+    "EnquirySettings": {
+      "title": "Enquiry Settings",
+      "description": "Configuration for WhatsApp enquiries.",
+      "type": "object",
+      "properties": {
+        "whatsappNumber": {
+          "type": "string",
+          "description": "The WhatsApp business number, including country code, without '+' or spaces."
+        },
+        "prefilledText": {
+          "type": "string",
+          "description": "The default pre-filled message for WhatsApp enquiries. Use {{items}} for the list of items and {{total}} for the total amount."
+        }
+      },
+      "required": [
+        "whatsappNumber",
+        "prefilledText"
+      ]
     }
   },
   "auth": {
@@ -190,6 +209,17 @@
               "description": "The unique identifier for the admin user."
             }
           ]
+        }
+      },
+      {
+        "path": "/settings/enquiry",
+        "definition": {
+          "entityName": "EnquirySettings",
+          "schema": {
+            "$ref": "#/backend/entities/EnquirySettings"
+          },
+          "description": "A single document storing settings for WhatsApp enquiries. Publicly readable, admin writable.",
+          "params": []
         }
       }
     ],

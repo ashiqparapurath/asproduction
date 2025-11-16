@@ -32,6 +32,14 @@ export type Category = {
   updatedAt?: any;
 };
 
+export type EnquirySettings = {
+  id: string;
+  whatsappNumber: string;
+  prefilledText: string;
+  createdAt?: any;
+  updatedAt?: any;
+}
+
 
 // This static data is no longer used. Products are now fetched from Firestore.
 export const products: Product[] = [];
