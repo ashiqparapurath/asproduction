@@ -1,16 +1,11 @@
 'use client';
+
 import { Header } from '@/components/header';
 import { ProductGridContainer } from '@/components/product-grid';
-import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import Image from 'next/image';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import { ArrowRight, Sparkles } from 'lucide-react';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -19,39 +14,17 @@ import type { Product, Banner } from '@/lib/products';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Suspense } from 'react';
 
-
 function HomePageContent() {
   const firestore = useFirestore();
   const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'products'), limit(8));
   }, [firestore]);
-
   const { data: products, isLoading } = useCollection<Product>(productsQuery);
 
   if (isLoading) {
-    return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <Card key={i}>
-            <CardContent className="p-0">
-              <Skeleton className="w-full h-64" />
-            </CardContent>
-            <CardContent className="p-4 space-y-2">
-              <Skeleton className="h-4 w-2/3" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full" />
-            </CardContent>
-            <CardContent className="p-4 pt-0 flex justify-between items-center">
-              <Skeleton className="h-6 w-1/3" />
-              <Skeleton className="h-10 w-10 rounded-full" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    )
+    return <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="space-y-3"><Skeleton className="aspect-[4/5] w-full rounded-[18px]" /><Skeleton className="h-4 w-2/3" /><Skeleton className="h-4 w-1/3" /></div>)}</div>;
   }
-
   return <ProductGridContainer products={products || []} />;
 }
 
@@ -61,42 +34,26 @@ function BannerCarousel() {
     if (!firestore) return null;
     return query(collection(firestore, 'banners'), where('isActive', '==', true));
   }, [firestore]);
-
   const { data: banners, isLoading } = useCollection<Banner>(bannersQuery);
 
-  if (isLoading) {
-    return <Skeleton className="w-full h-64 md:h-80 lg:h-96 rounded-lg" />;
-  }
-  
-  if (!banners || banners.length === 0) {
-    return null; // Don't show the carousel if there are no active banners
-  }
+  if (isLoading) return <Skeleton className="h-56 w-full rounded-[24px] md:h-72" />;
+  if (!banners || banners.length === 0) return null;
 
   return (
-    <Carousel
-      className="w-full"
-      opts={{
-        align: "start",
-        loop: true,
-      }}
-    >
+    <Carousel className="w-full" opts={{ align: "start", loop: true }}>
       <CarouselContent>
         {banners.map((banner) => (
           <CarouselItem key={banner.id}>
-            <Card className="border-0 rounded-lg overflow-hidden">
-              <CardContent className="relative flex items-center justify-center p-0 h-64 md:h-80 lg:h-96">
-                <Image
-                  src={banner.imageUrl}
-                  alt={banner.title}
-                  fill
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-black/50" />
-                <div className="relative text-center text-white p-4">
-                  <h2 className="text-3xl md:text-4xl font-bold">{banner.title}</h2>
-                  <p className="mt-2 text-lg md:text-xl">{banner.subtitle}</p>
-                  <Button asChild className="mt-4">
-                    <Link href={banner.buttonLink}>{banner.buttonText}</Link>
+            <Card className="overflow-hidden rounded-[24px] border-0 shadow-none">
+              <CardContent className="relative flex h-56 items-center justify-center p-0 md:h-72 lg:h-[340px]">
+                <Image src={banner.imageUrl} alt={banner.title} fill sizes="100vw" className="object-cover" />
+                <div className="absolute inset-0 bg-black/40" />
+                <div className="relative max-w-2xl px-5 text-center text-white sm:px-10">
+                  <p className="eyebrow text-white/80">The TreatStory edit</p>
+                  <h2 className="mt-3 text-3xl font-medium tracking-tight sm:text-4xl md:text-5xl">{banner.title}</h2>
+                  <p className="mx-auto mt-3 max-w-xl text-sm text-white/85 sm:text-base">{banner.subtitle}</p>
+                  <Button asChild className="mt-6 rounded-full bg-white px-6 text-xs font-semibold uppercase tracking-widest text-foreground hover:bg-white/90">
+                    <Link href={banner.buttonLink}>{banner.buttonText}<ArrowRight className="ml-2 h-4 w-4" /></Link>
                   </Button>
                 </div>
               </CardContent>
@@ -104,47 +61,97 @@ function BannerCarousel() {
           </CarouselItem>
         ))}
       </CarouselContent>
-      <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 hidden md:flex" />
-      <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 hidden md:flex" />
+      <CarouselPrevious className="absolute left-4 top-1/2 hidden -translate-y-1/2 md:flex" />
+      <CarouselNext className="absolute right-4 top-1/2 hidden -translate-y-1/2 md:flex" />
     </Carousel>
   );
 }
 
-
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen bg-secondary/40">
+    <div className="flex min-h-screen flex-col overflow-hidden bg-background">
       <Header />
       <main className="flex-1">
-        <section className="bg-background py-12 md:py-20 lg:py-24">
-          <div className="container text-center">
-            <Badge variant="outline" className="mb-4">Now available</Badge>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter mb-4">
-              The AS Production Collection
-            </h1>
-            <p className="max-w-2xl mx-auto text-muted-foreground md:text-xl mb-8">
-              Discover our curated selection of high-quality products. Built to last, designed to inspire.
-            </p>
+        <section className="section-shell pb-9 pt-8 sm:pb-14 sm:pt-12 lg:pb-20 lg:pt-16">
+          <div className="grid items-center gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:gap-14">
+            <div className="relative z-10 order-2 max-w-xl pb-3 lg:order-1 lg:pb-0">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#e6ded2] bg-white/70 px-3 py-2">
+                <Sparkles className="h-3.5 w-3.5 text-[#b28f62]" />
+                <span className="eyebrow text-[#8c7658]">Good things live here</span>
+              </div>
+              <h1 className="text-[clamp(2.75rem,6vw,5.9rem)] font-medium leading-[0.98] tracking-[-0.065em] text-foreground">
+                Little finds.<br /><span className="font-serif italic font-normal text-[#a68a64]">Lovely stories.</span>
+              </h1>
+              <p className="mt-6 max-w-md text-sm leading-7 text-muted-foreground sm:text-base">
+                Discover thoughtful pieces for the way you live, give and grow. Your next favourite thing is waiting to be found.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center gap-4">
+                <Link href="/products" className="editorial-button">Explore the collection <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                <Link href="/about" className="text-xs font-semibold uppercase tracking-[0.14em] text-foreground underline decoration-[#c7b08e] underline-offset-4 transition-colors hover:text-[#9b7d55]">Our story</Link>
+              </div>
+              <div className="mt-10 hidden items-center gap-4 border-t border-[#e8e0d5] pt-5 sm:flex">
+                <div className="flex -space-x-2">
+                  <span className="h-7 w-7 rounded-full border-2 border-background bg-[#d9c8b1]" />
+                  <span className="h-7 w-7 rounded-full border-2 border-background bg-[#b5b09b]" />
+                  <span className="h-7 w-7 rounded-full border-2 border-background bg-[#e7d9c8]" />
+                </div>
+                <p className="text-[11px] leading-relaxed text-muted-foreground">A little more joy in<br /><span className="font-semibold text-foreground">the everyday details.</span></p>
+              </div>
+            </div>
+            <div className="relative order-1 lg:order-2">
+              <div className="relative aspect-[1.12/1] overflow-hidden rounded-[26px] bg-[#e8dfd2] sm:aspect-[1.25/1] lg:aspect-[1.08/1]">
+                <Image
+                  src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1600&q=85"
+                  alt="A warm, thoughtfully curated lifestyle store"
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 55vw"
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
+                <div className="absolute bottom-5 left-5 rounded-full border border-white/40 bg-white/80 px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#3e342b] backdrop-blur-md sm:bottom-7 sm:left-7">
+                  Curated with a little extra love
+                </div>
+              </div>
+              <div className="absolute -bottom-5 -right-2 hidden rounded-2xl border border-[#e7ded1] bg-[#faf8f3] px-5 py-4 shadow-[0_12px_40px_rgba(54,43,29,0.08)] sm:block lg:-right-5">
+                <p className="brand-wordmark text-2xl">TreatStory</p>
+                <p className="mt-1 text-[9px] uppercase tracking-[0.18em] text-muted-foreground">Find your little something</p>
+              </div>
+            </div>
           </div>
         </section>
 
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-           <BannerCarousel />
+        <section className="section-shell pb-12 sm:pb-16">
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <div><p className="eyebrow text-[#a68a64]">A little inspiration</p><h2 className="mt-2 text-2xl font-medium tracking-tight sm:text-3xl">The latest from TreatStory</h2></div>
+            <Link href="/products" className="hidden items-center gap-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.15em] sm:flex">Shop all <ArrowRight className="h-4 w-4" /></Link>
+          </div>
+          <BannerCarousel />
         </section>
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-            <HomePageContent />
-          </Suspense>
-        </div>
+        <section className="bg-[#f1ede6] py-12 sm:py-16">
+          <div className="section-shell">
+            <div className="mb-7 flex flex-col justify-between gap-3 sm:mb-9 sm:flex-row sm:items-end">
+              <div><p className="eyebrow text-[#a68a64]">Picked for you</p><h2 className="mt-2 text-3xl font-medium tracking-tight sm:text-4xl">Find your next favourite</h2><p className="mt-2 text-sm text-muted-foreground">Thoughtful finds, all in one happy place.</p></div>
+              <Link href="/products" className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em]">View everything <ArrowRight className="h-4 w-4" /></Link>
+            </div>
+            <Suspense fallback={<Skeleton className="h-96 w-full rounded-2xl" />}><HomePageContent /></Suspense>
+          </div>
+        </section>
+
+        <section className="section-shell py-14 sm:py-20">
+          <div className="overflow-hidden rounded-[26px] bg-[#29241f] px-6 py-10 text-center text-[#faf8f3] sm:px-10 sm:py-14">
+            <p className="eyebrow text-[#cbb18b]">The joy is in the finding</p>
+            <h2 className="mx-auto mt-4 max-w-2xl text-3xl font-medium leading-tight tracking-tight sm:text-4xl">A good find can turn an ordinary day into a lovely story.</h2>
+            <Link href="/products" className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#faf8f3] px-6 py-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#29241f] transition hover:bg-white">Find yours <ArrowRight className="h-4 w-4" /></Link>
+          </div>
+        </section>
       </main>
-      <footer className="py-8 bg-background text-center text-sm text-muted-foreground border-t">
-        <div className="container flex flex-col md:flex-row justify-between items-center gap-4">
-          <p>© {new Date().getFullYear()} AS PRODUCTION. All rights reserved.</p>
-          <div className="flex gap-4">
-            <Link href="/terms-of-service" className="hover:text-primary transition-colors">Terms of Service</Link>
-            <Link href="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>
-          </div>
+      <footer className="border-t border-[#e8e0d5] bg-[#faf8f3] py-8">
+        <div className="section-shell flex flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
+          <div><Link href="/" className="brand-wordmark text-3xl">TreatStory</Link><p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Little finds. Lovely stories.</p></div>
+          <div className="flex flex-wrap justify-center gap-5 text-[10px] font-medium uppercase tracking-[0.13em] text-muted-foreground"><Link href="/about" className="hover:text-foreground">Our story</Link><Link href="/terms-of-service" className="hover:text-foreground">Terms</Link><Link href="/privacy-policy" className="hover:text-foreground">Privacy</Link></div>
+          <p className="text-[10px] text-muted-foreground">© {new Date().getFullYear()} TreatStory. All rights reserved.</p>
         </div>
       </footer>
     </div>
