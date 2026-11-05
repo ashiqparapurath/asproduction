@@ -7,27 +7,27 @@ export default function TermsOfServicePage() {
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
       <main className="flex-1">
-        <div className="container py-12 md:py-20 lg:py-24">
+        <div className="section-shell py-12 md:py-20 lg:py-24">
           <div className="max-w-3xl mx-auto">
             <h1 className="text-4xl md:text-5xl font-bold tracking-tighter mb-8">
               Terms of Service
             </h1>
             <div className="space-y-6 text-muted-foreground">
-              <p>Welcome to AS PRODUCTION. These terms and conditions outline the rules and regulations for the use of AS PRODUCTION's Website, located at your-website.com.</p>
-              <p>By accessing this website we assume you accept these terms and conditions. Do not continue to use AS PRODUCTION if you do not agree to take all of the terms and conditions stated on this page.</p>
+              <p>Welcome to TreatStory. These terms and conditions outline the rules and regulations for the use of TreatStory's Website, located at treatstory.in.</p>
+              <p>By accessing this website we assume you accept these terms and conditions. Do not continue to use TreatStory if you do not agree to take all of the terms and conditions stated on this page.</p>
 
               <h2 className="text-2xl font-bold text-foreground pt-4">Cookies</h2>
-              <p>We employ the use of cookies. By accessing AS PRODUCTION, you agreed to use cookies in agreement with the AS PRODUCTION's Privacy Policy.</p>
+              <p>We employ the use of cookies. By accessing TreatStory, you agreed to use cookies in agreement with the TreatStory's Privacy Policy.</p>
               <p>Most interactive websites use cookies to let us retrieve the user's details for each visit. Cookies are used by our website to enable the functionality of certain areas to make it easier for people visiting our website. Some of our affiliate/advertising partners may also use cookies.</p>
 
               <h2 className="text-2xl font-bold text-foreground pt-4">License</h2>
-              <p>Unless otherwise stated, AS PRODUCTION and/or its licensors own the intellectual property rights for all material on AS PRODUCTION. All intellectual property rights are reserved. You may access this from AS PRODUCTION for your own personal use subjected to restrictions set in these terms and conditions.</p>
+              <p>Unless otherwise stated, TreatStory and/or its licensors own the intellectual property rights for all material on TreatStory. All intellectual property rights are reserved. You may access this from TreatStory for your own personal use subjected to restrictions set in these terms and conditions.</p>
               <p>You must not:</p>
               <ul className="list-disc list-inside pl-4">
-                <li>Republish material from AS PRODUCTION</li>
-                <li>Sell, rent or sub-license material from AS PRODUCTION</li>
-                <li>Reproduce, duplicate or copy material from AS PRODUCTION</li>
-                <li>Redistribute content from AS PRODUCTION</li>
+                <li>Republish material from TreatStory</li>
+                <li>Sell, rent or sub-license material from TreatStory</li>
+                <li>Reproduce, duplicate or copy material from TreatStory</li>
+                <li>Redistribute content from TreatStory</li>
               </ul>
               <p>This Agreement shall begin on the date hereof.</p>
 
@@ -47,7 +47,7 @@ export default function TermsOfServicePage() {
       </main>
       <footer className="py-8 bg-background text-center text-sm text-muted-foreground border-t">
         <div className="container flex flex-col md:flex-row justify-between items-center gap-4">
-          <p>© {new Date().getFullYear()} AS PRODUCTION. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} TreatStory. All rights reserved.</p>
           <div className="flex gap-4">
             <Link href="/terms-of-service" className="hover:text-primary transition-colors">Terms of Service</Link>
             <Link href="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>
