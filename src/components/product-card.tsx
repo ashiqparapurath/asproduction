@@ -1,119 +1,79 @@
-
 "use client";
 
 import type { Product } from '@/lib/products';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingBag, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import Image from 'next/image';
 
-interface ProductCardProps {
-  product: Product;
-}
+interface ProductCardProps { product: Product; }
 
 export function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
   const { toast } = useToast();
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  const fallbackImage = "https://placehold.co/600x600/EEE/31343C?text=Image+Not+Available";
-  
+  const fallbackImage = "https://placehold.co/600x600/f1eee8/756b60?text=TreatStory";
   const images = product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls : [fallbackImage];
-
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [currentSrc, setCurrentSrc] = useState(images[0]);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(price);
-  };
+  const formatPrice = (price: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(price);
 
   const handleAddToCart = () => {
     addToCart(product);
-    toast({
-      title: "Added to cart",
-      description: `${product.name} has been added to your cart.`,
-    });
+    toast({ title: "Added to your bag", description: `${product.name} is waiting in your TreatStory bag.` });
   };
 
-  const nextImage = (e: React.MouseEvent) => {
+  const changeImage = (direction: number, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const newIndex = (currentImageIndex + 1) % images.length;
+    const newIndex = (currentImageIndex + direction + images.length) % images.length;
     setCurrentImageIndex(newIndex);
     setCurrentSrc(images[newIndex]);
   };
-
-  const prevImage = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const newIndex = (currentImageIndex - 1 + images.length) % images.length;
-    setCurrentImageIndex(newIndex);
-    setCurrentSrc(images[newIndex]);
-  };
-
 
   return (
-    <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group bg-card">
-      <CardHeader className="p-0 border-b">
-        <div className="relative w-full aspect-square overflow-hidden">
-            <Image
-              src={currentSrc}
-              alt={product.name}
-              fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
-              onError={() => setCurrentSrc(fallbackImage)}
-            />
-            {images.length > 1 && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute left-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/30 text-white hover:bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={prevImage}
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/30 text-white hover:bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={nextImage}
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </Button>
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
-                    {images.map((_, index) => (
-                        <div key={index} className={`w-2 h-2 rounded-full ${index === currentImageIndex ? 'bg-white' : 'bg-white/50'}`} />
-                    ))}
-                </div>
-              </>
-            )}
+    <Card className="group flex h-full flex-col overflow-hidden rounded-[18px] border-0 bg-transparent shadow-none">
+      <CardHeader className="relative mb-3 overflow-hidden rounded-[18px] bg-[#eee9e0] p-0">
+        <div className="relative aspect-[4/5] w-full overflow-hidden">
+          <Image
+            src={currentSrc}
+            alt={product.name}
+            fill
+            sizes="(max-width: 640px) 48vw, (max-width: 1024px) 30vw, 23vw"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.045]"
+            onError={() => setCurrentSrc(fallbackImage)}
+          />
+          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/15 to-transparent" />
+          {images.length > 1 && (
+            <>
+              <Button variant="ghost" size="icon" aria-label="Previous image" className="absolute left-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full bg-white/85 text-foreground opacity-100 shadow-sm hover:bg-white sm:opacity-0 sm:group-hover:opacity-100" onClick={(e) => changeImage(-1, e)}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" aria-label="Next image" className="absolute right-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full bg-white/85 text-foreground opacity-100 shadow-sm hover:bg-white sm:opacity-0 sm:group-hover:opacity-100" onClick={(e) => changeImage(1, e)}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+                {images.map((_, index) => <span key={index} className={`h-1.5 rounded-full transition-all ${index === currentImageIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/60'}`} />)}
+              </div>
+            </>
+          )}
+          <span className="absolute left-3 top-3 rounded-full bg-[#faf8f3]/90 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#51463a] backdrop-blur-sm">{product.category}</span>
+          <Button onClick={handleAddToCart} size="icon" aria-label={`Add ${product.name} to bag`} className="absolute bottom-3 right-3 h-9 w-9 rounded-full bg-white text-foreground shadow-md transition-transform hover:scale-105 hover:bg-white">
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
       </CardHeader>
-      <CardContent className="p-4 flex-grow flex flex-col">
-        <Badge variant="secondary" className="w-fit mb-2 capitalize">{product.category}</Badge>
-        <CardTitle className="text-lg font-semibold leading-tight mb-2 flex-grow">{product.name}</CardTitle>
-        <CardDescription className="text-sm text-muted-foreground line-clamp-2">{product.description}</CardDescription>
+      <CardContent className="flex flex-grow flex-col px-0 py-0">
+        <CardTitle className="line-clamp-2 text-[13px] font-medium leading-snug tracking-tight text-foreground sm:text-[15px]">{product.name}</CardTitle>
+        <CardDescription className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground sm:text-xs">{product.description}</CardDescription>
       </CardContent>
-      <CardFooter className="p-4 pt-0 flex justify-between items-center">
-        {product.showPrice ? (
-          <p className="text-xl font-bold text-primary">{formatPrice(product.price)}</p>
-        ) : (
-          <div className="text-sm text-muted-foreground">
-            <p>Price available</p>
-            <p>on request</p>
-          </div>
-        )}
-        <Button onClick={handleAddToCart} size="icon" className="md:w-auto md:px-3 rounded-full md:rounded-md opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-            <ShoppingCart className="h-4 w-4 md:mr-2" />
-            <span className="sr-only md:not-sr-only">Add to Cart</span>
-        </Button>
+      <CardFooter className="mt-3 flex items-center justify-between px-0 py-0">
+        {product.showPrice ? <p className="text-sm font-semibold tracking-tight text-foreground sm:text-base">{formatPrice(product.price)}</p> : <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">Price on request</p>}
+        <span className="text-[9px] uppercase tracking-[0.12em] text-[#a48a67]">Discover</span>
       </CardFooter>
     </Card>
   );
