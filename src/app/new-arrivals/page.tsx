@@ -1,4 +1,5 @@
 'use client';
+
 import { Header } from '@/components/header';
 import { ProductGridContainer } from '@/components/product-grid';
 import Link from 'next/link';
@@ -6,77 +7,36 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, limit, orderBy, query } from 'firebase/firestore';
 import type { Product } from '@/lib/products';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent } from '@/components/ui/card';
 import { Suspense } from 'react';
+import { Sparkles } from 'lucide-react';
 
 function NewArrivalsContent() {
   const firestore = useFirestore();
-  const productsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'products'), orderBy('createdAt', 'desc'), limit(4));
-  }, [firestore]);
-
+  const productsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'products'), orderBy('createdAt', 'desc'), limit(4)) : null, [firestore]);
   const { data: newArrivals, isLoading } = useCollection<Product>(productsQuery);
 
-  if (isLoading) {
-    return (
-       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i}>
-            <CardContent className="p-0">
-              <Skeleton className="w-full h-64" />
-            </CardContent>
-            <CardContent className="p-4 space-y-2">
-              <Skeleton className="h-4 w-2/3" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full" />
-            </CardContent>
-            <CardContent className="p-4 pt-0 flex justify-between items-center">
-              <Skeleton className="h-6 w-1/3" />
-              <Skeleton className="h-10 w-10 rounded-full" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    )
-  }
-
-  if (!newArrivals || newArrivals.length === 0) {
-    return (
-      <div className="text-center py-10">
-        <p className="text-muted-foreground">No new arrivals at the moment. Add some in the admin panel!</p>
-      </div>
-    )
-  }
-
+  if (isLoading) return <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="space-y-3"><Skeleton className="aspect-[4/5] w-full rounded-[18px]" /><Skeleton className="h-4 w-2/3" /><Skeleton className="h-4 w-1/3" /></div>)}</div>;
+  if (!newArrivals || newArrivals.length === 0) return <div className="rounded-3xl border border-dashed border-[#ded4c7] bg-white/60 px-5 py-20 text-center"><p className="text-sm text-muted-foreground">No new arrivals just yet. Check back soon for fresh finds.</p></div>;
   return <ProductGridContainer products={newArrivals} />;
 }
 
-
 export default function NewArrivalsPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-secondary/40">
+    <div className="flex min-h-screen flex-col bg-background">
       <Header />
-      <main className="flex-1 py-12">
-        <div className="container">
-          <div className="text-center mb-10">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tighter">New Arrivals</h1>
-            <p className="max-w-xl mx-auto text-muted-foreground md:text-xl mt-4">
-              Check out the latest additions to our collection. Fresh finds, just for you.
-            </p>
-          </div>
-          <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-            <NewArrivalsContent />
-          </Suspense>
+      <main className="section-shell flex-1 pb-16 pt-10 sm:pb-24 sm:pt-14">
+        <div className="mb-10 rounded-[26px] bg-[#eee8de] px-6 py-10 sm:mb-14 sm:px-12 sm:py-16">
+          <p className="eyebrow flex items-center gap-2 text-[#967a55]"><Sparkles className="h-3.5 w-3.5" /> Just landed</p>
+          <h1 className="mt-4 max-w-2xl text-4xl font-medium leading-[1.05] tracking-[-0.055em] sm:text-6xl">Fresh finds.<br /><span className="font-serif italic font-normal text-[#a68a64]">New little stories.</span></h1>
+          <p className="mt-4 max-w-md text-sm leading-6 text-muted-foreground sm:text-base">Meet the latest additions to the TreatStory collection. First looks, fresh ideas and new favourites.</p>
         </div>
+        <Suspense fallback={<Skeleton className="h-96 w-full rounded-2xl" />}><NewArrivalsContent /></Suspense>
       </main>
-      <footer className="py-8 bg-background text-center text-sm text-muted-foreground border-t">
-        <div className="container flex flex-col md:flex-row justify-between items-center gap-4">
-          <p>© {new Date().getFullYear()} AS PRODUCTION. All rights reserved.</p>
-          <div className="flex gap-4">
-            <Link href="/terms-of-service" className="hover:text-primary transition-colors">Terms of Service</Link>
-            <Link href="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>
-          </div>
+      <footer className="border-t border-[#e8e0d5] py-7">
+        <div className="section-shell flex flex-col items-center justify-between gap-3 text-center sm:flex-row sm:text-left">
+          <Link href="/" className="brand-wordmark text-2xl">TreatStory</Link>
+          <div className="flex gap-5 text-[10px] uppercase tracking-[0.13em] text-muted-foreground"><Link href="/terms-of-service">Terms</Link><Link href="/privacy-policy">Privacy</Link></div>
+          <p className="text-[10px] text-muted-foreground">© {new Date().getFullYear()} TreatStory</p>
         </div>
       </footer>
     </div>
