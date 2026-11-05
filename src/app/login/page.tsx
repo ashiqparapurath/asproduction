@@ -11,7 +11,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function LoginPage() {
@@ -61,7 +60,7 @@ export default function LoginPage() {
 
   if (isUserLoading || user) {
      return (
-      <div className="flex min-h-screen items-center justify-center bg-secondary/40 p-4">
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <div className="flex flex-col items-center gap-4">
             <Skeleton className="h-12 w-12 rounded-full" />
             <div className="space-y-2 text-center">
@@ -76,10 +75,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary/40 p-4">
        <div className="absolute top-8 left-8">
-         <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.png" alt="AS PRODUCTION Logo" width={32} height={32} priority />
-            <span className="text-xl font-bold">AS PRODUCTION</span>
-          </Link>
+         <Link href="/" className="brand-wordmark text-3xl">TreatStory</Link>
        </div>
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
