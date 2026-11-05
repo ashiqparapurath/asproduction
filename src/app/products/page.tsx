@@ -7,61 +7,36 @@ import Link from 'next/link';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Product } from '@/lib/products';
-import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 function ProductsPageContent() {
   const firestore = useFirestore();
-  const productsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'products');
-  }, [firestore]);
-
+  const productsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
   const { data: products, isLoading } = useCollection<Product>(productsQuery);
 
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <Card key={i}>
-            <CardContent className="p-0">
-              <Skeleton className="w-full h-64" />
-            </CardContent>
-            <CardContent className="p-4 space-y-2">
-              <Skeleton className="h-4 w-2/3" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full" />
-            </CardContent>
-            <CardContent className="p-4 pt-0 flex justify-between items-center">
-              <Skeleton className="h-6 w-1/3" />
-              <Skeleton className="h-10 w-10 rounded-full" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    )
-  }
+  if (isLoading) return <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="space-y-3"><Skeleton className="aspect-[4/5] w-full rounded-[18px]" /><Skeleton className="h-4 w-2/3" /><Skeleton className="h-4 w-1/3" /></div>)}</div>;
   return <ProductGridContainer products={products || []} />;
 }
 
 export default function ProductsPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-secondary/40">
+    <div className="flex min-h-screen flex-col bg-background">
       <Header />
-      <main className="flex-1 py-8">
-        <div className="container">
-          <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-            <ProductsPageContent />
-          </Suspense>
-        </div>
-      </main>
-      <footer className="py-8 bg-background text-center text-sm text-muted-foreground border-t">
-        <div className="container flex flex-col md:flex-row justify-between items-center gap-4">
-          <p>© {new Date().getFullYear()} AS PRODUCTION. All rights reserved.</p>
-          <div className="flex gap-4">
-            <Link href="/terms-of-service" className="hover:text-primary transition-colors">Terms of Service</Link>
-            <Link href="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+      <main className="section-shell flex-1 pb-16 pt-10 sm:pb-24 sm:pt-14">
+        <div className="mb-9 border-b border-[#e8e0d5] pb-8 sm:mb-12 sm:pb-10">
+          <p className="eyebrow text-[#a68a64]">The whole collection</p>
+          <div className="mt-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+            <h1 className="text-4xl font-medium tracking-[-0.055em] sm:text-6xl">Shop all <span className="font-serif italic font-normal text-[#a68a64]">the good things.</span></h1>
+            <p className="max-w-xs text-sm leading-6 text-muted-foreground">A considered mix of little discoveries and everyday favourites. Take your time, find your thing.</p>
           </div>
+        </div>
+        <Suspense fallback={<Skeleton className="h-96 w-full rounded-2xl" />}><ProductsPageContent /></Suspense>
+      </main>
+      <footer className="border-t border-[#e8e0d5] py-7">
+        <div className="section-shell flex flex-col items-center justify-between gap-3 text-center sm:flex-row sm:text-left">
+          <Link href="/" className="brand-wordmark text-2xl">TreatStory</Link>
+          <div className="flex gap-5 text-[10px] uppercase tracking-[0.13em] text-muted-foreground"><Link href="/terms-of-service">Terms</Link><Link href="/privacy-policy">Privacy</Link></div>
+          <p className="text-[10px] text-muted-foreground">© {new Date().getFullYear()} TreatStory</p>
         </div>
       </footer>
     </div>
