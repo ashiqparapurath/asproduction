@@ -59,7 +59,7 @@ function AdminContent() {
   const handleContact = (platform: 'whatsapp' | 'instagram') => {
     const developerPhoneNumber = '97430147881'; 
     const instagramUrl = 'https://www.instagram.com/mrashiq._';
-    const message = encodeURIComponent("Hello, I need assistance with the AS PRODUCTION admin panel.");
+    const message = encodeURIComponent("Hello, I need assistance with the TreatStory admin panel.");
 
     let url;
     if (platform === 'whatsapp') {
