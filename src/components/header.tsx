@@ -43,7 +43,7 @@ export function Header() {
                       <Menu className="h-5 w-5" />
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="left" className="w-[ min(86vw,360px)] border-r-0 bg-[#faf8f3]">
+                  <SheetContent side="left" className="w-[min(86vw,360px)] border-r-0 bg-[#faf8f3]">
                     <SheetHeader className="border-b border-[#e9e2d8] pb-6 text-left">
                       <SheetTitle>
                         <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="brand-wordmark text-3xl text-foreground">TreatStory</Link>
