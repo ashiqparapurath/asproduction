@@ -5,18 +5,11 @@ import type { Product } from '@/lib/products';
 import { ProductCard } from '@/components/product-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
+import { Search, SlidersHorizontal } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-interface ProductGridContainerProps {
-  products: Product[];
-}
-
-interface ProductGridProps {
-  products: Product[];
-  categories: string[];
-  initialCategory: string | null;
-}
+interface ProductGridContainerProps { products: Product[]; }
+interface ProductGridProps { products: Product[]; categories: string[]; initialCategory: string | null; }
 
 function ProductGrid({ products, categories, initialCategory }: ProductGridProps) {
   const router = useRouter();
@@ -24,11 +17,8 @@ function ProductGrid({ products, categories, initialCategory }: ProductGridProps
   const [selectedCategory, setSelectedCategory] = useState(initialCategory || 'All');
 
   useEffect(() => {
-    if (initialCategory) {
-      setSelectedCategory(initialCategory);
-    }
+    if (initialCategory) setSelectedCategory(initialCategory);
   }, [initialCategory]);
-
 
   const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && searchTerm.toLowerCase() === 'adm') {
@@ -40,37 +30,33 @@ function ProductGrid({ products, categories, initialCategory }: ProductGridProps
   const filteredProducts = useMemo(() => {
     if (!products) return [];
     return products
-      .filter((product) => {
-        if (selectedCategory === 'All') return true;
-        return product.category === selectedCategory;
-      })
-      .filter((product) => {
-        return product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-               product.description.toLowerCase().includes(searchTerm.toLowerCase());
-      });
+      .filter((product) => selectedCategory === 'All' || product.category === selectedCategory)
+      .filter((product) => product.name.toLowerCase().includes(searchTerm.toLowerCase()) || product.description.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [products, selectedCategory, searchTerm]);
 
   return (
     <div>
-      <div className="mb-8 flex flex-col md:flex-row gap-4 items-center">
-        <div className="relative w-full md:max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+      <div className="mb-7 flex flex-col gap-4 border-b border-[#e9e2d8] pb-6 lg:mb-9 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative w-full lg:max-w-[340px]">
+          <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search products..."
-            className="pl-10"
+            placeholder="Search something lovely..."
+            aria-label="Search products"
+            className="h-12 rounded-full border-[#e6ded2] bg-white pl-11 text-sm shadow-none placeholder:text-muted-foreground/70 focus-visible:ring-[#b99a70]"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={handleSearchKeyDown}
           />
         </div>
-        <div className="flex flex-wrap gap-2 justify-center">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <SlidersHorizontal className="mr-1 h-4 w-4 shrink-0 text-muted-foreground" />
           {categories.map((category) => (
             <Button
               key={category}
-              variant={selectedCategory === category ? 'default' : 'outline'}
+              variant="outline"
               onClick={() => setSelectedCategory(category)}
-              className="capitalize"
+              className={`h-9 shrink-0 rounded-full px-4 text-[11px] font-semibold capitalize tracking-wide transition-all ${selectedCategory === category ? 'border-foreground bg-foreground text-background hover:bg-foreground/90 hover:text-background' : 'border-[#e6ded2] bg-transparent text-muted-foreground hover:border-foreground hover:bg-transparent hover:text-foreground'}`}
             >
               {category}
             </Button>
@@ -78,18 +64,20 @@ function ProductGrid({ products, categories, initialCategory }: ProductGridProps
         </div>
       </div>
 
+      <div className="mb-5 flex items-center justify-between">
+        <p className="text-xs text-muted-foreground"><span className="font-semibold text-foreground">{filteredProducts.length}</span> pieces to explore</p>
+        <p className="hidden text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:block">Curated for everyday living</p>
+      </div>
+
       {filteredProducts.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+        <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-x-5 sm:gap-y-9 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-6">
+          {filteredProducts.map((product) => <ProductCard key={product.id} product={product} />)}
         </div>
       ) : (
-        <div className="text-center py-16">
-          <h2 className="text-2xl font-semibold mb-2">No Products Found</h2>
-          <p className="text-muted-foreground">
-            Try adjusting your search or filters.
-          </p>
+        <div className="rounded-3xl border border-dashed border-[#ded4c7] bg-white/60 px-5 py-20 text-center">
+          <p className="eyebrow text-[#b28f62]">Nothing here just yet</p>
+          <h2 className="mt-3 text-2xl font-medium tracking-tight">No pieces found</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Try another search or choose a different category.</p>
         </div>
       )}
     </div>
@@ -99,11 +87,9 @@ function ProductGrid({ products, categories, initialCategory }: ProductGridProps
 export function ProductGridContainer({ products }: ProductGridContainerProps) {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get('category');
-
   const categories = useMemo(() => {
     if (!products || products.length === 0) return ['All'];
     return ['All', ...Array.from(new Set(products.map((p) => p.category)))];
   }, [products]);
-  
-  return <ProductGrid products={products} categories={categories} initialCategory={initialCategory} />
+  return <ProductGrid products={products} categories={categories} initialCategory={initialCategory} />;
 }
