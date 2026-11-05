@@ -9,8 +9,12 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
-  title: 'AS PRODUCTION',
-  description: 'An e-commerce platform for showcasing products.',
+  title: {
+    default: 'TreatStory — Little finds, lovely stories',
+    template: '%s | TreatStory',
+  },
+  description: 'Discover thoughtful finds across lifestyle, fashion, home and more at TreatStory.',
+  applicationName: 'TreatStory',
   icons: {
     icon: '/favicon.ico',
   },
@@ -23,10 +27,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
-       <head>
+      <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#F0F4EF" />
+        <meta name="theme-color" content="#faf8f3" />
       </head>
       <body className={cn("min-h-screen bg-background font-sans antialiased", inter.variable)}>
         <FirebaseClientProvider>
