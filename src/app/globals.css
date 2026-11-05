@@ -4,90 +4,87 @@
 
 @layer base {
   :root {
-    --background: 220 14% 96%; /* #F0F4EF */
-    --foreground: 224 28% 14%; /* #293462 */
-    --card: 220 14% 98%;
-    --card-foreground: 224 28% 14%;
-    --popover: 220 14% 98%;
-    --popover-foreground: 224 28% 14%;
-    --primary: 224 28% 27%; /* #293462 */
-    --primary-foreground: 210 40% 98%;
-    --secondary: 220 13% 91%;
-    --secondary-foreground: 224 28% 27%;
-    --muted: 220 13% 91%;
-    --muted-foreground: 220 9% 45%;
-    --accent: 337 32% 40%; /* #80485B - slightly adjusted for accessibility */
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 220 13% 85%;
-    --input: 220 13% 85%;
-    --ring: 224 28% 27%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+    --background: 42 38% 97%;
+    --foreground: 24 15% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 24 15% 13%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 24 15% 13%;
+    --primary: 24 15% 13%;
+    --primary-foreground: 42 38% 97%;
+    --secondary: 38 29% 92%;
+    --secondary-foreground: 24 15% 18%;
+    --muted: 38 22% 93%;
+    --muted-foreground: 25 8% 43%;
+    --accent: 34 34% 68%;
+    --accent-foreground: 24 15% 13%;
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 35 17% 86%;
+    --input: 35 17% 86%;
+    --ring: 24 15% 25%;
+    --chart-1: 24 60% 45%;
+    --chart-2: 145 25% 40%;
+    --chart-3: 197 37% 35%;
+    --chart-4: 43 74% 55%;
+    --chart-5: 337 32% 48%;
+    --radius: 1rem;
   }
   .dark {
-    --background: 224 28% 14%;
-    --foreground: 220 14% 96%;
-    --card: 224 28% 18%;
-    --card-foreground: 220 14% 96%;
-    --popover: 224 28% 18%;
-    --popover-foreground: 220 14% 96%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 224 28% 14%;
-    --secondary: 220 13% 25%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 220 13% 25%;
-    --muted-foreground: 220 9% 55%;
-    --accent: 337 32% 55%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 220 13% 30%;
-    --input: 220 13% 30%;
-    --ring: 210 40% 98%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --background: 24 13% 10%;
+    --foreground: 42 30% 94%;
+    --card: 24 12% 14%;
+    --card-foreground: 42 30% 94%;
+    --popover: 24 12% 14%;
+    --popover-foreground: 42 30% 94%;
+    --primary: 42 30% 94%;
+    --primary-foreground: 24 13% 10%;
+    --secondary: 24 10% 20%;
+    --secondary-foreground: 42 30% 94%;
+    --muted: 24 10% 20%;
+    --muted-foreground: 35 10% 65%;
+    --accent: 34 30% 48%;
+    --accent-foreground: 42 30% 94%;
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 24 9% 25%;
+    --input: 24 9% 25%;
+    --ring: 42 30% 80%;
+    --chart-1: 24 60% 55%;
+    --chart-2: 145 25% 50%;
+    --chart-3: 197 37% 50%;
+    --chart-4: 43 74% 60%;
+    --chart-5: 337 32% 58%;
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
+  * { @apply border-border; }
+  html { scroll-behavior: smooth; }
+  body { @apply bg-background text-foreground font-sans antialiased; }
+  ::selection { background: hsl(var(--accent)); color: hsl(var(--foreground)); }
+}
+
+@layer components {
+  .brand-wordmark {
+    font-family: "Cre Happiness", "Trebuchet MS", sans-serif;
+    font-weight: 400;
+    letter-spacing: -0.055em;
   }
-  body {
-    @apply bg-background text-foreground font-sans;
+  .eyebrow {
+    @apply text-[10px] sm:text-xs font-semibold uppercase tracking-[0.24em];
+  }
+  .section-shell {
+    @apply mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-10;
+  }
+  .editorial-button {
+    @apply inline-flex items-center justify-center rounded-full bg-foreground px-6 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-background transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   }
 }
 
 @layer utilities {
-  .smooth-scrollbar {
-    scrollbar-width: thin; /* For Firefox */
-    scrollbar-color: hsl(var(--border)) transparent; /* For Firefox */
-  }
-  .smooth-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  .smooth-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .smooth-scrollbar::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--border));
-    border-radius: 10px;
-    border: 3px solid transparent;
-    background-clip: content-box;
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out;
-  }
-  .smooth-scrollbar:hover::-webkit-scrollbar-thumb {
-    opacity: 1;
-  }
+  .smooth-scrollbar { scrollbar-width: thin; scrollbar-color: hsl(var(--border)) transparent; }
+  .smooth-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+  .smooth-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .smooth-scrollbar::-webkit-scrollbar-thumb { background-color: hsl(var(--border)); border-radius: 10px; border: 3px solid transparent; background-clip: content-box; }
 }
