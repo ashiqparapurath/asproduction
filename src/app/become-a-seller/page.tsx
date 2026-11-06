@@ -78,7 +78,7 @@ export default function BecomeSellerPage() {
         ) : !user ? (
           <div className="mt-10 rounded-3xl border bg-white p-8">
             <h2 className="text-xl font-medium">Sign in required</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Sign in to submit a seller application. New account registration will be introduced with the buyer account system.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Sign in to submit a seller application. You can also create a new account from the sign-in page.</p>
             <Link href="/login" className="editorial-button mt-6">Sign in</Link>
           </div>
         ) : (
