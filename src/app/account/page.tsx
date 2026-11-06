@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { signOut as firebaseSignOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useAuth, useFirestore, useUser } from '@/firebase';
 import { Header } from '@/components/header';
@@ -41,7 +42,7 @@ export default function AccountPage() {
         {role === 'admin' && <Link href="/admin" className="editorial-button">Open Super Admin dashboard</Link>}
         {role === 'seller' && <Link href="/seller/dashboard" className="editorial-button">Open Seller Studio</Link>}
         {role === 'customer' && <Link href="/become-a-seller" className="editorial-button">Apply to become a seller</Link>}
-        <div><Button variant="outline" onClick={async () => { await auth?.signOut(); router.replace('/'); }}>Sign out</Button></div>
+        <div><Button variant="outline" onClick={async () => { if (auth) await firebaseSignOut(auth); router.replace('/'); }}>Sign out</Button></div>
       </div>}
   </main></div>;
 }
