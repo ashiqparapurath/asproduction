@@ -108,7 +108,28 @@ service cloud.firestore {
     // New multi-vendor collections are restricted until the corresponding
     // validated server workflows and emulator tests are ready.
     match /seller_applications/{applicationId} {
-      allow read, write: if false;
+      allow create: if request.auth != null &&
+        applicationId == request.auth.uid &&
+        request.resource.data.keys().hasOnly([
+          'ownerUid', 'businessName', 'businessCategory',
+          'contactEmail', 'contactPhone', 'description',
+          'status', 'submittedAt'
+        ]) &&
+        request.resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.businessName is string &&
+        request.resource.data.businessName.size() >= 2 &&
+        request.resource.data.businessName.size() <= 120 &&
+        request.resource.data.businessCategory in ['home-bakery', 'art', 'handmade', 'other'] &&
+        request.resource.data.contactEmail is string &&
+        request.resource.data.contactEmail.size() <= 254 &&
+        request.resource.data.contactPhone is string &&
+        request.resource.data.contactPhone.size() <= 40 &&
+        request.resource.data.description is string &&
+        request.resource.data.description.size() <= 2000 &&
+        request.resource.data.submittedAt == request.time;
+      allow get: if isAdmin() || (request.auth != null && applicationId == request.auth.uid);
+      allow list, update, delete: if isAdmin();
     }
     match /sellers/{sellerId} {
       allow read, write: if false;
