@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { DeliveryAddress, addressText } from '@/components/default-delivery-address';
 import { addDoc, collection, doc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirestore, useUser } from '@/firebase';
 import { useCart } from '@/context/cart-context';
@@ -12,7 +13,7 @@ import Link from 'next/link';
 import type { MarketplaceProduct, Seller } from '@/lib/marketplace-types';
 import { Banknote, CreditCard, MapPin, ShieldCheck, Truck } from 'lucide-react';
 
-export function CreatorCheckout({ variant = 'card' }: { variant?: 'card' | 'page' }) {
+export function CreatorCheckout({ variant = 'card', onlyProductId }: { variant?: 'card' | 'page'; onlyProductId?: string }) {
   const { user } = useUser();
   const db = useFirestore();
   const { cartItems, removeFromCart } = useCart();
@@ -24,7 +25,8 @@ export function CreatorCheckout({ variant = 'card' }: { variant?: 'card' | 'page
   const [busy, setBusy] = useState(false);
   const paymentMethod = 'cod' as const;
   const [result, setResult] = useState<string[]>([]);
-  const items = cartItems.filter(i => i.id.startsWith('seller:'));
+  const items = cartItems.filter(i => i.id.startsWith('seller:') && (!onlyProductId || i.id === 'seller:' + onlyProductId));
+  useEffect(() => { if (!db || !user) return; let live = true; getDoc(doc(db,'customer_addresses',user.uid)).then(s => { if(!live || !s.exists()) return; const a = s.data() as DeliveryAddress; setName(v=>v||a.recipient||'');setPhone(v=>v||a.phone||'');setAddress(v=>v||addressText(a)); }).catch(()=>{});return()=>{live=false}; },[db,user]);
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!db || !user || busy || !items.length) return;
