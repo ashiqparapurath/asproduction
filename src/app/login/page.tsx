@@ -97,7 +97,7 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-[#faf8f4] text-[#2c2823] lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <section className="relative hidden min-h-screen overflow-hidden bg-[#e9dfd0] lg:flex lg:flex-col lg:justify-between">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=1500&q=85')] bg-cover bg-center" />
+        <div className="absolute inset-0 bg-[url('/img/login-side.avif')] bg-cover bg-center" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#1d1916]/45 via-[#1d1916]/10 to-[#1d1916]/75" />
         <div className="relative z-10 flex items-center justify-between px-10 pt-10 xl:px-16">
           <Link href="/" className="brand-wordmark text-4xl text-white">TreatStory</Link>
