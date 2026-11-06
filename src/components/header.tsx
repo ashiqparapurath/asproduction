@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, ShoppingBag, Search, ArrowUpRight, UserRound, LogOut } from 'lucide-react';
+import { Menu, ShoppingBag, ArrowUpRight, UserRound, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -76,6 +76,7 @@ export function Header() {
                         </SheetClose>
                       ))}
                     </nav>
+                    <Link href="/become-a-seller" onClick={() => setIsMobileMenuOpen(false)} className="mt-5 flex min-h-12 items-center justify-between rounded-xl bg-[#29251f] px-4 text-sm font-semibold text-white">Become a seller <ArrowUpRight className="h-4 w-4" /></Link>
                     {user && <div className="mt-6 border-t border-[#e9e2d8] pt-4">
                       <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-medium hover:bg-[#eee7dc]"><UserRound className="h-4 w-4" />My account</Link>
                       <button type="button" onClick={handleSignOut} disabled={signingOut} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"><LogOut className="h-4 w-4" />{signingOut ? 'Signing out…' : 'Sign out'}</button>
@@ -87,8 +88,8 @@ export function Header() {
                   </SheetContent>
                 </Sheet>
               </div>
-              <Link href="/products" className="hidden items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground md:flex">
-                <Search className="h-4 w-4" /> Explore
+              <Link href="/become-a-seller" className="hidden items-center gap-2 rounded-full border border-[#d7c8b4] bg-white px-4 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#44372a] transition-colors hover:bg-[#eee7dc] md:inline-flex">
+                Become a seller <ArrowUpRight className="h-3.5 w-3.5" />
               </Link>
             </div>
 
