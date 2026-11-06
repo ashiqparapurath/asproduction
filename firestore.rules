@@ -202,11 +202,69 @@ service cloud.firestore {
         resource.data.sellerId == request.auth.uid;
       allow create, update, delete: if isAdmin();
     }
+    // Each order is one verified seller listing. Client-provided prices
+    // and seller identities must match the current Firestore product.
+    function orderProduct(productId) {
+      return get(/databases/$(database)/documents/marketplace_products/$(productId)).data;
+    }
+
+    function validNewOrder(d) {
+      return isSignedIn() &&
+        d.keys().hasOnly([
+          'buyerUid', 'sellerId', 'productId', 'productName', 'quantity',
+          'unitPrice', 'subtotal', 'status', 'customerName', 'customerPhone',
+          'deliveryAddress', 'customerNote', 'createdAt', 'updatedAt'
+        ]) &&
+        d.keys().hasAll([
+          'buyerUid', 'sellerId', 'productId', 'productName', 'quantity',
+          'unitPrice', 'subtotal', 'status', 'customerName', 'customerPhone',
+          'deliveryAddress', 'customerNote', 'createdAt', 'updatedAt'
+        ]) &&
+        d.buyerUid == request.auth.uid &&
+        d.productId is string &&
+        d.quantity is int && d.quantity >= 1 && d.quantity <= 99 &&
+        d.customerName is string && d.customerName.size() >= 2 && d.customerName.size() <= 120 &&
+        d.customerPhone is string && d.customerPhone.size() >= 5 && d.customerPhone.size() <= 40 &&
+        d.deliveryAddress is string && d.deliveryAddress.size() >= 10 && d.deliveryAddress.size() <= 1000 &&
+        d.customerNote is string && d.customerNote.size() <= 1000 &&
+        d.status == 'pending' &&
+        d.createdAt == request.time && d.updatedAt == request.time &&
+        exists(/databases/$(database)/documents/marketplace_products/$(d.productId)) &&
+        orderProduct(d.productId).status == 'published' &&
+        orderProduct(d.productId).availability != 'unavailable' &&
+        orderProduct(d.productId).showPrice == true &&
+        d.sellerId == orderProduct(d.productId).sellerId &&
+        d.productName == orderProduct(d.productId).name &&
+        d.unitPrice == orderProduct(d.productId).price &&
+        d.subtotal == d.quantity * d.unitPrice &&
+        exists(/databases/$(database)/documents/sellers/$(d.sellerId)) &&
+        get(/databases/$(database)/documents/sellers/$(d.sellerId)).data.status == 'active' &&
+        get(/databases/$(database)/documents/sellers/$(d.sellerId)).data.isOpen == true &&
+        get(/databases/$(database)/documents/sellers/$(d.sellerId)).data.accessEndsAt > request.time;
+    }
+
     match /checkout_orders/{checkoutId} {
       allow read, write: if false;
     }
+
     match /seller_orders/{orderId} {
-      allow read, write: if false;
+      allow create: if validNewOrder(request.resource.data);
+      allow get, list: if isAdmin() ||
+        (isSignedIn() && resource.data.buyerUid == request.auth.uid) ||
+        (isSignedIn() && resource.data.sellerId == request.auth.uid);
+      allow update: if isAdmin() || (
+        isSignedIn() &&
+        resource.data.sellerId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']) &&
+        request.resource.data.updatedAt == request.time &&
+        (
+          (resource.data.status == 'pending' && request.resource.data.status in ['accepted', 'rejected']) ||
+          (resource.data.status == 'accepted' && request.resource.data.status in ['preparing', 'cancelled']) ||
+          (resource.data.status == 'preparing' && request.resource.data.status in ['ready', 'cancelled']) ||
+          (resource.data.status == 'ready' && request.resource.data.status == 'completed')
+        )
+      );
+      allow delete: if false;
     }
     match /conversations/{conversationId}/{nested=**} {
       allow read, write: if false;
