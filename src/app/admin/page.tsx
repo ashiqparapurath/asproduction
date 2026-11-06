@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProductList } from '@/components/admin/product-list';
 import { SellerApplications } from '@/components/admin/seller-applications';
+import { AdminOverview } from '@/components/admin/admin-overview';
 import { ProductDialog } from '@/components/admin/product-dialog';
 import { BannerList } from '@/components/admin/banner-list';
 import { BannerDialog } from '@/components/admin/banner-dialog';
@@ -35,7 +36,7 @@ function AdminContent() {
   const [isBannerDialogOpen, setIsBannerDialogOpen] = useState(false);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const [activeTab, setActiveTab] = useState('products');
+  const [activeTab, setActiveTab] = useState('overview');
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
@@ -126,10 +127,10 @@ function AdminContent() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl md:text-4xl font-bold tracking-tighter">
-            Admin Panel
+            Super Admin
           </h1>
           <p className="text-lg text-muted-foreground">
-            Manage your store's content and settings here.
+            Manage TreatStory sellers, applications, products and marketplace operations.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -166,9 +167,10 @@ function AdminContent() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="products">
+      <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="overview">
         <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-4 mb-4">
           <TabsList className="flex h-auto flex-wrap justify-start">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="sellers">Seller applications</TabsTrigger>
             <TabsTrigger value="banners">Banners</TabsTrigger>
@@ -179,6 +181,7 @@ function AdminContent() {
               {renderAddButton()}
           </div>
         </div>
+        <TabsContent value="overview"><AdminOverview /></TabsContent>
         <TabsContent value="sellers"><SellerApplications /></TabsContent>
         <TabsContent value="products">
           <ProductList />
