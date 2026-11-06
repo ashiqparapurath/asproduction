@@ -2,6 +2,7 @@
 
 import { Suspense } from 'react';
 import { Header } from '@/components/header';
+import { SellerStorefrontProducts } from '@/components/seller-storefront-products';
 import { ProductGridContainer } from '@/components/product-grid';
 import Link from 'next/link';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -30,6 +31,7 @@ export default function ProductsPage() {
             <p className="max-w-xs text-sm leading-6 text-muted-foreground">A considered mix of little discoveries and everyday favourites. Take your time, find your thing.</p>
           </div>
         </div>
+        <div className="mb-12"><SellerStorefrontProducts /></div>
         <Suspense fallback={<Skeleton className="h-96 w-full rounded-2xl" />}><ProductsPageContent /></Suspense>
       </main>
       <footer className="border-t border-[#e8e0d5] py-7">
