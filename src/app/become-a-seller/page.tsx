@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { Header } from '@/components/header';
 import { useFirestore, useUser } from '@/firebase';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,7 @@ const categories: { value: SellerCategory; label: string }[] = [
 ];
 
 export default function BecomeSellerPage() {
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [businessName, setBusinessName] = useState('');
@@ -33,11 +33,11 @@ export default function BecomeSellerPage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!user || !firestore || submitting) return;
+    if (!firestore || submitting) return;
     setSubmitting(true);
     try {
-      await setDoc(doc(firestore, 'seller_applications', user.uid), {
-        ownerUid: user.uid,
+      await setDoc(user ? doc(firestore, 'seller_applications', user.uid) : doc(collection(firestore, 'seller_applications')), {
+        ownerUid: user?.uid ?? '',
         businessName: businessName.trim(),
         businessCategory,
         contactEmail: contactEmail.trim(),
@@ -70,16 +70,8 @@ export default function BecomeSellerPage() {
         {submitted ? (
           <div role="status" className="mt-10 rounded-3xl border bg-white p-8">
             <h2 className="text-2xl font-medium">Application received</h2>
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">Your application is pending review. Seller dashboard access will be available after approval and account activation.</p>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">Your application is pending review. We'll review your request and contact you by email. You'll need a TreatStory account before seller access can be activated.</p>
             <Link href="/" className="mt-6 inline-block text-sm font-semibold underline underline-offset-4">Return to marketplace</Link>
-          </div>
-        ) : isUserLoading ? (
-          <p className="mt-10 text-sm text-muted-foreground">Checking your account…</p>
-        ) : !user ? (
-          <div className="mt-10 rounded-3xl border bg-white p-8">
-            <h2 className="text-xl font-medium">Sign in required</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Sign in to submit a seller application. You can also create a new account from the sign-in page.</p>
-            <Link href="/login" className="editorial-button mt-6">Sign in</Link>
           </div>
         ) : (
           <form onSubmit={submit} className="mt-10 space-y-6 rounded-3xl border bg-white p-5 sm:p-8">
@@ -99,7 +91,7 @@ export default function BecomeSellerPage() {
             </div>
             <div className="space-y-2"><Label htmlFor="description">Tell us about your business</Label><Textarea id="description" required maxLength={2000} rows={5} value={description} onChange={e => setDescription(e.target.value)} placeholder="What do you create? What makes your work special?" /></div>
             <Button type="submit" className="h-12 w-full rounded-full" disabled={submitting || !firestore}>{submitting ? 'Submitting…' : 'Submit seller application'}</Button>
-            <p className="text-xs text-muted-foreground">Submitting an application does not automatically activate selling privileges.</p>
+            <p className="text-xs text-muted-foreground">No sign-in needed to apply. We'll contact you using the details above. A TreatStory account is required only when your seller access is activated.</p>
           </form>
         )}
       </main>
