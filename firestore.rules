@@ -104,5 +104,27 @@ service cloud.firestore {
         allow read: if true;
         allow write: if isAdmin();
     }
+
+    // New multi-vendor collections are restricted until the corresponding
+    // validated server workflows and emulator tests are ready.
+    match /seller_applications/{applicationId} {
+      allow read, write: if false;
+    }
+    match /sellers/{sellerId} {
+      allow read, write: if false;
+    }
+    match /checkout_orders/{checkoutId} {
+      allow read, write: if false;
+    }
+    match /seller_orders/{orderId} {
+      allow read, write: if false;
+    }
+    match /conversations/{conversationId}/{nested=**} {
+      allow read, write: if false;
+    }
+    match /audit_logs/{logId} {
+      allow read, write: if false;
+    }
+
   }
 }
