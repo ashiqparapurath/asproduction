@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, ShoppingBag, Search, ArrowUpRight, UserRound } from 'lucide-react';
+import { Menu, ShoppingBag, Search, ArrowUpRight, UserRound, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -15,7 +15,9 @@ import { useCart } from '@/context/cart-context';
 import { CartDrawer } from './cart-drawer';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
-import { useUser } from '@/firebase';
+import { useUser, useAuth } from '@/firebase';
+import { signOut as firebaseSignOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
 
 const navItems = [
   { href: '/', label: 'Home' },
@@ -27,6 +29,20 @@ const navItems = [
 export function Header() {
   const { cartCount } = useCart();
   const { user } = useUser();
+  const auth = useAuth();
+  const router = useRouter();
+  const [signingOut, setSigningOut] = useState(false);
+  async function handleSignOut() {
+    if (!auth || signingOut) return;
+    setSigningOut(true);
+    try {
+      await firebaseSignOut(auth);
+      setIsMobileMenuOpen(false);
+      router.replace('/');
+    } finally {
+      setSigningOut(false);
+    }
+  }
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -60,6 +76,10 @@ export function Header() {
                         </SheetClose>
                       ))}
                     </nav>
+                    {user && <div className="mt-6 border-t border-[#e9e2d8] pt-4">
+                      <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-medium hover:bg-[#eee7dc]"><UserRound className="h-4 w-4" />My account</Link>
+                      <button type="button" onClick={handleSignOut} disabled={signingOut} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"><LogOut className="h-4 w-4" />{signingOut ? 'Signing out…' : 'Sign out'}</button>
+                    </div>}
                     <div className="absolute bottom-8 left-6 right-6 rounded-2xl bg-[#eee7dc] p-5">
                       <p className="eyebrow text-muted-foreground">The TreatStory edit</p>
                       <p className="mt-2 text-sm leading-relaxed">Discover pieces that make the everyday feel a little more special.</p>
