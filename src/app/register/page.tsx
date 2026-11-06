@@ -24,8 +24,8 @@ export default function RegisterPage() {
     setSubmitting(true);
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      toast({ title: 'Account created', description: 'You can now apply to sell on TreatStory.' });
-      router.replace('/become-a-seller');
+      toast({ title: 'Welcome to TreatStory', description: 'Your customer account is ready.' });
+      router.replace('/account');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Please try again.';
       toast({ variant: 'destructive', title: 'Registration failed', description: message });
