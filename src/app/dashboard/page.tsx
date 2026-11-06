@@ -21,10 +21,18 @@ export default function DashboardRouter() {
         const admin = await getDoc(doc(db, 'roles_admin', user.uid));
         if (!active) return;
         if (admin.exists()) { router.replace('/admin'); return; }
-        const seller = await getDoc(doc(db, 'sellers', user.uid));
-        if (!active) return;
-        router.replace(seller.exists() ? '/seller/dashboard' : '/account');
-      } catch { if (active) setError(true); }
+        try {
+          const seller = await getDoc(doc(db, 'sellers', user.uid));
+          if (!active) return;
+          router.replace(seller.exists() ? '/seller/dashboard' : '/account');
+        } catch (roleError) {
+          console.warn('Seller role lookup unavailable; continuing to customer account.', roleError);
+          if (active) router.replace('/account');
+        }
+      } catch (roleError) {
+        console.warn('Role lookup unavailable; continuing to customer account.', roleError);
+        if (active) router.replace('/account');
+      }
     })();
     return () => { active = false; };
   }, [user, isUserLoading, db, router]);
