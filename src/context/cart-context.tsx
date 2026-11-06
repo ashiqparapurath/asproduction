@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { Product } from '@/lib/products';
 
 // The imageUrl in CartItem is optional because the base Product type might change.
@@ -23,6 +23,9 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => { try { const saved = localStorage.getItem('treatstory-cart-v1'); if (saved) { const parsed = JSON.parse(saved); if (Array.isArray(parsed)) setCartItems(parsed.filter((item: CartItem) => item && typeof item.id === 'string' && Number.isInteger(item.quantity) && item.quantity > 0).slice(0, 100)); } } catch {} finally { setHydrated(true); } }, []);
+  useEffect(() => { if (hydrated) { try { localStorage.setItem('treatstory-cart-v1', JSON.stringify(cartItems)); } catch {} } }, [cartItems, hydrated]);
 
   const addToCart = (product: Product) => {
     setCartItems((prevItems) => {
