@@ -111,25 +111,26 @@ export default function LoginPage() {
         </div>
       </section>
 
-      <section className="flex min-h-screen flex-col px-5 py-6 sm:px-10 sm:py-9 lg:px-12 xl:px-20">
-        <div className="flex items-center justify-between gap-3 lg:justify-end">
-          <Link href="/" className="brand-wordmark text-[30px] leading-none lg:hidden">TreatStory</Link>
-          <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-[#e6ded2] bg-white px-4 py-2.5 text-xs font-medium transition hover:bg-[#f2ece4]"><ArrowLeft className="h-3.5 w-3.5" /> Back to shop</Link>
+      <section className="flex min-h-[100dvh] flex-col bg-white px-5 pb-5 pt-5 sm:bg-[#faf8f4] sm:px-10 sm:py-9 lg:min-h-screen lg:px-12 xl:px-20">
+        <div className="flex items-center justify-between gap-3 border-b border-[#f0eae2] pb-5 sm:border-0 sm:pb-0 lg:justify-end">
+          <Link href="/" className="brand-wordmark text-[27px] leading-none lg:hidden">TreatStory</Link>
+          <Link href="/" className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-[#e6ded2] bg-white px-3 py-2 text-[11px] font-medium transition hover:bg-[#f2ece4] sm:px-4 sm:text-xs"><ArrowLeft className="h-3.5 w-3.5" /> Back to shop</Link>
         </div>
-        <div className="mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center py-10 sm:py-14">
-          <div className="mb-8">
-            <h1 className="text-[36px] font-medium leading-tight tracking-tight sm:text-[44px]">Welcome back.</h1>
-            <p className="mt-3 text-sm leading-6 text-[#7a7167]">Sign in to keep your favourite finds, orders and delivery details together.</p>
+        <div className="mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center py-8 sm:py-14">
+          <div className="mb-7 sm:mb-8">
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#a68a64] lg:hidden">Little finds. Lovely stories.</p>
+            <h1 className="text-[34px] font-medium leading-tight tracking-tight sm:text-[44px]">Welcome back.</h1>
+            <p className="mt-2 max-w-sm text-[13px] leading-6 text-[#7a7167] sm:mt-3 sm:text-sm">Sign in to keep your favourite finds, orders and delivery details together.</p>
           </div>
-          <form onSubmit={handleSignIn} className="space-y-5">
-            <div className="space-y-2"><Label htmlFor="email" className="text-xs font-semibold">Email address</Label><Input id="email" type="email" autoComplete="email" inputMode="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required disabled={isLoading} className="h-12 rounded-xl border-[#ddd4c8] bg-white px-4 text-sm focus-visible:ring-[#a78c6a]" /></div>
-            <div className="space-y-2"><Label htmlFor="password" className="text-xs font-semibold">Password</Label><div className="relative"><Input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} required disabled={isLoading} className="h-12 rounded-xl border-[#ddd4c8] bg-white px-4 pr-12 text-sm focus-visible:ring-[#a78c6a]" /><button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(v=>!v)} className="absolute inset-y-0 right-1 flex w-11 items-center justify-center rounded-lg text-[#7a7167] hover:text-[#29251f]">{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div></div>
-            <Button type="submit" disabled={isLoading || !auth} className="h-12 w-full rounded-full bg-[#29251f] text-sm font-semibold text-white transition hover:bg-[#51463a]">{isLoading ? 'Signing in…' : <>Sign in <ArrowRight className="ml-2 h-4 w-4" /></>}</Button>
+          <form onSubmit={handleSignIn} className="space-y-4 sm:space-y-5">
+            <div className="space-y-2"><Label htmlFor="email" className="text-xs font-semibold">Email address</Label><Input id="email" type="email" autoComplete="email" inputMode="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required disabled={isLoading} className="h-13 rounded-xl border-[#ddd4c8] bg-[#faf9f6] px-4 text-base sm:h-12 sm:bg-white sm:text-sm focus-visible:ring-[#a78c6a]" /></div>
+            <div className="space-y-2"><Label htmlFor="password" className="text-xs font-semibold">Password</Label><div className="relative"><Input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} required disabled={isLoading} className="h-13 rounded-xl border-[#ddd4c8] bg-[#faf9f6] px-4 pr-12 text-base sm:h-12 sm:bg-white sm:text-sm focus-visible:ring-[#a78c6a]" /><button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(v=>!v)} className="absolute inset-y-0 right-1 flex w-11 items-center justify-center rounded-lg text-[#7a7167] hover:text-[#29251f]">{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div></div>
+            <Button type="submit" disabled={isLoading || !auth} className="mt-2 h-13 w-full rounded-xl bg-[#29251f] sm:h-12 sm:rounded-full text-sm font-semibold text-white transition hover:bg-[#51463a]">{isLoading ? 'Signing in…' : <>Sign in <ArrowRight className="ml-2 h-4 w-4" /></>}</Button>
           </form>
-          <div className="mt-7 border-t border-[#e8e0d5] pt-6"><p className="text-center text-sm text-[#7a7167]">New to TreatStory? <Link href="/register" className="font-semibold text-[#29251f] underline decoration-[#bca07b] underline-offset-4 hover:text-[#8c6c43]">Create an account</Link></p></div>
-          <p className="mt-7 flex items-center justify-center gap-2 text-center text-xs text-[#958a7c]"><ShieldCheck className="h-4 w-4" /> Secure sign-in for customers and creators</p>
+          <div className="mt-7 border-t border-[#e8e0d5] pt-5"><p className="text-center text-sm text-[#7a7167]">New to TreatStory? <Link href="/register" className="font-semibold text-[#29251f] underline decoration-[#bca07b] underline-offset-4 hover:text-[#8c6c43]">Create an account</Link></p></div>
+          <p className="mt-5 flex items-center justify-center gap-2 text-center text-[11px] text-[#958a7c]"><ShieldCheck className="h-4 w-4" /> Secure sign-in for customers and creators</p>
         </div>
-        <p className="text-center text-[11px] text-[#a3998e]">© {new Date().getFullYear()} TreatStory · Little finds. Lovely stories.</p>
+        <p className="hidden text-center text-[11px] text-[#a3998e] sm:block">© {new Date().getFullYear()} TreatStory · Little finds. Lovely stories.</p>
       </section>
     </main>
   );
