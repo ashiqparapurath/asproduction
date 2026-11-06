@@ -6,26 +6,18 @@ import { ProductCard } from '@/components/product-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, SlidersHorizontal } from 'lucide-react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 interface ProductGridContainerProps { products: Product[]; }
 interface ProductGridProps { products: Product[]; categories: string[]; initialCategory: string | null; }
 
 function ProductGrid({ products, categories, initialCategory }: ProductGridProps) {
-  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(initialCategory || 'All');
 
   useEffect(() => {
     if (initialCategory) setSelectedCategory(initialCategory);
   }, [initialCategory]);
-
-  const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && searchTerm.toLowerCase() === 'adm') {
-      event.preventDefault();
-      router.push('/admin');
-    }
-  };
 
   const filteredProducts = useMemo(() => {
     if (!products) return [];
@@ -46,7 +38,6 @@ function ProductGrid({ products, categories, initialCategory }: ProductGridProps
             className="h-12 rounded-full border-[#e6ded2] bg-white pl-11 text-sm shadow-none placeholder:text-muted-foreground/70 focus-visible:ring-[#b99a70]"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={handleSearchKeyDown}
           />
         </div>
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
