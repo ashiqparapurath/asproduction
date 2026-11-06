@@ -38,20 +38,22 @@ export default function LoginPage() {
           router.replace('/admin');
           return;
         }
-        const seller = await getDoc(doc(firestore!, 'sellers', user!.uid));
-        if (cancelled) return;
-        if (seller.exists()) {
-          router.replace('/seller/dashboard');
-          return;
+        // A buyer does not need a seller application or seller role.
+        // Failed optional role reads must not block a successful login.
+        try {
+          const seller = await getDoc(doc(firestore!, 'sellers', user!.uid));
+          if (cancelled) return;
+          if (seller.exists()) {
+            router.replace('/seller/dashboard');
+            return;
+          }
+        } catch (roleError) {
+          console.warn('Seller role lookup unavailable; continuing as customer.', roleError);
         }
-        const application = await getDoc(doc(firestore!, 'seller_applications', user!.uid));
-        if (cancelled) return;
-        router.replace(application.exists() ? '/become-a-seller' : '/');
-      } catch {
-        if (!cancelled) {
-          toast({ variant: 'destructive', title: 'Could not check account access', description: 'Check your Firebase permissions and try again.' });
-          setCheckingRole(false);
-        }
+        if (!cancelled) router.replace('/');
+      } catch (roleError) {
+        console.warn('Role lookup unavailable; routing to customer storefront.', roleError);
+        if (!cancelled) router.replace('/');
       }
     }
     void routeByRole();
