@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   description: 'Discover thoughtful finds across lifestyle, fashion, home and more at TreatStory.',
   applicationName: 'TreatStory',
   icons: {
-    icon: '/favicon.ico',
+    icon: [{ url: '/ts%20logo%20white.ico', sizes: 'any', type: 'image/x-icon' }],
   },
 };
 
@@ -28,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/ts%20logo%20white.ico" sizes="any" type="image/x-icon" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#faf8f3" />
       </head>
