@@ -128,6 +128,7 @@ export default function Home() {
             <Link href="/products" className="hidden items-center gap-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.15em] sm:flex">Shop all <ArrowRight className="h-4 w-4" /></Link>
           </div>
           <BannerCarousel />
+          <div className="mt-8"><SellerStorefrontProducts limitCount={8} /></div>
         </section>
 
         <section className="bg-[#f1ede6] py-12 sm:py-16">
@@ -136,7 +137,6 @@ export default function Home() {
               <div><p className="eyebrow text-[#a68a64]">Picked for you</p><h2 className="mt-2 text-3xl font-medium tracking-tight sm:text-4xl">Find your next favourite</h2><p className="mt-2 text-sm text-muted-foreground">Thoughtful finds, all in one happy place.</p></div>
               <Link href="/products" className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em]">View everything <ArrowRight className="h-4 w-4" /></Link>
             </div>
-            <div className="mb-12"><SellerStorefrontProducts limitCount={8} /></div>
             <Suspense fallback={<Skeleton className="h-96 w-full rounded-2xl" />}><HomePageContent /></Suspense>
           </div>
         </section>
