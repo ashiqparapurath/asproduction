@@ -2,241 +2,76 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { doc } from 'firebase/firestore';
+import { useAuth, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
-import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProductList } from '@/components/admin/product-list';
 import { SellerApplications } from '@/components/admin/seller-applications';
-import { AdminOverview } from '@/components/admin/admin-overview';
 import { SellerManagement } from '@/components/admin/seller-management';
+import { AdminOverview } from '@/components/admin/admin-overview';
 import { ProductDialog } from '@/components/admin/product-dialog';
 import { BannerList } from '@/components/admin/banner-list';
 import { BannerDialog } from '@/components/admin/banner-dialog';
 import { CategoryList } from '@/components/admin/category-list';
 import { CategoryDialog } from '@/components/admin/category-dialog';
 import { EnquirySettingsForm } from '@/components/admin/enquiry-settings-form';
-import { LifeBuoy, Instagram, MessageSquare } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { LayoutDashboard, Store, ClipboardList, Package, ImageIcon, Tags, Settings, LogOut, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
-function AdminContent() {
-  const { user } = useUser();
-  const auth = useAuth();
-  const router = useRouter();
-  const firestore = useFirestore();
-  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
-  const [isBannerDialogOpen, setIsBannerDialogOpen] = useState(false);
-  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
-  const [isSigningOut, setIsSigningOut] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
-
-  const adminRoleRef = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
-    return doc(firestore, 'roles_admin', user.uid);
-  }, [user, firestore]);
-
-  const { data: adminRole, isLoading: isAdminLoading } = useDoc(adminRoleRef);
-
-  const handleSignOut = async () => {
-    if (auth) {
-      setIsSigningOut(true);
-      try {
-        await auth.signOut();
-        router.replace('/');
-      } catch (error) {
-        console.error("Sign out failed:", error);
-        setIsSigningOut(false);
-      }
-    }
-  };
-
-  const handleContact = (platform: 'whatsapp' | 'instagram') => {
-    const developerPhoneNumber = '97430147881'; 
-    const instagramUrl = 'https://www.instagram.com/mrashiq._';
-    const message = encodeURIComponent("Hello, I need assistance with the TreatStory admin panel.");
-
-    let url;
-    if (platform === 'whatsapp') {
-      url = `https://wa.me/${developerPhoneNumber}?text=${message}`;
-    } else {
-      url = instagramUrl;
-    }
-    window.open(url, '_blank');
-  };
-
-
-  if (isAdminLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-1/2" />
-        <Skeleton className="h-4 w-3/4" />
-        <Skeleton className="h-4 w-2/3" />
-      </div>
-    );
-  }
-
-  if (!adminRole) {
-    return (
-      <div>
-        <h1 className="text-3xl font-bold">Access Denied</h1>
-        <p className="text-muted-foreground mt-2">
-          You do not have the necessary permissions to view this page.
-        </p>
-        <Button onClick={handleSignOut} variant="outline" className="mt-4" disabled={isSigningOut}>
-          {isSigningOut ? 'Signing Out...' : 'Sign Out & Go Home'}
-        </Button>
-      </div>
-    );
-  }
-
-  const renderAddButton = () => {
-    switch(activeTab) {
-      case 'products':
-        return (
-          <ProductDialog isOpen={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
-            <Button onClick={() => setIsProductDialogOpen(true)}>Add New Product</Button>
-          </ProductDialog>
-        );
-      case 'banners':
-        return (
-          <BannerDialog isOpen={isBannerDialogOpen} onOpenChange={setIsBannerDialogOpen}>
-            <Button onClick={() => setIsBannerDialogOpen(true)}>Add New Banner</Button>
-          </BannerDialog>
-        );
-      case 'categories':
-        return (
-           <CategoryDialog isOpen={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
-            <Button onClick={() => setIsCategoryDialogOpen(true)}>Add New Category</Button>
-          </CategoryDialog>
-        );
-      default:
-        return null;
-    }
-  }
-
-  return (
-    <div className="space-y-6 w-full">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tighter">
-            Super Admin
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Manage TreatStory sellers, applications, products and marketplace operations.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <LifeBuoy className="mr-2 h-4 w-4" />
-                Contact Developer
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-xs">
-              <DialogHeader>
-                <DialogTitle>Contact Developer</DialogTitle>
-                <DialogDescription>
-                  Need help? Reach out via WhatsApp or Instagram.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="flex flex-col gap-3 pt-4">
-                <Button onClick={() => handleContact('whatsapp')} className="justify-start">
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  <span>WhatsApp</span>
-                </Button>
-                 <Button onClick={() => handleContact('instagram')} variant="secondary" className="justify-start">
-                  <Instagram className="mr-2 h-4 w-4" />
-                  <span>Instagram</span>
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          <Button onClick={handleSignOut} variant="outline" size="sm" disabled={isSigningOut}>
-            {isSigningOut ? 'Signing Out...' : 'Sign Out'}
-          </Button>
-        </div>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="overview">
-        <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-4 mb-4">
-          <TabsList className="flex h-auto flex-wrap justify-start">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="products">Products</TabsTrigger>
-            <TabsTrigger value="sellers">Applications</TabsTrigger>
-            <TabsTrigger value="seller-management">Manage sellers</TabsTrigger>
-            <TabsTrigger value="banners">Banners</TabsTrigger>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-          </TabsList>
-           <div className="flex items-center">
-              {renderAddButton()}
-          </div>
-        </div>
-        <TabsContent value="overview"><AdminOverview /></TabsContent>
-        <TabsContent value="sellers"><SellerApplications /></TabsContent>
-        <TabsContent value="seller-management"><SellerManagement /></TabsContent>
-        <TabsContent value="products">
-          <ProductList />
-        </TabsContent>
-        <TabsContent value="banners">
-          <BannerList />
-        </TabsContent>
-        <TabsContent value="categories">
-          <CategoryList />
-        </TabsContent>
-        <TabsContent value="settings">
-          <EnquirySettingsForm />
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
+type Tab = 'overview' | 'applications' | 'sellers' | 'products' | 'banners' | 'categories' | 'settings';
+const navigation: { id: Tab; label: string; icon: typeof Store; group: string }[] = [
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard, group: 'Workspace' },
+  { id: 'applications', label: 'Seller applications', icon: ClipboardList, group: 'Marketplace' },
+  { id: 'sellers', label: 'Seller management', icon: Store, group: 'Marketplace' },
+  { id: 'products', label: 'Legacy products', icon: Package, group: 'Content' },
+  { id: 'banners', label: 'Banners', icon: ImageIcon, group: 'Content' },
+  { id: 'categories', label: 'Categories', icon: Tags, group: 'Content' },
+  { id: 'settings', label: 'Store settings', icon: Settings, group: 'Configuration' },
+];
 
 export default function AdminPage() {
   const { user, isUserLoading } = useUser();
+  const auth = useAuth();
+  const db = useFirestore();
   const router = useRouter();
+  const [tab, setTab] = useState<Tab>('overview');
+  const [productOpen, setProductOpen] = useState(false);
+  const [bannerOpen, setBannerOpen] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const adminRef = useMemoFirebase(() => user && db ? doc(db, 'roles_admin', user.uid) : null, [user, db]);
+  const { data: admin, isLoading: adminLoading } = useDoc(adminRef);
 
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.replace('/login');
-    }
-  }, [user, isUserLoading, router]);
+  useEffect(() => { if (!isUserLoading && !user) router.replace('/login'); }, [isUserLoading, user, router]);
 
-  if (isUserLoading || !user) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="container py-12 md:py-20 lg:py-24">
-            <div className="space-y-4">
-              <Skeleton className="h-10 w-1/3" />
-              <Skeleton className="h-6 w-1/2" />
-            </div>
-          </div>
-        </main>
-      </div>
-    );
+  async function signOut() {
+    if (!auth) return;
+    setSigningOut(true);
+    try { await auth.signOut(); router.replace('/'); }
+    catch { setSigningOut(false); }
   }
 
-  return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <Header />
-      <main className="flex-1">
-        <div className="container py-12 md:py-20 lg:py-24">
-          <AdminContent />
-        </div>
+  if (isUserLoading || !user || adminLoading) return <div className="min-h-screen bg-[#f7f5f1]"><Header /><main className="section-shell py-16 text-sm text-muted-foreground">Verifying administrator access…</main></div>;
+  if (!admin) return <div className="min-h-screen bg-[#f7f5f1]"><Header /><main className="section-shell mx-auto max-w-xl py-20"><ShieldCheck className="h-8 w-8 text-[#a68a64]" /><h1 className="mt-5 text-3xl font-medium">Administrator access required</h1><p className="mt-3 text-sm text-muted-foreground">This workspace is restricted to verified TreatStory administrators.</p><Link href="/account" className="editorial-button mt-7">Return to account</Link></main></div>;
+
+  return <div className="min-h-screen bg-[#f7f5f1]"><Header />
+    <div className="section-shell grid gap-8 py-8 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-10 lg:py-12">
+      <aside className="space-y-6">
+        <div className="rounded-3xl bg-[#29251f] p-6 text-white"><div className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-[#c9ae85]" /><p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#c9ae85]">Control center</p></div><h2 className="mt-4 text-2xl font-medium">TreatStory HQ</h2><p className="mt-2 text-xs text-white/65">Super Administrator</p><p className="mt-4 truncate border-t border-white/15 pt-4 text-xs text-white/75">{user.email}</p></div>
+        <nav aria-label="Admin navigation" className="flex gap-2 overflow-x-auto lg:block lg:space-y-5">{['Workspace', 'Marketplace', 'Content', 'Configuration'].map(group => <div key={group} className="shrink-0"><p className="mb-2 hidden px-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a68a64] lg:block">{group}</p><div className="flex gap-2 lg:flex-col">{navigation.filter(item => item.group === group).map(item => <button key={item.id} onClick={() => setTab(item.id)} className={`flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-left text-sm transition lg:w-full ${tab === item.id ? 'bg-[#e7dfd2] font-semibold text-[#29251f]' : 'text-muted-foreground hover:bg-white'}`}><item.icon className="h-4 w-4" />{item.label}</button>)}</div></div>)}</nav>
+        <Button variant="outline" className="w-full justify-start rounded-xl" onClick={signOut} disabled={signingOut}><LogOut className="mr-2 h-4 w-4" />Sign out</Button>
+      </aside>
+      <main className="min-w-0 space-y-7">
+        <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#a68a64]">Marketplace operations</p><h1 className="mt-2 text-3xl font-medium tracking-tight sm:text-4xl">{navigation.find(item => item.id === tab)?.label}</h1><p className="mt-2 text-sm text-muted-foreground">Manage creators, storefront content and platform operations.</p></div><div className="flex gap-2"><Link href="/" className="inline-flex h-10 items-center gap-2 rounded-full border bg-white px-4 text-xs font-medium">View marketplace <ArrowUpRight className="h-4 w-4" /></Link>{tab === 'products' && <ProductDialog isOpen={productOpen} onOpenChange={setProductOpen}><Button onClick={() => setProductOpen(true)}>Add product</Button></ProductDialog>}{tab === 'banners' && <BannerDialog isOpen={bannerOpen} onOpenChange={setBannerOpen}><Button onClick={() => setBannerOpen(true)}>Add banner</Button></BannerDialog>}{tab === 'categories' && <CategoryDialog isOpen={categoryOpen} onOpenChange={setCategoryOpen}><Button onClick={() => setCategoryOpen(true)}>Add category</Button></CategoryDialog>}</div></div>
+        {tab === 'overview' && <AdminOverview navigate={next => setTab(next === 'sellers' ? 'applications' : next as Tab)} />}
+        {tab === 'applications' && <SellerApplications />}
+        {tab === 'sellers' && <SellerManagement />}
+        {tab === 'products' && <ProductList />}
+        {tab === 'banners' && <BannerList />}
+        {tab === 'categories' && <CategoryList />}
+        {tab === 'settings' && <EnquirySettingsForm />}
       </main>
     </div>
-  );
+  </div>;
 }
