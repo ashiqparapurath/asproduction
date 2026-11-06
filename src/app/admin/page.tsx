@@ -8,6 +8,7 @@ import { useAuth, useDoc, useFirestore, useMemoFirebase, useUser } from '@/fireb
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { ProductList } from '@/components/admin/product-list';
+import { MarketplaceCatalog } from '@/components/admin/marketplace-catalog';
 import { SellerApplications } from '@/components/admin/seller-applications';
 import { SellerManagement } from '@/components/admin/seller-management';
 import { AdminOverview } from '@/components/admin/admin-overview';
@@ -19,11 +20,12 @@ import { CategoryDialog } from '@/components/admin/category-dialog';
 import { EnquirySettingsForm } from '@/components/admin/enquiry-settings-form';
 import { LayoutDashboard, Store, ClipboardList, Package, ImageIcon, Tags, Settings, LogOut, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
-type Tab = 'overview' | 'applications' | 'sellers' | 'products' | 'banners' | 'categories' | 'settings';
+type Tab = 'overview' | 'applications' | 'sellers' | 'catalog' | 'products' | 'banners' | 'categories' | 'settings';
 const navigation: { id: Tab; label: string; icon: typeof Store; group: string }[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, group: 'Workspace' },
   { id: 'applications', label: 'Seller applications', icon: ClipboardList, group: 'Marketplace' },
   { id: 'sellers', label: 'Seller management', icon: Store, group: 'Marketplace' },
+  { id: 'catalog', label: 'Seller catalog', icon: Package, group: 'Marketplace' },
   { id: 'products', label: 'Legacy products', icon: Package, group: 'Content' },
   { id: 'banners', label: 'Banners', icon: ImageIcon, group: 'Content' },
   { id: 'categories', label: 'Categories', icon: Tags, group: 'Content' },
@@ -67,6 +69,7 @@ export default function AdminPage() {
         {tab === 'overview' && <AdminOverview navigate={next => setTab(next === 'sellers' ? 'applications' : next as Tab)} />}
         {tab === 'applications' && <SellerApplications />}
         {tab === 'sellers' && <SellerManagement />}
+        {tab === 'catalog' && <MarketplaceCatalog />}
         {tab === 'products' && <ProductList />}
         {tab === 'banners' && <BannerList />}
         {tab === 'categories' && <CategoryList />}
