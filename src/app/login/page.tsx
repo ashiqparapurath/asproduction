@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Eye, EyeOff, LockKeyhole, Sparkles, ShoppingBag, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Eye, EyeOff, Sparkles, ShoppingBag, ShieldCheck } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 
@@ -97,7 +97,7 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-[#faf8f4] text-[#2c2823] lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <section className="relative hidden min-h-screen overflow-hidden bg-[#e9dfd0] lg:flex lg:flex-col lg:justify-between">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1493857671505-72967e2e2760?auto=format&fit=crop&w=1500&q=85')] bg-cover bg-center" />
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=1500&q=85')] bg-cover bg-center" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#1d1916]/45 via-[#1d1916]/10 to-[#1d1916]/75" />
         <div className="relative z-10 flex items-center justify-between px-10 pt-10 xl:px-16">
           <Link href="/" className="brand-wordmark text-4xl text-white">TreatStory</Link>
@@ -106,7 +106,7 @@ export default function LoginPage() {
         <div className="relative z-10 max-w-xl px-10 pb-14 text-white xl:px-16 xl:pb-20">
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#f0d9b5]"><Sparkles className="h-4 w-4" /> Thoughtfully discovered</p>
           <h2 className="mt-5 text-5xl font-medium leading-[1.08] tracking-tight xl:text-6xl">Every little find has <span className="font-serif italic font-normal">a story.</span></h2>
-          <p className="mt-5 max-w-md text-sm leading-7 text-white/85">Discover beautiful bakes, thoughtful gifts and handmade creations from independent makers.</p>
+          <p className="mt-5 max-w-md text-sm leading-7 text-white/85">From homemade bakes to thoughtful handcrafted gifts, discover creations made with care by independent makers.</p>
           <div className="mt-9 flex items-center gap-5 border-t border-white/30 pt-6 text-xs text-white/85"><span className="flex items-center gap-2"><ShoppingBag className="h-4 w-4" /> Curated finds</span><span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> Your personal account</span></div>
         </div>
       </section>
@@ -117,7 +117,7 @@ export default function LoginPage() {
           <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-[#e6ded2] bg-white px-4 py-2.5 text-xs font-medium transition hover:bg-[#f2ece4]"><ArrowLeft className="h-3.5 w-3.5" /> Back to shop</Link>
         </div>
         <div className="mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center py-10 sm:py-14">
-          <div className="mb-8"><div className="mb-5 inline-flex items-center gap-2 rounded-full bg-[#f0e8dc] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8c6c43]"><LockKeyhole className="h-3.5 w-3.5" /> Your TreatStory account</div>
+          <div className="mb-8">
             <h1 className="text-[36px] font-medium leading-tight tracking-tight sm:text-[44px]">Welcome back.</h1>
             <p className="mt-3 text-sm leading-6 text-[#7a7167]">Sign in to keep your favourite finds, orders and delivery details together.</p>
           </div>
