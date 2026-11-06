@@ -40,7 +40,7 @@ export default function RegisterPage() {
         <Link href="/" className="brand-wordmark text-3xl">TreatStory</Link>
         <p className="eyebrow mt-8 text-[#a68a64]">Join our creative community</p>
         <h1 className="mt-3 text-3xl font-medium tracking-tight">Create your account</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Register to apply for your own TreatStory seller storefront.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Create an account to shop handmade creations, track orders and save delivery details.</p>
         <form onSubmit={register} className="mt-8 space-y-5">
           <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} /></div>
           <div className="space-y-2"><Label htmlFor="password">Password</Label><Input id="password" type="password" autoComplete="new-password" required minLength={6} value={password} onChange={e => setPassword(e.target.value)} /></div>
