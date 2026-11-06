@@ -75,7 +75,7 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: 'Login Successful',
-        description: 'Checking your account access...',
+        description: 'Welcome back to TreatStory.',
       });
       // The useEffect will handle the redirect
     } catch (error: any) {
