@@ -30,15 +30,18 @@ export function CreatorCheckout({ variant = 'card' }: { variant?: 'card' | 'page
     if (!db || !user || busy || !items.length) return;
     setBusy(true);
     const placed: string[] = [];
+    let stage = 'checking the product';
     try {
       // Orders are deliberately submitted per listing so rules can verify
       // each product, seller, price and quantity independently.
       for (const item of items) {
         const productId = item.id.slice('seller:'.length);
+        stage = 'reading product details';
         const snapshot = await getDoc(doc(db, 'marketplace_products', productId));
         if (!snapshot.exists()) throw new Error('A product is no longer available.');
         const product = snapshot.data() as MarketplaceProduct;
         if (product.status !== 'published' || product.availability === 'unavailable' || !product.showPrice) throw new Error(`${product.name} cannot be ordered.`);
+        stage = 'reading seller eligibility';
         const sellerSnapshot = await getDoc(doc(db, 'sellers', product.sellerId));
         if (!sellerSnapshot.exists()) throw new Error(`The seller for ${product.name} is no longer available.`);
         const seller = sellerSnapshot.data() as Seller;
@@ -48,6 +51,7 @@ export function CreatorCheckout({ variant = 'card' }: { variant?: 'card' | 'page
         if (!expiry?.toMillis || expiry.toMillis() <= Date.now()) throw new Error(`${seller.businessName || 'This seller'}'s marketplace access has expired.`);
         if (!Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 99) throw new Error('Choose a quantity between 1 and 99.');
         if (name.trim().length < 2 || phone.trim().length < 5 || address.trim().length < 10) throw new Error('Please complete your contact and delivery details.');
+        stage = 'creating the order';
         const order = await addDoc(collection(db, 'seller_orders'), {
           buyerUid: user.uid, sellerId: product.sellerId, productId,
           productName: product.name, quantity: item.quantity,
@@ -64,7 +68,8 @@ export function CreatorCheckout({ variant = 'card' }: { variant?: 'card' | 'page
     } catch (err) {
       if (placed.length) setResult(placed);
       const message = err instanceof Error ? err.message : 'Please retry remaining items.';
-      const helpful = message.includes('permission') ? 'Firestore rejected the order. Confirm the latest rules are published, and check that the seller is active, open, and has a future accessEndsAt timestamp. If all are valid, run the seller_orders create request in the Firestore Rules simulator.' : message;
+      const helpful = message.toLowerCase().includes('permission') ? `Firestore denied access while ${stage}. ${stage === 'creating the order' ? 'The seller and product reads succeeded, but the seller_orders create rule rejected the submitted data. Check published rules and the order validation conditions.' : 'Check the published Firestore read rules for this collection and the signed-in account.'}` : message;
+      console.error('TreatStory checkout failed', { stage, code: (err as { code?: string })?.code, message });
       toast({ variant: 'destructive', title: 'Could not finish checkout', description: `${placed.length} order(s) succeeded. ${helpful}` });
     } finally { setBusy(false); }
   }
