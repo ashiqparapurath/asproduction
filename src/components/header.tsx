@@ -21,6 +21,7 @@ const navItems = [
   { href: '/products', label: 'Shop all' },
   { href: '/new-arrivals', label: 'New arrivals' },
   { href: '/about', label: 'Our story' },
+  { href: '/become-a-seller', label: 'Sell with us' },
 ];
 
 export function Header() {
