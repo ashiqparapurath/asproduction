@@ -8,10 +8,9 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowLeft, ArrowRight, Eye, EyeOff, LockKeyhole, Sparkles, ShoppingBag, ShieldCheck } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 
@@ -19,6 +18,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const auth = useAuth();
   const firestore = useFirestore();
   const [checkingRole, setCheckingRole] = useState(false);
@@ -91,64 +91,46 @@ export default function LoginPage() {
   };
 
   if (isUserLoading || (user && checkingRole)) {
-     return (
-      <div className="flex min-h-screen items-center justify-center bg-background p-4">
-        <div className="flex flex-col items-center gap-4">
-            <Skeleton className="h-12 w-12 rounded-full" />
-            <div className="space-y-2 text-center">
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
-            </div>
-        </div>
-      </div>
-    );
+    return <div className="flex min-h-screen items-center justify-center bg-[#faf8f4]"><div className="flex items-center gap-3 text-sm text-[#756b5e]"><span className="h-5 w-5 animate-spin rounded-full border-2 border-[#d7c7b3] border-t-[#453a2f]" />Opening TreatStory…</div></div>;
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary/40 p-4">
-       <div className="absolute top-8 left-8">
-         <Link href="/" className="brand-wordmark text-3xl">TreatStory</Link>
-       </div>
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Sign in to TreatStory</CardTitle>
-          <CardDescription>Sign in to your marketplace account.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSignIn} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                placeholder="********"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={isLoading || !auth}>
-              {isLoading ? 'Signing In...' : 'Sign In'}
-            </Button>
+    <main className="min-h-screen bg-[#faf8f4] text-[#2c2823] lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <section className="relative hidden min-h-screen overflow-hidden bg-[#e9dfd0] lg:flex lg:flex-col lg:justify-between">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1493857671505-72967e2e2760?auto=format&fit=crop&w=1500&q=85')] bg-cover bg-center" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1d1916]/45 via-[#1d1916]/10 to-[#1d1916]/75" />
+        <div className="relative z-10 flex items-center justify-between px-10 pt-10 xl:px-16">
+          <Link href="/" className="brand-wordmark text-4xl text-white">TreatStory</Link>
+          <span className="rounded-full border border-white/40 bg-white/15 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur-sm">Made with heart</span>
+        </div>
+        <div className="relative z-10 max-w-xl px-10 pb-14 text-white xl:px-16 xl:pb-20">
+          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#f0d9b5]"><Sparkles className="h-4 w-4" /> Thoughtfully discovered</p>
+          <h2 className="mt-5 text-5xl font-medium leading-[1.08] tracking-tight xl:text-6xl">Every little find has <span className="font-serif italic font-normal">a story.</span></h2>
+          <p className="mt-5 max-w-md text-sm leading-7 text-white/85">Discover beautiful bakes, thoughtful gifts and handmade creations from independent makers.</p>
+          <div className="mt-9 flex items-center gap-5 border-t border-white/30 pt-6 text-xs text-white/85"><span className="flex items-center gap-2"><ShoppingBag className="h-4 w-4" /> Curated finds</span><span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> Your personal account</span></div>
+        </div>
+      </section>
+
+      <section className="flex min-h-screen flex-col px-5 py-6 sm:px-10 sm:py-9 lg:px-12 xl:px-20">
+        <div className="flex items-center justify-between gap-3 lg:justify-end">
+          <Link href="/" className="brand-wordmark text-[30px] leading-none lg:hidden">TreatStory</Link>
+          <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-[#e6ded2] bg-white px-4 py-2.5 text-xs font-medium transition hover:bg-[#f2ece4]"><ArrowLeft className="h-3.5 w-3.5" /> Back to shop</Link>
+        </div>
+        <div className="mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center py-10 sm:py-14">
+          <div className="mb-8"><div className="mb-5 inline-flex items-center gap-2 rounded-full bg-[#f0e8dc] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8c6c43]"><LockKeyhole className="h-3.5 w-3.5" /> Your TreatStory account</div>
+            <h1 className="text-[36px] font-medium leading-tight tracking-tight sm:text-[44px]">Welcome back.</h1>
+            <p className="mt-3 text-sm leading-6 text-[#7a7167]">Sign in to keep your favourite finds, orders and delivery details together.</p>
+          </div>
+          <form onSubmit={handleSignIn} className="space-y-5">
+            <div className="space-y-2"><Label htmlFor="email" className="text-xs font-semibold">Email address</Label><Input id="email" type="email" autoComplete="email" inputMode="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required disabled={isLoading} className="h-12 rounded-xl border-[#ddd4c8] bg-white px-4 text-sm focus-visible:ring-[#a78c6a]" /></div>
+            <div className="space-y-2"><Label htmlFor="password" className="text-xs font-semibold">Password</Label><div className="relative"><Input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} required disabled={isLoading} className="h-12 rounded-xl border-[#ddd4c8] bg-white px-4 pr-12 text-sm focus-visible:ring-[#a78c6a]" /><button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(v=>!v)} className="absolute inset-y-0 right-1 flex w-11 items-center justify-center rounded-lg text-[#7a7167] hover:text-[#29251f]">{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div></div>
+            <Button type="submit" disabled={isLoading || !auth} className="h-12 w-full rounded-full bg-[#29251f] text-sm font-semibold text-white transition hover:bg-[#51463a]">{isLoading ? 'Signing in…' : <>Sign in <ArrowRight className="ml-2 h-4 w-4" /></>}</Button>
           </form>
-          <p className="mt-5 text-center text-sm text-muted-foreground">New to TreatStory? <Link href="/register" className="font-semibold text-foreground underline underline-offset-4">Create an account</Link></p>
-        </CardContent>
-      </Card>
-    </div>
+          <div className="mt-7 border-t border-[#e8e0d5] pt-6"><p className="text-center text-sm text-[#7a7167]">New to TreatStory? <Link href="/register" className="font-semibold text-[#29251f] underline decoration-[#bca07b] underline-offset-4 hover:text-[#8c6c43]">Create an account</Link></p></div>
+          <p className="mt-7 flex items-center justify-center gap-2 text-center text-xs text-[#958a7c]"><ShieldCheck className="h-4 w-4" /> Secure sign-in for customers and creators</p>
+        </div>
+        <p className="text-center text-[11px] text-[#a3998e]">© {new Date().getFullYear()} TreatStory · Little finds. Lovely stories.</p>
+      </section>
+    </main>
   );
 }
