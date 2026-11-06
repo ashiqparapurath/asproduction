@@ -1,6 +1,7 @@
 'use client';
 
 import { Header } from '@/components/header';
+import { SellerStorefrontProducts } from '@/components/seller-storefront-products';
 import { ProductGridContainer } from '@/components/product-grid';
 import Link from 'next/link';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -30,6 +31,7 @@ export default function NewArrivalsPage() {
           <h1 className="mt-4 max-w-2xl text-4xl font-medium leading-[1.05] tracking-[-0.055em] sm:text-6xl">Fresh finds.<br /><span className="font-serif italic font-normal text-[#a68a64]">New little stories.</span></h1>
           <p className="mt-4 max-w-md text-sm leading-6 text-muted-foreground sm:text-base">Meet the latest additions to the TreatStory collection. First looks, fresh ideas and new favourites.</p>
         </div>
+        <div className="mb-12"><SellerStorefrontProducts limitCount={4} /></div>
         <Suspense fallback={<Skeleton className="h-96 w-full rounded-2xl" />}><NewArrivalsContent /></Suspense>
       </main>
       <footer className="border-t border-[#e8e0d5] py-7">
