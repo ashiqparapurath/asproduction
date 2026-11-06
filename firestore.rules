@@ -182,12 +182,11 @@ service cloud.firestore {
     }
 
     match /marketplace_products/{productId} {
+      // Public queries must include where('status', '==', 'published').
+      // Seller dashboard queries must include where('sellerId', '==', auth.uid).
       allow get, list: if isAdmin() ||
         (isSignedIn() && resource.data.sellerId == request.auth.uid) ||
-        (resource.data.status == 'published' &&
-          exists(/databases/$(database)/documents/sellers/$(resource.data.sellerId)) &&
-          get(/databases/$(database)/documents/sellers/$(resource.data.sellerId)).data.status == 'active' &&
-          get(/databases/$(database)/documents/sellers/$(resource.data.sellerId)).data.accessEndsAt > request.time);
+        resource.data.status == 'published';
       allow create: if sellerActive(request.resource.data.sellerId) &&
         request.resource.data.sellerId == request.auth.uid &&
         validMarketplaceProduct(request.resource.data) &&
