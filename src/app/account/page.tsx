@@ -42,6 +42,7 @@ export default function AccountPage() {
         {role === 'admin' && <Link href="/admin" className="editorial-button">Open Super Admin dashboard</Link>}
         {role === 'seller' && <Link href="/seller/dashboard" className="editorial-button">Open Seller Studio</Link>}
         {role === 'customer' && <Link href="/become-a-seller" className="editorial-button">Apply to become a seller</Link>}
+        <Link href="/orders" className="editorial-button">Track my orders</Link>
         <div><Button variant="outline" onClick={async () => { if (auth) await firebaseSignOut(auth); router.replace('/'); }}>Sign out</Button></div>
       </div>}
   </main></div>;
