@@ -114,6 +114,7 @@ export default function LoginPage() {
               {isLoading ? 'Signing In...' : 'Sign In'}
             </Button>
           </form>
+          <p className="mt-5 text-center text-sm text-muted-foreground">New to TreatStory? <Link href="/register" className="font-semibold text-foreground underline underline-offset-4">Create an account</Link></p>
         </CardContent>
       </Card>
     </div>
