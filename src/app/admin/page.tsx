@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { doc } from 'firebase/firestore';
 import { useAuth, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { Header } from '@/components/header';
+import { OrderManagement } from '@/components/order-management';
 import { Button } from '@/components/ui/button';
 import { ProductList } from '@/components/admin/product-list';
 import { MarketplaceCatalog } from '@/components/admin/marketplace-catalog';
@@ -21,9 +22,10 @@ import { CategoryDialog } from '@/components/admin/category-dialog';
 import { EnquirySettingsForm } from '@/components/admin/enquiry-settings-form';
 import { LayoutDashboard, Store, ClipboardList, Package, ImageIcon, Tags, Settings, LogOut, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
-type Tab = 'overview' | 'applications' | 'sellers' | 'catalog' | 'products' | 'banners' | 'categories' | 'settings';
+type Tab = 'orders' | 'overview' | 'applications' | 'sellers' | 'catalog' | 'products' | 'banners' | 'categories' | 'settings';
 const navigation: { id: Tab; label: string; icon: typeof Store; group: string }[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, group: 'Workspace' },
+  { id: 'orders', label: 'Orders & fulfillment', icon: ClipboardList, group: 'Marketplace' },
   { id: 'applications', label: 'Seller applications', icon: ClipboardList, group: 'Marketplace' },
   { id: 'sellers', label: 'Seller management', icon: Store, group: 'Marketplace' },
   { id: 'catalog', label: 'Seller catalog', icon: Package, group: 'Marketplace' },
@@ -68,6 +70,7 @@ export default function AdminPage() {
       <main className="min-w-0 space-y-7">
         <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#a68a64]">Marketplace operations</p><h1 className="mt-2 text-3xl font-medium tracking-tight sm:text-4xl">{navigation.find(item => item.id === tab)?.label}</h1><p className="mt-2 text-sm text-muted-foreground">Manage creators, storefront content and platform operations.</p></div><div className="flex gap-2"><Link href="/" className="inline-flex h-10 items-center gap-2 rounded-full border bg-white px-4 text-xs font-medium">View marketplace <ArrowUpRight className="h-4 w-4" /></Link>{tab === 'products' && <ProductDialog isOpen={productOpen} onOpenChange={setProductOpen}><Button onClick={() => setProductOpen(true)}>Add product</Button></ProductDialog>}{tab === 'banners' && <BannerDialog isOpen={bannerOpen} onOpenChange={setBannerOpen}><Button onClick={() => setBannerOpen(true)}>Add banner</Button></BannerDialog>}{tab === 'categories' && <CategoryDialog isOpen={categoryOpen} onOpenChange={setCategoryOpen}><Button onClick={() => setCategoryOpen(true)}>Add category</Button></CategoryDialog>}</div></div>
         {tab === 'overview' && <AdminOverview navigate={next => setTab(next === 'sellers' ? 'applications' : next as Tab)} />}
+        {tab === 'orders' && <OrderManagement mode="admin" />}
         {tab === 'applications' && <SellerApplications />}
         {tab === 'sellers' && <SellerManagement />}
         {tab === 'catalog' && <MarketplaceCatalog />}
