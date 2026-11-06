@@ -39,7 +39,7 @@ export default function AccountPage() {
         <div><p className="text-xs uppercase tracking-widest text-muted-foreground">Signed in as</p><p className="mt-2 font-medium">{user.email}</p></div>
         <p className="text-sm text-muted-foreground">Account type: {role === 'admin' ? 'Super Admin' : role === 'seller' ? 'Seller' : 'Customer'}</p>
         {role === 'admin' && <Link href="/admin" className="editorial-button">Open Super Admin dashboard</Link>}
-        {role === 'seller' && <p className="text-sm text-muted-foreground">Seller dashboard features are being prepared.</p>}
+        {role === 'seller' && <Link href="/seller/dashboard" className="editorial-button">Open Seller Studio</Link>}
         {role === 'customer' && <Link href="/become-a-seller" className="editorial-button">Apply to become a seller</Link>}
         <div><Button variant="outline" onClick={async () => { await auth?.signOut(); router.replace('/'); }}>Sign out</Button></div>
       </div>}
