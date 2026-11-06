@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProductList } from '@/components/admin/product-list';
 import { SellerApplications } from '@/components/admin/seller-applications';
 import { AdminOverview } from '@/components/admin/admin-overview';
+import { SellerManagement } from '@/components/admin/seller-management';
 import { ProductDialog } from '@/components/admin/product-dialog';
 import { BannerList } from '@/components/admin/banner-list';
 import { BannerDialog } from '@/components/admin/banner-dialog';
@@ -172,7 +173,8 @@ function AdminContent() {
           <TabsList className="flex h-auto flex-wrap justify-start">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
-            <TabsTrigger value="sellers">Seller applications</TabsTrigger>
+            <TabsTrigger value="sellers">Applications</TabsTrigger>
+            <TabsTrigger value="seller-management">Manage sellers</TabsTrigger>
             <TabsTrigger value="banners">Banners</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -183,6 +185,7 @@ function AdminContent() {
         </div>
         <TabsContent value="overview"><AdminOverview /></TabsContent>
         <TabsContent value="sellers"><SellerApplications /></TabsContent>
+        <TabsContent value="seller-management"><SellerManagement /></TabsContent>
         <TabsContent value="products">
           <ProductList />
         </TabsContent>
