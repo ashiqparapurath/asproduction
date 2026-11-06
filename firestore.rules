@@ -39,7 +39,7 @@ service cloud.firestore {
      * @principle Role-Based Access Control: Only users with an admin role can access certain resources.
      */
     function isAdmin() {
-      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
     /**
@@ -89,7 +89,7 @@ service cloud.firestore {
      * @deny (write) A non-admin attempts to create an admin role.
      */
     match /roles_admin/{uid} {
-        allow get: if isSignedIn();
+        allow get: if isSignedIn() && (request.auth.uid == uid || isAdmin());
         allow list, create, update, delete: if isAdmin();
     }
 
@@ -101,7 +101,7 @@ service cloud.firestore {
      * @deny (write) A non-admin attempts to change a setting.
      */
     match /settings/{settingId} {
-        allow read: if true;
+        allow read: if settingId == 'enquiry' || isAdmin();
         allow write: if isAdmin();
     }
 
@@ -135,6 +135,72 @@ service cloud.firestore {
       allow get: if isAdmin() || (request.auth != null &&
         resource.data.ownerUid == request.auth.uid) || resource.data.status == 'active';
       allow list: if isAdmin() || resource.data.status == 'active';
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        isSignedIn() &&
+        sellerId == request.auth.uid &&
+        resource.data.ownerUid == request.auth.uid &&
+        resource.data.status == 'active' &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'description', 'contactPhone', 'isOpen', 'updatedAt'
+        ]) &&
+        request.resource.data.description is string &&
+        request.resource.data.description.size() <= 2000 &&
+        request.resource.data.contactPhone is string &&
+        request.resource.data.contactPhone.size() <= 40 &&
+        request.resource.data.isOpen is bool &&
+        request.resource.data.updatedAt == request.time
+      );
+    }
+
+    function sellerActive(sellerId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/sellers/$(sellerId)) &&
+        get(/databases/$(database)/documents/sellers/$(sellerId)).data.ownerUid == request.auth.uid &&
+        get(/databases/$(database)/documents/sellers/$(sellerId)).data.status == 'active' &&
+        get(/databases/$(database)/documents/sellers/$(sellerId)).data.accessEndsAt > request.time;
+    }
+
+    function validMarketplaceProduct(p) {
+      return p.keys().hasOnly([
+        'sellerId', 'name', 'description', 'price', 'category', 'imageUrls',
+        'showPrice', 'availability', 'stockQuantity', 'preparationDays',
+        'status', 'createdAt', 'updatedAt'
+      ]) &&
+      p.sellerId is string &&
+      p.name is string && p.name.size() >= 2 && p.name.size() <= 120 &&
+      p.description is string && p.description.size() <= 2000 &&
+      p.category is string && p.category.size() > 0 && p.category.size() <= 80 &&
+      p.price is number && p.price >= 0 && p.price <= 10000000 &&
+      p.imageUrls is list && p.imageUrls.size() <= 10 &&
+      p.showPrice is bool &&
+      p.availability in ['available', 'unavailable', 'made-to-order'] &&
+      p.stockQuantity is int && p.stockQuantity >= 0 &&
+      p.preparationDays is int && p.preparationDays >= 0 &&
+      p.status in ['draft', 'published'] &&
+      p.createdAt is timestamp && p.updatedAt is timestamp;
+    }
+
+    match /marketplace_products/{productId} {
+      allow get, list: if isAdmin() ||
+        (isSignedIn() && resource.data.sellerId == request.auth.uid) ||
+        (resource.data.status == 'published' &&
+          exists(/databases/$(database)/documents/sellers/$(resource.data.sellerId)) &&
+          get(/databases/$(database)/documents/sellers/$(resource.data.sellerId)).data.status == 'active' &&
+          get(/databases/$(database)/documents/sellers/$(resource.data.sellerId)).data.accessEndsAt > request.time);
+      allow create: if sellerActive(request.resource.data.sellerId) &&
+        request.resource.data.sellerId == request.auth.uid &&
+        validMarketplaceProduct(request.resource.data) &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.updatedAt == request.time;
+      allow update: if sellerActive(resource.data.sellerId) &&
+        resource.data.sellerId == request.auth.uid &&
+        request.resource.data.sellerId == resource.data.sellerId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        validMarketplaceProduct(request.resource.data) &&
+        request.resource.data.updatedAt == request.time;
+      allow delete: if sellerActive(resource.data.sellerId) &&
+        resource.data.sellerId == request.auth.uid;
       allow create, update, delete: if isAdmin();
     }
     match /checkout_orders/{checkoutId} {
