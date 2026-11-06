@@ -10,7 +10,7 @@ import { Package, Search } from 'lucide-react';
 
 export type OrderRecord = {
   id: string; buyerUid: string; sellerId: string; productId: string; productName: string;
-  quantity: number; unitPrice: number; subtotal: number;
+  quantity: number; unitPrice: number; subtotal: number; paymentMethod?: 'cod';
   status: 'pending' | 'accepted' | 'preparing' | 'ready' | 'completed' | 'rejected' | 'cancelled';
   customerName: string; customerPhone: string; deliveryAddress: string; customerNote: string;
   createdAt?: { toDate?: () => Date };
@@ -41,7 +41,7 @@ export function OrderManagement({ mode }: { mode: 'seller' | 'admin' | 'customer
     <p className="text-xs text-muted-foreground">These figures represent order values, not verified payments or revenue. Orders use offline fulfillment.</p>
     <div className="flex flex-wrap gap-3"><div className="relative min-w-[180px] flex-1"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search orders…" className="bg-white pl-9" /></div><select aria-label="Filter order status" value={filter} onChange={e => setFilter(e.target.value)} className="rounded-xl border bg-white px-4 text-sm">{['all', 'pending', 'accepted', 'preparing', 'ready', 'completed', 'rejected', 'cancelled'].map(s => <option key={s} value={s}>{s === 'all' ? 'All statuses' : s}</option>)}</select></div>
     {isLoading ? <p className="text-sm text-muted-foreground">Loading orders…</p> : !orders.length ? <div className="rounded-2xl border bg-white p-12 text-center"><Package className="mx-auto h-8 w-8 text-[#a68a64]" /><p className="mt-4 text-sm">No matching orders yet.</p></div> : <div className="space-y-4">{orders.map(o => <article key={o.id} className="rounded-2xl border bg-white p-5 sm:p-6"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs text-muted-foreground">Order {o.id.slice(0, 10)} · {o.createdAt?.toDate?.()?.toLocaleDateString('en-IN') ?? 'New'}</p><h3 className="mt-2 font-semibold">{o.productName} × {o.quantity}</h3><p className="mt-1 text-sm">{money(o.subtotal)}</p></div><span className="rounded-full bg-[#eee7dc] px-3 py-1 text-xs font-medium capitalize">{o.status}</span></div>
-    <div className="mt-4 grid gap-2 border-t pt-4 text-xs text-muted-foreground sm:grid-cols-2"><p>Customer: {o.customerName}</p><p>Phone: {o.customerPhone}</p><p className="sm:col-span-2">Delivery: {o.deliveryAddress}</p>{o.customerNote && <p className="sm:col-span-2">Note: {o.customerNote}</p>}{mode === 'admin' && <p className="sm:col-span-2">Seller: {o.sellerId}</p>}</div>
+    <div className="mt-4 grid gap-2 border-t pt-4 text-xs text-muted-foreground sm:grid-cols-2"><p>Customer: {o.customerName}</p><p>Phone: {o.customerPhone}</p><p>Payment: {o.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Offline (legacy order)'}</p><p className="sm:col-span-2">Delivery: {o.deliveryAddress}</p>{o.customerNote && <p className="sm:col-span-2">Note: {o.customerNote}</p>}{mode === 'admin' && <p className="sm:col-span-2">Seller: {o.sellerId}</p>}</div>
     {mode !== 'customer' && <div className="mt-5 flex flex-wrap gap-2">{(next[o.status] ?? []).map(s => <Button key={s} size="sm" variant={s === 'rejected' || s === 'cancelled' ? 'outline' : 'default'} disabled={working !== null} onClick={() => transition(o, s)} className="rounded-full capitalize">{s}</Button>)}</div>}</article>)}</div>}
   </section>;
 }
