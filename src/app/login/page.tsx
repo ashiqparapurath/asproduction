@@ -12,21 +12,52 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
+import { doc, getDoc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
+  const firestore = useFirestore();
+  const [checkingRole, setCheckingRole] = useState(false);
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   
   useEffect(() => {
-    if (!isUserLoading && user) {
-      router.replace('/admin');
+    if (isUserLoading || !user || !firestore) return;
+    let cancelled = false;
+    async function routeByRole() {
+      setCheckingRole(true);
+      try {
+        const admin = await getDoc(doc(firestore!, 'roles_admin', user!.uid));
+        if (cancelled) return;
+        if (admin.exists()) {
+          router.replace('/admin');
+          return;
+        }
+        const seller = await getDoc(doc(firestore!, 'sellers', user!.uid));
+        if (cancelled) return;
+        if (seller.exists()) {
+          // Seller dashboard is not released yet. Keep approved sellers in onboarding.
+          router.replace('/become-a-seller');
+          return;
+        }
+        const application = await getDoc(doc(firestore!, 'seller_applications', user!.uid));
+        if (cancelled) return;
+        router.replace(application.exists() ? '/become-a-seller' : '/');
+      } catch {
+        if (!cancelled) {
+          toast({ variant: 'destructive', title: 'Could not check account access', description: 'Check your Firebase permissions and try again.' });
+          setCheckingRole(false);
+        }
+      }
     }
-  }, [user, isUserLoading, router]);
+    void routeByRole();
+    return () => { cancelled = true; };
+  }, [user, isUserLoading, firestore, router, toast]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +74,7 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: 'Login Successful',
-        description: 'Redirecting to admin panel...',
+        description: 'Checking your account access...',
       });
       // The useEffect will handle the redirect
     } catch (error: any) {
@@ -58,7 +89,7 @@ export default function LoginPage() {
     }
   };
 
-  if (isUserLoading || user) {
+  if (isUserLoading || (user && checkingRole)) {
      return (
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <div className="flex flex-col items-center gap-4">
@@ -79,8 +110,8 @@ export default function LoginPage() {
        </div>
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Admin Login</CardTitle>
-          <CardDescription>Enter your credentials to access the admin panel.</CardDescription>
+          <CardTitle className="text-2xl">Sign in to TreatStory</CardTitle>
+          <CardDescription>Sign in to your marketplace account.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignIn} className="space-y-4">
@@ -90,7 +121,7 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 autoComplete="email"
-                placeholder="admin@example.com"
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
