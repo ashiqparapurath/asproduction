@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { signOut as firebaseSignOut } from 'firebase/auth';
 import Link from 'next/link';
 import { doc } from 'firebase/firestore';
 import { useAuth, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -50,7 +51,7 @@ export default function AdminPage() {
   async function signOut() {
     if (!auth) return;
     setSigningOut(true);
-    try { await auth.signOut(); router.replace('/'); }
+    try { await firebaseSignOut(auth); router.replace('/'); }
     catch { setSigningOut(false); }
   }
 
