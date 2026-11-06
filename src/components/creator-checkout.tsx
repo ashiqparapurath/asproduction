@@ -1,0 +1,63 @@
+'use client';
+
+import { useState, type FormEvent } from 'react';
+import { addDoc, collection, doc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { useFirestore, useUser } from '@/firebase';
+import { useCart } from '@/context/cart-context';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import Link from 'next/link';
+import type { MarketplaceProduct } from '@/lib/marketplace-types';
+
+export function CreatorCheckout() {
+  const { user } = useUser();
+  const db = useFirestore();
+  const { cartItems, removeFromCart } = useCart();
+  const { toast } = useToast();
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<string[]>([]);
+  const items = cartItems.filter(i => i.id.startsWith('seller:'));
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (!db || !user || busy || !items.length) return;
+    setBusy(true);
+    const placed: string[] = [];
+    try {
+      // Orders are deliberately submitted per listing so rules can verify
+      // each product, seller, price and quantity independently.
+      for (const item of items) {
+        const productId = item.id.slice('seller:'.length);
+        const snapshot = await getDoc(doc(db, 'marketplace_products', productId));
+        if (!snapshot.exists()) throw new Error('A product is no longer available.');
+        const product = snapshot.data() as MarketplaceProduct;
+        if (product.status !== 'published' || product.availability === 'unavailable' || !product.showPrice) throw new Error(`${product.name} cannot be ordered.`);
+        const order = await addDoc(collection(db, 'seller_orders'), {
+          buyerUid: user.uid, sellerId: product.sellerId, productId,
+          productName: product.name, quantity: item.quantity,
+          unitPrice: product.price, subtotal: product.price * item.quantity,
+          status: 'pending', customerName: name.trim(), customerPhone: phone.trim(),
+          deliveryAddress: address.trim(), customerNote: note.trim(),
+          createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+        });
+        placed.push(order.id);
+        removeFromCart(item.id);
+      }
+      setResult(placed);
+      toast({ title: 'Orders submitted', description: `${placed.length} creator order(s) placed.` });
+    } catch (err) {
+      if (placed.length) setResult(placed);
+      toast({ variant: 'destructive', title: 'Could not finish checkout', description: `${placed.length} order(s) succeeded. ${err instanceof Error ? err.message : 'Please retry remaining items.'}` });
+    } finally { setBusy(false); }
+  }
+  if (!items.length && !result.length) return null;
+  return <section className="mt-7 rounded-2xl border bg-[#f7f5f1] p-5"><h3 className="text-lg font-medium">Creator checkout</h3><p className="mt-2 text-xs leading-5 text-muted-foreground">Place an offline order request with each creator. No payment is collected online. Sellers confirm availability and fulfillment.</p>
+    {result.length > 0 && <div className="mt-4 rounded-xl bg-white p-4 text-sm"><p className="font-semibold">{result.length} order(s) submitted</p><p className="mt-2 text-xs text-muted-foreground">Order references: {result.map(id => id.slice(0, 10)).join(', ')}</p><Link href="/orders" className="mt-3 inline-block underline underline-offset-4">Track your orders</Link></div>}
+    {!user ? <Link href="/login" className="editorial-button mt-5">Sign in to order</Link> : items.length > 0 && <form onSubmit={submit} className="mt-5 space-y-3"><Input required minLength={2} maxLength={120} placeholder="Full name" aria-label="Full name" value={name} onChange={e => setName(e.target.value)} /><Input required minLength={5} maxLength={40} placeholder="Contact phone" aria-label="Contact phone" value={phone} onChange={e => setPhone(e.target.value)} /><Textarea required minLength={10} maxLength={1000} placeholder="Delivery address" aria-label="Delivery address" value={address} onChange={e => setAddress(e.target.value)} /><Textarea maxLength={1000} placeholder="Special instructions (optional)" aria-label="Special instructions" value={note} onChange={e => setNote(e.target.value)} /><Button type="submit" disabled={busy || !db} className="w-full rounded-full">{busy ? 'Submitting orders…' : `Place ${items.length} creator order(s)`}</Button></form>}
+  </section>;
+}
