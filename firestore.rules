@@ -108,24 +108,37 @@ service cloud.firestore {
     // New multi-vendor collections are restricted until the corresponding
     // validated server workflows and emulator tests are ready.
     match /seller_applications/{applicationId} {
-      allow create: if request.auth != null &&
-        applicationId == request.auth.uid &&
+      // Public applications may be submitted without an account. They remain
+      // pending and cannot grant seller privileges or set an owner UID.
+      allow create: if (
+        (isSignedIn() && applicationId == request.auth.uid &&
+          request.resource.data.ownerUid == request.auth.uid) ||
+        (request.resource.data.ownerUid == '' &&
+          applicationId.size() >= 20 && applicationId.size() <= 40)
+      ) &&
         request.resource.data.keys().hasOnly([
           'ownerUid', 'businessName', 'businessCategory',
           'contactEmail', 'contactPhone', 'description',
           'status', 'submittedAt'
         ]) &&
-        request.resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.keys().hasAll([
+          'ownerUid', 'businessName', 'businessCategory',
+          'contactEmail', 'contactPhone', 'description',
+          'status', 'submittedAt'
+        ]) &&
         request.resource.data.status == 'pending' &&
         request.resource.data.businessName is string &&
         request.resource.data.businessName.size() >= 2 &&
         request.resource.data.businessName.size() <= 120 &&
         request.resource.data.businessCategory in ['home-bakery', 'art', 'handmade', 'other'] &&
         request.resource.data.contactEmail is string &&
+        request.resource.data.contactEmail.size() >= 3 &&
         request.resource.data.contactEmail.size() <= 254 &&
         request.resource.data.contactPhone is string &&
+        request.resource.data.contactPhone.size() >= 5 &&
         request.resource.data.contactPhone.size() <= 40 &&
         request.resource.data.description is string &&
+        request.resource.data.description.size() >= 1 &&
         request.resource.data.description.size() <= 2000 &&
         request.resource.data.submittedAt == request.time;
       allow get: if isAdmin() || (request.auth != null && applicationId == request.auth.uid);
