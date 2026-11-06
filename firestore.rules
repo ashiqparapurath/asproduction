@@ -213,12 +213,12 @@ service cloud.firestore {
         d.keys().hasOnly([
           'buyerUid', 'sellerId', 'productId', 'productName', 'quantity',
           'unitPrice', 'subtotal', 'status', 'customerName', 'customerPhone',
-          'deliveryAddress', 'customerNote', 'createdAt', 'updatedAt'
+          'deliveryAddress', 'customerNote', 'paymentMethod', 'createdAt', 'updatedAt'
         ]) &&
         d.keys().hasAll([
           'buyerUid', 'sellerId', 'productId', 'productName', 'quantity',
           'unitPrice', 'subtotal', 'status', 'customerName', 'customerPhone',
-          'deliveryAddress', 'customerNote', 'createdAt', 'updatedAt'
+          'deliveryAddress', 'customerNote', 'paymentMethod', 'createdAt', 'updatedAt'
         ]) &&
         d.buyerUid == request.auth.uid &&
         d.productId is string &&
@@ -227,6 +227,7 @@ service cloud.firestore {
         d.customerPhone is string && d.customerPhone.size() >= 5 && d.customerPhone.size() <= 40 &&
         d.deliveryAddress is string && d.deliveryAddress.size() >= 10 && d.deliveryAddress.size() <= 1000 &&
         d.customerNote is string && d.customerNote.size() <= 1000 &&
+        d.paymentMethod == 'cod' &&
         d.status == 'pending' &&
         d.createdAt == request.time && d.updatedAt == request.time &&
         exists(/databases/$(database)/documents/marketplace_products/$(d.productId)) &&
