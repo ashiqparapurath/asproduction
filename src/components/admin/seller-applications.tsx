@@ -20,6 +20,10 @@ export function SellerApplications() {
 
   async function review(application: SellerApplication, approved: boolean) {
     if (!firestore || !user || working) return;
+    if (approved && !application.ownerUid) {
+      toast({ variant: 'destructive', title: 'Account required for activation', description: 'Contact this applicant and ask them to register before granting seller access.' });
+      return;
+    }
     setWorking(application.id);
     try {
       const batch = writeBatch(firestore);
@@ -77,10 +81,11 @@ export function SellerApplications() {
                   <p className="text-xs uppercase tracking-widest text-muted-foreground">{application.businessCategory}</p>
                   <p className="text-sm text-muted-foreground">{application.description}</p>
                   <p className="text-sm">{application.contactEmail} · {application.contactPhone}</p>
+                  {!application.ownerUid && <p className="text-xs font-medium text-amber-800">Guest application · Contact applicant to arrange account registration before approval</p>}
                 </div>
                 <div className="flex shrink-0 gap-2">
                   <Button variant="outline" disabled={working !== null} onClick={() => review(application, false)}>Reject</Button>
-                  <Button disabled={working !== null} onClick={() => review(application, true)}>{working === application.id ? 'Saving…' : 'Approve trial'}</Button>
+                  <Button disabled={!application.ownerUid || working !== null} onClick={() => review(application, true)}>{working === application.id ? 'Saving…' : 'Approve trial'}</Button>
                 </div>
               </div>
             </article>
