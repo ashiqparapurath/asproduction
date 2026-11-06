@@ -88,18 +88,10 @@ export function Header() {
                 ))}
               </nav>
               <Link href={user ? "/dashboard" : "/login"} aria-label={user ? "Open dashboard" : "Sign in"} title={user ? "Open dashboard" : "Sign in"} className="inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-muted"><UserRound className="h-[19px] w-[19px]" /></Link>
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Shopping bag" className="relative h-10 w-10 rounded-full">
-                    <ShoppingBag className="h-[19px] w-[19px]" />
-                    {cartCount > 0 && <Badge className="absolute -right-0.5 -top-0.5 h-[19px] min-w-[19px] justify-center rounded-full border-2 border-background bg-[#b28f62] px-1 text-[10px] text-white">{cartCount}</Badge>}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent className="flex flex-col">
-                  <SheetHeader><SheetTitle>Your bag <span className="text-muted-foreground">({cartCount})</span></SheetTitle></SheetHeader>
-                  <CartDrawer />
-                </SheetContent>
-              </Sheet>
+              <Link href="/cart" aria-label={`Shopping bag, ${cartCount} items`} title="Shopping bag" className="relative inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-muted">
+                <ShoppingBag className="h-[19px] w-[19px]" />
+                {cartCount > 0 && <Badge className="absolute -right-0.5 -top-0.5 h-[19px] min-w-[19px] justify-center rounded-full border-2 border-background bg-[#b28f62] px-1 text-[10px] text-white">{cartCount}</Badge>}
+              </Link>
             </div>
           </div>
           <nav className="hidden h-10 items-center justify-center gap-10 border-t border-[#eee8df] lg:hidden md:flex">
