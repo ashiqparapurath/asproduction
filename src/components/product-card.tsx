@@ -3,7 +3,7 @@
 import type { Product } from '@/lib/products';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
@@ -61,8 +61,8 @@ export function ProductCard({ product }: ProductCardProps) {
             </>
           )}
           <span className="absolute left-3 top-3 rounded-full bg-[#faf8f3]/90 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#51463a] backdrop-blur-sm">{product.category}</span>
-          <Button onClick={handleAddToCart} size="icon" aria-label={`Add ${product.name} to bag`} className="absolute bottom-3 right-3 h-9 w-9 rounded-full bg-white text-foreground shadow-md transition-transform hover:scale-105 hover:bg-white">
-            <Plus className="h-4 w-4" />
+          <Button onClick={handleAddToCart} size="icon" aria-label={`Add ${product.name} to bag`} className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-white text-foreground shadow-md transition-transform hover:scale-105 hover:bg-[#f4eee5]">
+            <ShoppingBag className="h-4 w-4" />
           </Button>
         </div>
       </CardHeader>
@@ -70,7 +70,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <CardTitle className="line-clamp-2 text-[13px] font-medium leading-snug tracking-tight text-foreground sm:text-[15px]">{product.name}</CardTitle>
         <CardDescription className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground sm:text-xs">{product.description}</CardDescription>
       </CardContent>
-      <CardFooter className="mt-3 flex items-center justify-between px-0 py-0">
+      <CardFooter className="mt-3 flex items-center justify-between gap-2 px-0 py-0">
         {product.showPrice ? <p className="text-sm font-semibold tracking-tight text-foreground sm:text-base">{formatPrice(product.price)}</p> : <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">Price on request</p>}
         <span className="text-[9px] uppercase tracking-[0.12em] text-[#a48a67]">Discover</span>
       </CardFooter>
