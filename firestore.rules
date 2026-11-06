@@ -256,41 +256,10 @@ service cloud.firestore {
         request.resource.data.locality is string && request.resource.data.locality.size() <= 120 &&
         request.resource.data.district is string && request.resource.data.district.size() > 0 && request.resource.data.district.size() <= 120 &&
         request.resource.data.state is string && request.resource.data.state.size() > 0 && request.resource.data.state.size() <= 120 &&
-        request.resource.data.pincode is string && request.resource.data.pincode.matches('^[0-9]{6}
-      allow read, write: if false;
-    }
-
-    match /seller_orders/{orderId} {
-      allow create: if validNewOrder(request.resource.data);
-      allow get, list: if isAdmin() ||
-        (isSignedIn() && resource.data.buyerUid == request.auth.uid) ||
-        (isSignedIn() && resource.data.sellerId == request.auth.uid);
-      allow update: if isAdmin() || (
-        isSignedIn() &&
-        resource.data.sellerId == request.auth.uid &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']) &&
-        request.resource.data.updatedAt == request.time &&
-        (
-          (resource.data.status == 'pending' && request.resource.data.status in ['accepted', 'rejected']) ||
-          (resource.data.status == 'accepted' && request.resource.data.status in ['preparing', 'cancelled']) ||
-          (resource.data.status == 'preparing' && request.resource.data.status in ['ready', 'cancelled']) ||
-          (resource.data.status == 'ready' && request.resource.data.status == 'completed')
-        )
-      );
-      allow delete: if false;
-    }
-    match /conversations/{conversationId}/{nested=**} {
-      allow read, write: if false;
-    }
-    match /audit_logs/{logId} {
-      allow read, write: if false;
-    }
-
-  }
-}
-) &&
+        request.resource.data.pincode is string && request.resource.data.pincode.matches('^[0-9]{6}$') &&
         request.resource.data.updatedAt == request.time;
     }
+
     match /checkout_orders/{checkoutId} {
       allow read, write: if false;
     }
