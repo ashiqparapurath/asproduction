@@ -102,8 +102,8 @@ export default function Home() {
             <div className="relative order-1 md:order-2">
               <div className="relative aspect-[1.3/1] overflow-hidden rounded-[22px] bg-[#e8dfd2] md:aspect-[1.18/1] lg:aspect-[1.4/1]">
                 <Image
-                  src="/img/login-side.avif"
-                  alt="Handmade strawberry desserts in glass jars, showcasing TreatStory home bakers"
+                  src="/img/landing-hero.png"
+                  alt="Artisanal cakes and homemade treats alongside embroidered crafts, handmade gifts and candles"
                   fill
                   priority
                   sizes="(max-width: 1024px) 100vw, 55vw"
