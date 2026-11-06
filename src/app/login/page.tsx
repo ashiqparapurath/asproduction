@@ -41,8 +41,7 @@ export default function LoginPage() {
         const seller = await getDoc(doc(firestore!, 'sellers', user!.uid));
         if (cancelled) return;
         if (seller.exists()) {
-          // Seller dashboard is not released yet. Keep approved sellers in onboarding.
-          router.replace('/become-a-seller');
+          router.replace('/seller/dashboard');
           return;
         }
         const application = await getDoc(doc(firestore!, 'seller_applications', user!.uid));
