@@ -73,24 +73,24 @@ export default function Home() {
     <div className="flex min-h-screen flex-col overflow-hidden bg-background">
       <Header />
       <main className="flex-1">
-        <section className="section-shell pb-9 pt-8 sm:pb-14 sm:pt-12 lg:pb-20 lg:pt-16">
-          <div className="grid items-center gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:gap-14">
-            <div className="relative z-10 order-2 max-w-xl pb-3 lg:order-1 lg:pb-0">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#e6ded2] bg-white/70 px-3 py-2">
+        <section className="section-shell pb-7 pt-5 sm:pb-10 sm:pt-8 lg:pb-12 lg:pt-10">
+          <div className="grid items-center gap-5 md:grid-cols-[0.95fr_1.05fr] md:gap-8 lg:gap-10">
+            <div className="relative z-10 order-2 max-w-xl pb-1 md:order-1 md:pb-0">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#e6ded2] bg-white/70 px-3 py-2">
                 <Sparkles className="h-3.5 w-3.5 text-[#b28f62]" />
                 <span className="eyebrow text-[#8c7658]">Good things live here</span>
               </div>
-              <h1 className="text-[clamp(2.75rem,6vw,5.9rem)] font-medium leading-[0.98] tracking-[-0.065em] text-foreground">
+              <h1 className="text-[clamp(2.5rem,5vw,5.2rem)] font-medium leading-[0.98] tracking-[-0.065em] text-foreground">
                 Little finds.<br /><span className="font-serif italic font-normal text-[#a68a64]">Lovely stories.</span>
               </h1>
-              <p className="mt-6 max-w-md text-sm leading-7 text-muted-foreground sm:text-base">
+              <p className="mt-4 max-w-md text-sm leading-7 text-muted-foreground sm:text-base">
                 Discover thoughtful pieces for the way you live, give and grow. Your next favourite thing is waiting to be found.
               </p>
-              <div className="mt-8 flex flex-wrap items-center gap-4">
+              <div className="mt-5 flex flex-wrap items-center gap-4">
                 <Link href="/products" className="editorial-button">Explore the collection <ArrowRight className="ml-2 h-4 w-4" /></Link>
                 <Link href="/about" className="text-xs font-semibold uppercase tracking-[0.14em] text-foreground underline decoration-[#c7b08e] underline-offset-4 transition-colors hover:text-[#9b7d55]">Our story</Link>
               </div>
-              <div className="mt-10 hidden items-center gap-4 border-t border-[#e8e0d5] pt-5 sm:flex">
+              <div className="mt-6 hidden items-center gap-4 border-t border-[#e8e0d5] pt-5 sm:flex">
                 <div className="flex -space-x-2">
                   <span className="h-7 w-7 rounded-full border-2 border-background bg-[#d9c8b1]" />
                   <span className="h-7 w-7 rounded-full border-2 border-background bg-[#b5b09b]" />
@@ -99,8 +99,8 @@ export default function Home() {
                 <p className="text-[11px] leading-relaxed text-muted-foreground">A little more joy in<br /><span className="font-semibold text-foreground">the everyday details.</span></p>
               </div>
             </div>
-            <div className="relative order-1 lg:order-2">
-              <div className="relative aspect-[1.12/1] overflow-hidden rounded-[26px] bg-[#e8dfd2] sm:aspect-[1.25/1] lg:aspect-[1.08/1]">
+            <div className="relative order-1 md:order-2">
+              <div className="relative aspect-[1.65/1] overflow-hidden rounded-[22px] bg-[#e8dfd2] md:aspect-[1.18/1] lg:aspect-[1.4/1]">
                 <Image
                   src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1600&q=85"
                   alt="A warm, thoughtfully curated lifestyle store"
@@ -122,7 +122,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="section-shell pb-12 sm:pb-16">
+        <section className="section-shell pb-8 sm:pb-11">
           <div className="mb-5 flex items-end justify-between gap-4">
             <div><p className="eyebrow text-[#a68a64]">A little inspiration</p><h2 className="mt-2 text-2xl font-medium tracking-tight sm:text-3xl">The latest from TreatStory</h2></div>
             <Link href="/products" className="hidden items-center gap-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.15em] sm:flex">Shop all <ArrowRight className="h-4 w-4" /></Link>
@@ -130,19 +130,19 @@ export default function Home() {
           <BannerCarousel />
         </section>
 
-        <section className="bg-[#f1ede6] py-12 sm:py-16">
+        <section className="bg-[#f1ede6] py-9 sm:py-12">
           <div className="section-shell">
             <div className="mb-7 flex flex-col justify-between gap-3 sm:mb-9 sm:flex-row sm:items-end">
               <div><p className="eyebrow text-[#a68a64]">Picked for you</p><h2 className="mt-2 text-3xl font-medium tracking-tight sm:text-4xl">Find your next favourite</h2><p className="mt-2 text-sm text-muted-foreground">Thoughtful finds, all in one happy place.</p></div>
               <Link href="/products" className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em]">View everything <ArrowRight className="h-4 w-4" /></Link>
             </div>
-            <div className="mb-12"><SellerStorefrontProducts limitCount={8} /></div>
+            <div className="mb-7"><SellerStorefrontProducts limitCount={8} /></div>
             <Suspense fallback={<Skeleton className="h-96 w-full rounded-2xl" />}><HomePageContent /></Suspense>
           </div>
         </section>
 
-        <section className="section-shell py-14 sm:py-20">
-          <div className="overflow-hidden rounded-[26px] bg-[#29241f] px-6 py-10 text-center text-[#faf8f3] sm:px-10 sm:py-14">
+        <section className="section-shell py-9 sm:py-12">
+          <div className="overflow-hidden rounded-[26px] bg-[#29241f] px-6 py-8 text-center text-[#faf8f3] sm:px-10 sm:py-10">
             <p className="eyebrow text-[#cbb18b]">The joy is in the finding</p>
             <h2 className="mx-auto mt-4 max-w-2xl text-3xl font-medium leading-tight tracking-tight sm:text-4xl">A good find can turn an ordinary day into a lovely story.</h2>
             <Link href="/products" className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#faf8f3] px-6 py-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#29241f] transition hover:bg-white">Find yours <ArrowRight className="h-4 w-4" /></Link>
