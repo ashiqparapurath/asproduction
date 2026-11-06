@@ -22,7 +22,6 @@ const navItems = [
   { href: '/products', label: 'Shop all' },
   { href: '/new-arrivals', label: 'New arrivals' },
   { href: '/about', label: 'Our story' },
-  { href: '/become-a-seller', label: 'Sell with us' },
 ];
 
 export function Header() {
@@ -32,12 +31,10 @@ export function Header() {
 
   return (
     <>
-      <div className="hidden sm:flex h-8 items-center justify-center bg-[#28231f] px-4 text-[10px] font-medium tracking-[0.18em] text-[#f7f1e8]">
-        GOOD THINGS, THOUGHTFULLY FOUND <span className="mx-2 text-[#c8a879]">✳</span> WELCOME TO TREATSTORY
-      </div>
-      <header className="sticky top-0 z-40 border-b border-[#e9e2d8] bg-background/95 backdrop-blur-xl">
+
+      <header className="sticky top-0 z-40 border-b border-[#e9e2d8] bg-[#fcfaf6]/95 shadow-[0_3px_18px_rgba(48,36,22,0.035)] backdrop-blur-xl">
         <div className="section-shell">
-          <div className="grid h-[68px] grid-cols-[1fr_auto_1fr] items-center md:h-[82px]">
+          <div className="grid h-[64px] grid-cols-[1fr_auto_1fr] items-center md:h-[72px]">
             <div className="flex items-center justify-start">
               <div className="md:hidden">
                 <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
@@ -75,14 +72,14 @@ export function Header() {
               </Link>
             </div>
 
-            <Link href="/" aria-label="TreatStory home" className="brand-wordmark justify-self-center text-[29px] leading-none text-foreground sm:text-[34px] md:text-[39px]">
+            <Link href="/" aria-label="TreatStory home" className="brand-wordmark justify-self-center whitespace-nowrap text-[28px] leading-none text-foreground sm:text-[33px] md:text-[36px]">
               TreatStory
             </Link>
 
-            <div className="flex items-center justify-end gap-1 sm:gap-3">
-              <nav className="hidden items-center gap-7 lg:flex">
+            <div className="flex items-center justify-end gap-0.5 sm:gap-2">
+              <nav className="hidden items-center gap-5 xl:gap-7 lg:flex">
                 {navItems.map((item) => (
-                  <Link key={item.href} href={item.href} className="text-[11px] font-semibold uppercase tracking-[0.13em] text-muted-foreground transition-colors hover:text-foreground">
+                  <Link key={item.href} href={item.href} className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.10em] text-[#72685d] transition-colors hover:text-foreground">
                     {item.label}
                   </Link>
                 ))}
@@ -94,7 +91,7 @@ export function Header() {
               </Link>
             </div>
           </div>
-          <nav className="hidden h-10 items-center justify-center gap-10 border-t border-[#eee8df] lg:hidden md:flex">
+          <nav className="hidden h-10 items-center justify-center gap-8 border-t border-[#eee8df] lg:hidden md:flex">
             {navItems.map((item) => (
               <Link key={item.href} href={item.href} className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground">{item.label}</Link>
             ))}
