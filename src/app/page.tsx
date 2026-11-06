@@ -84,7 +84,7 @@ export default function Home() {
                 Little finds.<br /><span className="font-serif italic font-normal text-[#a68a64]">Lovely stories.</span>
               </h1>
               <p className="mt-4 max-w-md text-sm leading-7 text-muted-foreground sm:text-base">
-                Discover thoughtful pieces for the way you live, give and grow. Your next favourite thing is waiting to be found.
+                Discover homemade bakes, handmade gifts and creative finds from independent makers across Kerala.
               </p>
               <div className="mt-5 flex flex-wrap items-center gap-4">
                 <Link href="/products" className="editorial-button">Explore the collection <ArrowRight className="ml-2 h-4 w-4" /></Link>
@@ -100,10 +100,10 @@ export default function Home() {
               </div>
             </div>
             <div className="relative order-1 md:order-2">
-              <div className="relative aspect-[1.65/1] overflow-hidden rounded-[22px] bg-[#e8dfd2] md:aspect-[1.18/1] lg:aspect-[1.4/1]">
+              <div className="relative aspect-[1.3/1] overflow-hidden rounded-[22px] bg-[#e8dfd2] md:aspect-[1.18/1] lg:aspect-[1.4/1]">
                 <Image
-                  src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1600&q=85"
-                  alt="A warm, thoughtfully curated lifestyle store"
+                  src="/img/login-side.avif"
+                  alt="Handmade strawberry desserts in glass jars, showcasing TreatStory home bakers"
                   fill
                   priority
                   sizes="(max-width: 1024px) 100vw, 55vw"
