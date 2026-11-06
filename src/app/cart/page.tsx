@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { Header } from '@/components/header';
-import { CreatorCheckout } from '@/components/creator-checkout';
 import { useCart } from '@/context/cart-context';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -39,7 +38,7 @@ export default function CartPage() {
       </article>)}</div>
       <aside className="h-fit rounded-3xl border border-[#e8e0d5] bg-white p-7 lg:sticky lg:top-28"><h2 className="text-xl font-medium">Bag summary</h2><div className="mt-6 flex justify-between text-sm"><span className="text-muted-foreground">Items</span><span>{cartCount}</span></div><div className="mt-4 flex justify-between border-t pt-4 text-lg font-semibold"><span>Displayed subtotal</span><span>{money(subtotal)}</span></div><p className="mt-3 text-xs leading-5 text-muted-foreground">Prices on request, delivery and other charges are not included.</p>
       {legacyItems.length > 0 && <Button onClick={sendLegacyEnquiry} disabled={!settings?.whatsappNumber} className="mt-7 w-full rounded-full"><Send className="mr-2 h-4 w-4" />Enquire about TreatStory items</Button>}
-      {sellerItems.length > 0 && <CreatorCheckout />}
+      {sellerItems.length > 0 && <div className="mt-6 space-y-3 border-t pt-6"><Link href="/checkout" className="flex min-h-12 w-full items-center justify-center rounded-full bg-[#29251f] px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-[#51463a]">Proceed to checkout</Link><p className="text-center text-xs leading-5 text-muted-foreground">Cash on Delivery · Seller-confirmed delivery · No online payment</p></div>}
       </aside>
     </div>}
   </main></div>;
