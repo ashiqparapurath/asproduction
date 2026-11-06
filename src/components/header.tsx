@@ -87,7 +87,7 @@ export function Header() {
                   </Link>
                 ))}
               </nav>
-              <Link href={user ? "/account" : "/login"} aria-label={user ? "My account" : "Sign in"} title={user ? "My account" : "Sign in"} className="inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-muted"><UserRound className="h-[19px] w-[19px]" /></Link>
+              <Link href={user ? "/dashboard" : "/login"} aria-label={user ? "Open dashboard" : "Sign in"} title={user ? "Open dashboard" : "Sign in"} className="inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-muted"><UserRound className="h-[19px] w-[19px]" /></Link>
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon" aria-label="Shopping bag" className="relative h-10 w-10 rounded-full">
