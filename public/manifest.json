@@ -2,8 +2,12 @@
   "short_name": "TreatStory",
   "name": "TreatStory — Little finds, lovely stories",
   "icons": [
-    { "src": "/logo.png", "type": "image/png", "sizes": "192x192" },
-    { "src": "/logo.png", "type": "image/png", "sizes": "512x512" }
+    {
+      "src": "/favicon.ico",
+      "type": "image/x-icon",
+      "sizes": "any",
+      "purpose": "any"
+    }
   ],
   "start_url": "/",
   "display": "standalone",
