@@ -132,7 +132,10 @@ service cloud.firestore {
       allow list, update, delete: if isAdmin();
     }
     match /sellers/{sellerId} {
-      allow read, write: if false;
+      allow get: if isAdmin() || (request.auth != null &&
+        resource.data.ownerUid == request.auth.uid) || resource.data.status == 'active';
+      allow list: if isAdmin() || resource.data.status == 'active';
+      allow create, update, delete: if isAdmin();
     }
     match /checkout_orders/{checkoutId} {
       allow read, write: if false;
