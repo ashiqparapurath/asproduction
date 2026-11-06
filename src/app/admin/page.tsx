@@ -9,6 +9,7 @@ import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProductList } from '@/components/admin/product-list';
+import { SellerApplications } from '@/components/admin/seller-applications';
 import { ProductDialog } from '@/components/admin/product-dialog';
 import { BannerList } from '@/components/admin/banner-list';
 import { BannerDialog } from '@/components/admin/banner-dialog';
@@ -166,9 +167,10 @@ function AdminContent() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="products">
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
-          <TabsList>
+        <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-4 mb-4">
+          <TabsList className="flex h-auto flex-wrap justify-start">
             <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="sellers">Seller applications</TabsTrigger>
             <TabsTrigger value="banners">Banners</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -177,6 +179,7 @@ function AdminContent() {
               {renderAddButton()}
           </div>
         </div>
+        <TabsContent value="sellers"><SellerApplications /></TabsContent>
         <TabsContent value="products">
           <ProductList />
         </TabsContent>
