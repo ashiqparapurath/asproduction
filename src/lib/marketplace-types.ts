@@ -39,6 +39,9 @@ export interface Seller {
 export interface MarketplaceProduct {
   id: string;
   sellerId: string;
+  status: 'draft' | 'published';
+  createdAt?: unknown;
+  updatedAt?: unknown;
   name: string;
   description: string;
   price: number;
