@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import Link from 'next/link';
-import type { MarketplaceProduct } from '@/lib/marketplace-types';
+import type { MarketplaceProduct, Seller } from '@/lib/marketplace-types';
 
 export function CreatorCheckout() {
   const { user } = useUser();
@@ -37,6 +37,15 @@ export function CreatorCheckout() {
         if (!snapshot.exists()) throw new Error('A product is no longer available.');
         const product = snapshot.data() as MarketplaceProduct;
         if (product.status !== 'published' || product.availability === 'unavailable' || !product.showPrice) throw new Error(`${product.name} cannot be ordered.`);
+        const sellerSnapshot = await getDoc(doc(db, 'sellers', product.sellerId));
+        if (!sellerSnapshot.exists()) throw new Error(`The seller for ${product.name} is no longer available.`);
+        const seller = sellerSnapshot.data() as Seller;
+        if (seller.status !== 'active') throw new Error(`${seller.businessName || 'This seller'} is not currently active.`);
+        if (!seller.isOpen) throw new Error(`${seller.businessName || 'This seller'} is not accepting orders right now.`);
+        const expiry = seller.accessEndsAt as { toMillis?: () => number } | undefined;
+        if (!expiry?.toMillis || expiry.toMillis() <= Date.now()) throw new Error(`${seller.businessName || 'This seller'}'s marketplace access has expired.`);
+        if (!Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 99) throw new Error('Choose a quantity between 1 and 99.');
+        if (name.trim().length < 2 || phone.trim().length < 5 || address.trim().length < 10) throw new Error('Please complete your contact and delivery details.');
         const order = await addDoc(collection(db, 'seller_orders'), {
           buyerUid: user.uid, sellerId: product.sellerId, productId,
           productName: product.name, quantity: item.quantity,
@@ -52,7 +61,9 @@ export function CreatorCheckout() {
       toast({ title: 'Orders submitted', description: `${placed.length} creator order(s) placed.` });
     } catch (err) {
       if (placed.length) setResult(placed);
-      toast({ variant: 'destructive', title: 'Could not finish checkout', description: `${placed.length} order(s) succeeded. ${err instanceof Error ? err.message : 'Please retry remaining items.'}` });
+      const message = err instanceof Error ? err.message : 'Please retry remaining items.';
+      const helpful = message.includes('permission') ? 'Firestore rejected the order. Confirm the latest rules are published, and check that the seller is active, open, and has a future accessEndsAt timestamp. If all are valid, run the seller_orders create request in the Firestore Rules simulator.' : message;
+      toast({ variant: 'destructive', title: 'Could not finish checkout', description: `${placed.length} order(s) succeeded. ${helpful}` });
     } finally { setBusy(false); }
   }
   if (!items.length && !result.length) return null;
