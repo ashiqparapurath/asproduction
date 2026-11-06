@@ -11,8 +11,6 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Eye, EyeOff, Sparkles, ShoppingBag, ShieldCheck } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -20,45 +18,15 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const auth = useAuth();
-  const firestore = useFirestore();
-  const [checkingRole, setCheckingRole] = useState(false);
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
-  
+
+  // The dashboard router sends buyers to their profile and creators/admins
+  // to the correct workspace. Never send a successful login to the homepage.
   useEffect(() => {
-    if (isUserLoading || !user || !firestore) return;
-    let cancelled = false;
-    async function routeByRole() {
-      setCheckingRole(true);
-      try {
-        const admin = await getDoc(doc(firestore!, 'roles_admin', user!.uid));
-        if (cancelled) return;
-        if (admin.exists()) {
-          router.replace('/admin');
-          return;
-        }
-        // A buyer does not need a seller application or seller role.
-        // Failed optional role reads must not block a successful login.
-        try {
-          const seller = await getDoc(doc(firestore!, 'sellers', user!.uid));
-          if (cancelled) return;
-          if (seller.exists()) {
-            router.replace('/seller/dashboard');
-            return;
-          }
-        } catch (roleError) {
-          console.warn('Seller role lookup unavailable; continuing as customer.', roleError);
-        }
-        if (!cancelled) router.replace('/');
-      } catch (roleError) {
-        console.warn('Role lookup unavailable; routing to customer storefront.', roleError);
-        if (!cancelled) router.replace('/');
-      }
-    }
-    void routeByRole();
-    return () => { cancelled = true; };
-  }, [user, isUserLoading, firestore, router, toast]);
+    if (!isUserLoading && user) router.replace('/dashboard');
+  }, [user, isUserLoading, router]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +45,7 @@ export default function LoginPage() {
         title: 'Login Successful',
         description: 'Welcome back to TreatStory.',
       });
-      // The useEffect will handle the redirect
+      // The useEffect routes the signed-in user to their role-specific dashboard.
     } catch (error: any) {
       console.error(error);
       toast({
@@ -90,7 +58,7 @@ export default function LoginPage() {
     }
   };
 
-  if (isUserLoading || (user && checkingRole)) {
+  if (isUserLoading || user) {
     return <div className="flex min-h-screen items-center justify-center bg-[#faf8f4]"><div className="flex items-center gap-3 text-sm text-[#756b5e]"><span className="h-5 w-5 animate-spin rounded-full border-2 border-[#d7c7b3] border-t-[#453a2f]" />Opening TreatStory…</div></div>;
   }
 
