@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, ShoppingBag, Search, ArrowUpRight } from 'lucide-react';
+import { Menu, ShoppingBag, Search, ArrowUpRight, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -15,6 +15,7 @@ import { useCart } from '@/context/cart-context';
 import { CartDrawer } from './cart-drawer';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
+import { useUser } from '@/firebase';
 
 const navItems = [
   { href: '/', label: 'Home' },
@@ -26,6 +27,7 @@ const navItems = [
 
 export function Header() {
   const { cartCount } = useCart();
+  const { user } = useUser();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -85,6 +87,7 @@ export function Header() {
                   </Link>
                 ))}
               </nav>
+              <Link href={user ? "/account" : "/login"} aria-label={user ? "My account" : "Sign in"} title={user ? "My account" : "Sign in"} className="inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-muted"><UserRound className="h-[19px] w-[19px]" /></Link>
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon" aria-label="Shopping bag" className="relative h-10 w-10 rounded-full">
