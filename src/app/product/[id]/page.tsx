@@ -76,7 +76,7 @@ export default function ProductDetailPage() {
     const item: Product = { id: creator ? 'seller:' + product.id : product.id, sellerId: product.sellerId,
       name: product.name, description: product.description, category: product.category,
       categoryId: product.category, price: product.price, imageUrls: photos, showPrice: product.showPrice,
-      customizationNote: creator ? note : undefined };
+      customizationNote: creator ? note : undefined, minimumOrderQuantity: creator ? minQty : 1 };
     for (let n = 0; n < (creator ? minQty : 1); n++) addToCart(item);
     toast({ title: 'Added to your bag', description: creator && minQty > 1 ? `${minQty} units of ${product.name} added.` : product.name });
     return true;
