@@ -260,6 +260,8 @@ service cloud.firestore {
         d.sellerId == orderProduct(d.productId).sellerId &&
         d.productName == orderProduct(d.productId).name &&
         d.unitPrice == orderProduct(d.productId).price &&
+        (!('minimumOrderQuantity' in orderProduct(d.productId)) ||
+          d.quantity >= orderProduct(d.productId).minimumOrderQuantity) &&
         d.subtotal == d.quantity * d.unitPrice &&
         exists(/databases/$(database)/documents/sellers/$(d.sellerId)) &&
         get(/databases/$(database)/documents/sellers/$(d.sellerId)).data.status == 'active' &&
