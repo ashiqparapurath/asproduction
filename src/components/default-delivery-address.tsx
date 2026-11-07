@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { useFirestore, useUser } from '@/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { useAccountData, useFirestore, useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,10 +13,11 @@ export const emptyAddress: DeliveryAddress = { recipient:'',phone:'',line1:'',lo
 export const addressText = (a:DeliveryAddress) => [a.line1,a.locality,a.district,a.state,a.pincode].filter(Boolean).join(', ');
 export function DefaultDeliveryAddress({ onSaved }: { onSaved?: (a: DeliveryAddress) => void }) {
   const { user } = useUser(); const db = useFirestore(); const { toast } = useToast();
+  const { address: savedAddress } = useAccountData();
   const [a,setA] = useState<DeliveryAddress>(emptyAddress);
   const [busy,setBusy] = useState(false); const [lookup,setLookup] = useState(false);
   const [areas,setAreas] = useState<string[]>([]);
-  useEffect(() => { if (!db || !user) return; let live=true; getDoc(doc(db,'customer_addresses',user.uid)).then(s => { if(live && s.exists()) { const v=s.data() as DeliveryAddress; setA(v); onSaved?.(v); } }).catch(()=>{}); return()=>{live=false}; },[db,user,onSaved]);
+  useEffect(() => { setA(savedAddress ?? emptyAddress); if (savedAddress) onSaved?.(savedAddress); }, [savedAddress]);
   const change = (key:keyof DeliveryAddress,value:string) => setA(v=>({...v,[key]:value}));
   async function lookupPin() {
     if(!/^\d{6}$/.test(a.pincode)) { toast({variant:'destructive',title:'Enter a valid 6-digit Indian PIN code'});return; }
