@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
-import { Plus, Trash2, X, Sparkles, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, X, Sparkles, ChevronDown, ImagePlus, ArrowLeft, ArrowRight } from 'lucide-react';
 import type { MarketplaceProduct } from '@/lib/marketplace-types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,7 +35,7 @@ export function suggestProductDescription(d: Pick<ProductDraft, 'name' | 'catego
   return `${lead}${made}${prep}${care} Contact the creator for specific requests before ordering.`;
 }
 
-export function SellerProductEditor({ open, editing, busy, enabled, draft, setDraft, categories, onClose, onSubmit }: {
+export function SellerProductEditor({ open, editing, busy, enabled, draft, setDraft, categories, onClose, onSubmit, onUploadPhotos, uploading, uploadProgress }: {
   open: boolean;
   editing: boolean;
   busy: boolean;
@@ -45,12 +45,24 @@ export function SellerProductEditor({ open, editing, busy, enabled, draft, setDr
   categories: string[];
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onUploadPhotos: (files: File[]) => Promise<void>;
+  uploading: boolean;
+  uploadProgress: string;
 }) {
   const [suggestion, setSuggestion] = useState('');
   if (!open) return null;
   const set = <K extends keyof ProductDraft>(key: K, value: ProductDraft[K]) => setDraft(d => ({ ...d, [key]: value }));
   const allCategories = [...new Set([...presets, ...categories])].filter(Boolean).sort((a,b) => a.localeCompare(b));
-  const photoCount = draft.imageUrls.split(/\r?\n|,/).filter(x=>x.trim()).length;
+  const photos = draft.imageUrls.split(/\r?\n|,/).map(x => x.trim()).filter(Boolean);
+  const photoCount = photos.length;
+  const arrangePhotos = (next: string[]) => set('imageUrls', next.join('\n'));
+  const shiftPhoto = (index: number, delta: number) => {
+    const target = index + delta;
+    if (target < 0 || target >= photos.length) return;
+    const next = [...photos];
+    [next[index], next[target]] = [next[target], next[index]];
+    arrangePhotos(next);
+  };
   return <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4" role="presentation" onMouseDown={e => { if(e.target === e.currentTarget) onClose(); }}>
     <div role="dialog" aria-modal="true" aria-label={editing ? 'Edit listing' : 'New listing'} className="flex h-[min(96dvh,920px)] w-full max-w-4xl flex-col overflow-hidden rounded-t-3xl bg-[#fbf9f6] shadow-2xl sm:h-[min(94dvh,940px)] sm:rounded-3xl">
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[#e8e0d5] bg-white px-4 py-3 sm:px-7 sm:py-5">
@@ -78,7 +90,16 @@ export function SellerProductEditor({ open, editing, busy, enabled, draft, setDr
           </section>
           <details className="group rounded-2xl border border-[#e8e0d5] bg-white p-4 sm:p-6">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">Photos & gallery <span className="flex items-center gap-2 text-xs font-normal text-[#8b795e]">{photoCount} photo(s)<ChevronDown className="h-4 w-4 transition group-open:rotate-180" /></span></summary>
-            <div className="mt-4 space-y-2"><Label htmlFor="creatorImages">Image URLs (one HTTPS link per line)</Label><Textarea id="creatorImages" rows={4} maxLength={5000} placeholder={"https://example.com/cake-front.jpg\nhttps://example.com/cake-detail.jpg"} value={draft.imageUrls} onChange={e => set('imageUrls',e.target.value)} /><p className="text-xs text-muted-foreground">Add up to ten photos. The first is the cover. Buyers can swipe through the gallery.</p></div>
+            <div className="mt-4 space-y-3">
+              <p className="text-xs leading-5 text-muted-foreground">Choose images straight from your phone or computer. TreatStory uploads them securely to Cloudinary. Up to ten photos; the first photo becomes the cover.</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <label htmlFor="sellerPhotoFiles" className={`inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-[#bfae95] bg-[#f8f5f0] px-5 text-xs font-semibold text-[#594b39] ${uploading || busy || !enabled || photoCount >= 10 ? 'pointer-events-none opacity-50' : ''}`}><ImagePlus className="h-4 w-4" />{uploading ? 'Uploading photos…' : 'Upload product photos'}</label>
+                <input id="sellerPhotoFiles" className="sr-only" type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={uploading || busy || !enabled || photoCount >= 10} onChange={e => { const files = [...(e.target.files ?? [])]; e.target.value = ''; if (files.length) void onUploadPhotos(files); }} />
+                <span role="status" aria-live="polite" className="text-xs text-muted-foreground">{uploadProgress || `${photoCount} / 10 photos`}</span>
+              </div>
+              {photoCount > 0 && <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{photos.map((url, i) => <div key={url + i} className="space-y-1 overflow-hidden rounded-xl border border-[#e8e0d5] bg-[#f7f4ef] p-2"><div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-[#ebe3d8]"><img src={url} alt={`Product photo ${i + 1}`} className="h-full w-full object-cover" loading="lazy" /></div><div className="flex items-center justify-between gap-1"><span className="truncate text-[10px] text-muted-foreground">{i === 0 ? 'Cover' : `Photo ${i + 1}`}</span><div className="flex gap-1"><button type="button" onClick={() => shiftPhoto(i,-1)} disabled={i===0||uploading} aria-label={`Move photo ${i+1} left`} className="grid h-7 w-7 place-items-center rounded-md border bg-white disabled:opacity-30"><ArrowLeft className="h-3.5 w-3.5" /></button><button type="button" onClick={() => shiftPhoto(i,1)} disabled={i===photos.length-1||uploading} aria-label={`Move photo ${i+1} right`} className="grid h-7 w-7 place-items-center rounded-md border bg-white disabled:opacity-30"><ArrowRight className="h-3.5 w-3.5" /></button><button type="button" onClick={() => arrangePhotos(photos.filter((_, n) => n !== i))} disabled={uploading} aria-label={`Remove photo ${i+1}`} className="grid h-7 w-7 place-items-center rounded-md border bg-white text-red-600 disabled:opacity-30"><X className="h-3.5 w-3.5" /></button></div></div></div>)}</div>}
+              <details className="rounded-xl border border-dashed p-3"><summary className="cursor-pointer text-xs font-medium text-[#71604b]">Or paste image URLs manually</summary><div className="mt-2 space-y-2"><Label htmlFor="creatorImages">HTTPS image links (one per line)</Label><Textarea id="creatorImages" rows={3} maxLength={5000} placeholder={"https://example.com/cake-front.jpg\nhttps://example.com/cake-detail.jpg"} value={draft.imageUrls} onChange={e => set('imageUrls',e.target.value)} /><p className="text-xs text-muted-foreground">You can still use previously hosted photo links. Photos from direct uploads are added here automatically.</p></div></details>
+            </div>
           </details>
           <details className="group rounded-2xl border border-[#e8e0d5] bg-white p-4 sm:p-6">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">Weights, sizes & quantity <span className="flex items-center gap-2 text-xs font-normal text-[#8b795e]">{draft.weightOptions.length} choices<ChevronDown className="h-4 w-4 transition group-open:rotate-180"/></span></summary>
@@ -108,7 +129,7 @@ export function SellerProductEditor({ open, editing, busy, enabled, draft, setDr
         </div>
         <div className="flex shrink-0 items-center gap-3 border-t border-[#e8e0d5] bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:justify-end sm:px-7 sm:py-4">
           <Button type="button" variant="outline" onClick={onClose} className="h-11 flex-1 rounded-full sm:flex-none">Cancel</Button>
-          <Button type="submit" disabled={busy||!enabled} className="h-11 flex-[2] rounded-full bg-[#29251f] text-white sm:flex-none sm:px-8">{busy ? 'Saving…' : editing ? 'Save changes' : 'Create product'}</Button>
+          <Button type="submit" disabled={busy||uploading||!enabled} className="h-11 flex-[2] rounded-full bg-[#29251f] text-white sm:flex-none sm:px-8">{busy ? 'Saving…' : editing ? 'Save changes' : 'Create product'}</Button>
         </div>
       </form>
     </div>
