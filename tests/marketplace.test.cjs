@@ -148,6 +148,11 @@ test('seller product card cycles two separately supplied image URLs and opens a 
   const { SellerProductCard } = load('src/components/seller-product-card.tsx', {
     'next/link': 'a',
     '@/components/product-image': { ProductImage: props => React.createElement('img', props) },
+    '@/hooks/use-product-gallery': { useProductGallery: length => {
+      const [index, setIndex] = React.useState(0);
+      return { index, direction: 'next', move: delta => setIndex(n => (n + delta + length) % length),
+        select: setIndex, onTouchStart() {}, onTouchEnd() {}, onClickCapture() {} };
+    } },
   });
   const product = {
     id: 'cake-1', sellerId: 'seller-a', name: 'Red Velvet Cake',
