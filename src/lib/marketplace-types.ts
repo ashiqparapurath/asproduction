@@ -51,12 +51,15 @@ export interface MarketplaceProduct {
   availability: 'available' | 'unavailable' | 'made-to-order';
   preparationDays?: number;
   minimumOrderQuantity?: number;
+  weightValue?: number;
+  weightUnit?: 'g' | 'kg' | 'ml' | 'l' | 'pieces';
+  careInstructions?: string;
   customizationOptions?: string[];
   stockQuantity?: number;
 }
 
 export type SellerOrderStatus =
-  | 'pending' | 'accepted' | 'preparing' | 'ready'
+  | 'pending' | 'accepted' | 'preparing' | 'ready' | 'out-for-delivery'
   | 'completed' | 'rejected' | 'cancelled';
 
 export interface SellerOrderItem {
