@@ -84,7 +84,7 @@ function SellerContent() {
       getCountFromServer(query(products, where('sellerId', '==', user.uid), where('availability', '==', 'available'), where('stockQuantity', '>=', 1), where('stockQuantity', '<=', 3))),
     ]).then(results => {
       if (!live) return;
-      const count = (n: number) => results[n].status === 'fulfilled' ? results[n].value.data().count : null;
+      const count = (n: number) => { const result = results[n]; return result.status === 'fulfilled' ? result.value.data().count : null; };
       setFulfillment({ today: count(0), pending: count(1), preparing: count(2), ready: count(3), outForDelivery: count(4), lowStock: count(5) });
     });
     return () => { live = false; };
