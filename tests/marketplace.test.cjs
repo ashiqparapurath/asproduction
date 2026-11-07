@@ -148,6 +148,11 @@ test('seller product card cycles two separately supplied image URLs and opens a 
   const { SellerProductCard } = load('src/components/seller-product-card.tsx', {
     'next/link': 'a',
     '@/components/product-image': { ProductImage: props => React.createElement('img', props) },
+    '@/hooks/use-product-gallery': { useProductGallery: length => {
+      const [index, setIndex] = React.useState(0);
+      return { index, direction: 'next', move: delta => setIndex(n => (n + delta + length) % length),
+        select: setIndex, onTouchStart() {}, onTouchEnd() {}, onClickCapture() {} };
+    } },
   });
   const product = {
     id: 'cake-1', sellerId: 'seller-a', name: 'Red Velvet Cake',
@@ -157,7 +162,7 @@ test('seller product card cycles two separately supplied image URLs and opens a 
   let tree;
   act(() => { tree = create(React.createElement(SellerProductCard, { product, addToBag: () => {}, buyNow: () => {} })); });
   assert.equal(tree.root.findAllByType('img')[0].props.src, product.imageUrls[0]);
-  assert.equal(tree.root.findByType('a').props.href, '/product/seller%3Acake-1');
+  assert.equal(tree.root.findByType('a').props.href, '/product/seller:cake-1');
   const next = tree.root.findAllByType('button').find(b => b.props['aria-label'] === 'Next photo of Red Velvet Cake');
   assert.ok(next, 'multi-photo card exposes a next-photo button');
   act(() => next.props.onClick({ preventDefault() {}, stopPropagation() {} }));
@@ -175,3 +180,53 @@ test('Firestore model contains guarded product options and out-for-delivery tran
     i.fields.map(f => [f.fieldPath, f.order]).join('|') ===
     [['sellerId','ASCENDING'],['createdAt','DESCENDING']].join('|')));
 });
+
+
+test('Firestore rules are a single complete ruleset with intact WhatsApp validation', () => {
+  const rules = fs.readFileSync('firestore.rules', 'utf8').trimEnd();
+  assert.ok(rules.endsWith('}\n}'), 'ruleset should end after closing service and database');
+  assert.equal((rules.match(/service cloud\.firestore\s*\{/g) || []).length, 1);
+  assert.equal((rules.match(/match \/marketplace_products\/\{productId\}/g) || []).length, 1);
+  assert.equal((rules.match(/match \/seller_orders\/\{orderId\}/g) || []).length, 1);
+  assert.match(rules, /whatsappNumber\.matches\('\^\[0-9\]\{8,15\}\$'\)/);
+  assert.match(rules, /request\.resource\.data\.isOpen is bool/);
+});
+
+
+test('Cloudinary photo upload requires verified Firebase authentication and authorized role', () => {
+  const handler = fs.readFileSync('src/app/api/cloudinary/upload/route.ts', 'utf8');
+  assert.match(handler, /verifyIdToken\(idToken\)/);
+  assert.match(handler, /canUpload\(projectId, uid, idToken, kind\)/);
+  assert.match(handler, /roles_admin/);
+  assert.match(handler, /fields\?\.status\?\.stringValue === 'active'/);
+  assert.match(handler, /fileFormat\(bytes\)/);
+  assert.match(handler, /file\.size > maxSize/);
+  assert.match(handler, /process\.env\.CLOUDINARY_API_SECRET/);
+  assert.match(handler, /'Basic '/);
+  assert.doesNotMatch(handler, /upload_preset/);
+  const client = fs.readFileSync('src/lib/cloudinary-upload.ts','utf8');
+  assert.match(client, /await user\.getIdToken\(\)/);
+  assert.match(client, /fetch\('\/api\/cloudinary\/upload'/);
+  assert.doesNotMatch(client, /CLOUDINARY_API_SECRET/);
+});
+
+test('Admin and seller photo forms save only Cloudinary image URLs to Firestore', () => {
+  const bannerForm = fs.readFileSync('src/components/admin/banner-form.tsx', 'utf8');
+  const productForm = fs.readFileSync('src/components/admin/product-form.tsx', 'utf8');
+  const sellerPage = fs.readFileSync('src/app/seller/dashboard/page.tsx', 'utf8');
+  assert.match(bannerForm, /await uploadTreatStoryPhoto\(user, selectedFile, 'banner'\)/);
+  assert.match(productForm, /await uploadTreatStoryPhoto\(user, file, 'product'\)/);
+  assert.match(sellerPage, /await uploadTreatStoryPhoto\(user, file, 'product'\)/);
+  for (const content of [bannerForm, productForm]) {
+    assert.match(content, /await (addDoc|updateDoc)\(/);
+    assert.doesNotMatch(content, /readAsDataURL|addDocumentNonBlocking|updateDocumentNonBlocking/);
+  }
+  assert.match(fs.readFileSync('src/components/seller-product-editor.tsx', 'utf8'), /multiple accept="image\/jpeg,image\/png,image\/webp"/);
+  const nextConfig = fs.readFileSync('next.config.ts', 'utf8');
+  assert.match(nextConfig, /res\.cloudinary\.com/);
+  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+  const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+  assert.ok(pkg.dependencies['firebase-admin']);
+  assert.equal(pkg.dependencies['firebase-admin'], lock.packages[''].dependencies['firebase-admin']);
+});
+

@@ -1,7 +1,7 @@
 "use client";
 import Image from 'next/image';
 import { useState } from 'react';
-const optimizedHosts = new Set(['firebasestorage.googleapis.com', 'images.unsplash.com', 'picsum.photos', 'lh3.googleusercontent.com']);
+const optimizedHosts = new Set(['firebasestorage.googleapis.com', 'images.unsplash.com', 'picsum.photos', 'lh3.googleusercontent.com', 'res.cloudinary.com']);
 export function ProductImage({ src, alt }: { src?: string; alt: string }) {
   const [failed, setFailed] = useState<string>();
   const source = !src || failed === src ? '/img/product-placeholder.svg' : src;
