@@ -32,7 +32,7 @@ function SellerContent() {
   const { data: application, isLoading: applicationLoading } = useDoc<SellerApplication>(appRef);
   const [counts, setCounts] = useState<{ total: number; published: number } | null>(null);
   const [countError, setCountError] = useState(false);
-  const [fulfillment, setFulfillment] = useState<{ today: number; pending: number; preparing: number; ready: number; outForDelivery: number; lowStock: number } | null>(null);
+  const [fulfillment, setFulfillment] = useState<{ today: number | null; pending: number | null; preparing: number | null; ready: number | null; outForDelivery: number | null; lowStock: number | null } | null>(null);
   const [countVersion, setCountVersion] = useState(0);
   const params = useSearchParams();
   useEffect(() => { const start = performance.now(); const frame = requestAnimationFrame(() => performance.measure('TreatStory seller render', { start, end: performance.now() })); return () => cancelAnimationFrame(frame); }, [params]);
@@ -75,16 +75,18 @@ function SellerContent() {
     const products = collection(db, 'marketplace_products');
     const scopedOrders = (status: string) => query(orders, where('sellerId', '==', user.uid), where('status', '==', status));
     const localMidnight = new Date(); localMidnight.setHours(0, 0, 0, 0);
-    Promise.all([
+    Promise.allSettled([
       getCountFromServer(query(orders, where('sellerId', '==', user.uid), where('createdAt', '>=', Timestamp.fromDate(localMidnight)))),
       getCountFromServer(scopedOrders('pending')),
       getCountFromServer(scopedOrders('preparing')),
       getCountFromServer(scopedOrders('ready')),
       getCountFromServer(scopedOrders('out-for-delivery')),
       getCountFromServer(query(products, where('sellerId', '==', user.uid), where('availability', '==', 'available'), where('stockQuantity', '>=', 1), where('stockQuantity', '<=', 3))),
-    ]).then(([today, pending, preparing, ready, outForDelivery, lowStock]) => {
-      if (live) setFulfillment({ today: today.data().count, pending: pending.data().count, preparing: preparing.data().count, ready: ready.data().count, outForDelivery: outForDelivery.data().count, lowStock: lowStock.data().count });
-    }).catch(() => { if (live) setFulfillment(null); });
+    ]).then(results => {
+      if (!live) return;
+      const count = (n: number) => results[n].status === 'fulfilled' ? results[n].value.data().count : null;
+      setFulfillment({ today: count(0), pending: count(1), preparing: count(2), ready: count(3), outForDelivery: count(4), lowStock: count(5) });
+    });
     return () => { live = false; };
   }, [db, user?.uid, seller?.id, section, countVersion]);
 
@@ -199,10 +201,10 @@ function SellerContent() {
               { label: 'Preparing', count: fulfillment?.preparing },
               { label: 'Ready to fulfill', count: fulfillment?.ready },
               { label: 'Out for delivery', count: fulfillment?.outForDelivery },
-            ].map(item => <button key={item.label} type="button" onClick={() => setSection('orders')} className="rounded-2xl border border-[#e8e0d5] bg-white p-3 text-left transition hover:border-[#a68a64] sm:p-5"><p className="text-2xl font-semibold">{item.count ?? '…'}</p><p className="mt-1 text-xs text-muted-foreground">{item.label}</p></button>)}
+            ].map(item => <button key={item.label} type="button" onClick={() => setSection('orders')} className="rounded-2xl border border-[#e8e0d5] bg-white p-3 text-left transition hover:border-[#a68a64] sm:p-5"><p className="text-2xl font-semibold">{fulfillment ? item.count ?? '—' : '…'}</p><p className="mt-1 text-xs text-muted-foreground">{item.label}</p></button>)}
           </div>
           <div className="flex flex-wrap gap-3">
-            <button type="button" onClick={() => setSection('products')} className="rounded-full bg-[#eee6da] px-4 py-2 text-xs font-medium text-[#6d5336]">Low-stock listings (1–3 units): {fulfillment?.lowStock ?? '…'}</button>
+            <button type="button" onClick={() => setSection('products')} className="rounded-full bg-[#eee6da] px-4 py-2 text-xs font-medium text-[#6d5336]">Low-stock listings (1–3 units): {fulfillment ? fulfillment.lowStock ?? '—' : '…'}</button>
             {((seller.accessEndsAt as { toMillis?: () => number } | null)?.toMillis?.() ?? 0) < Date.now() + 7 * 86400000 && <span className="rounded-full bg-amber-50 px-4 py-2 text-xs text-amber-900">Seller access expires {dateText(seller.accessEndsAt)} · Contact admin to renew</span>}
           </div>
           <div className="rounded-2xl border border-[#e9e3d9] bg-white p-5 sm:rounded-3xl sm:p-7"><p className="eyebrow text-[#a68a64]">Membership</p><h2 className="mt-3 text-xl font-medium capitalize">{seller.accessType} access</h2><p className="mt-2 text-sm text-muted-foreground">Valid until {dateText(seller.accessEndsAt)} · Status: {seller.status}</p><div className="mt-6 border-t pt-5"><h3 className="font-medium">Get your store ready</h3><p className="mt-2 text-sm text-muted-foreground">Add high-quality photos, publish products and keep your business contact details current.</p><Button variant="outline" className="mt-4 rounded-full" onClick={() => setSection('products')}>Manage products <ArrowUpRight className="ml-2 h-4 w-4" /></Button></div></div>
