@@ -63,7 +63,7 @@ export function ProductCard({ product }: ProductCardProps) {
           <span className="absolute left-2.5 top-2.5 max-w-[calc(100%-20px)] truncate rounded-md bg-white/95 px-2.5 py-1 text-[10px] font-medium text-[#51463a] shadow-sm">{product.category}</span>
           <div className="absolute inset-x-3 bottom-3 flex flex-col gap-2.5 text-white sm:inset-x-4 sm:bottom-4">
             <h3 className="line-clamp-2 text-sm font-semibold leading-snug drop-shadow-sm sm:text-base">{product.name}</h3>
-            {product.description && <p className="line-clamp-2 text-[11px] leading-snug text-white/85 sm:text-xs">{product.description}</p>}
+            {product.description && <p className="hidden line-clamp-2 text-[11px] leading-snug text-white/85 sm:block sm:text-xs">{product.description}</p>}
             <div className="flex items-center justify-between gap-2">
             <div className="min-w-0 text-white">{product.showPrice ? <p className="text-lg font-semibold tracking-tight sm:text-xl">{formatPrice(product.price)}</p> : <p className="text-xs font-medium">Price on request</p>}</div>
             <Button onClick={handleAddToCart} size="icon" aria-label={`Add ${product.name} to bag`} className="h-10 w-10 shrink-0 rounded-full bg-white text-[#29251f] shadow-sm transition-colors hover:bg-[#f4eee5]">
