@@ -21,6 +21,34 @@ firebase deploy --only firestore:rules,firestore:indexes --project treatstory-on
 
 **Do not blindly deploy rules to the wrong environment.** Firestore indexes build asynchronously. A dashboard query may initially report a missing index; wait for the index to become ready in Firebase Console.
 
+## Resolving `RunAggregationQuery failed-precondition` errors
+
+If the admin dashboard logs `failed-precondition` (HTTP 400) for the following count queries, **do not loosen the Firestore security rules**. These require composite indexes in the Firebase project used by the running app:
+
+| Collection | Query | Required composite index (Collection scope) |
+| --- | --- | --- |
+| `sellers` | `status == "active"` and `accessEndsAt > now` | `status` ascending, `accessEndsAt` ascending |
+| `seller_orders` | `status == "pending"` and `createdAt <= yesterday` | `status` ascending, `createdAt` ascending |
+
+Both definitions are already in `firestore.indexes.json`. You must still create them in Firebase and wait until their state is **Enabled**. In Firebase Console, open **Firestore Database → Indexes → Add index** and create the above index definitions for project `treatstory-online`.
+
+Alternatively, from this draft branch's local checkout:
+
+```bash
+firebase login
+firebase firestore:indexes --project treatstory-online
+# Reconcile the output with firestore.indexes.json before deploying.
+firebase deploy --only firestore:indexes --project treatstory-online
+```
+
+Do not deploy an incomplete local indexes file if Firebase already has other indexes. It may propose deleting indexes omitted from the file.
+
+This is separate from `firestore.rules` deployment; permission errors generally return `permission-denied`, not these index preconditions.
+
+## PWA browser console warnings
+
+The draft branch replaces deprecated `apple-mobile-web-app-capable` with `mobile-web-app-capable` and removes the eager splash image's `fetchPriority="high"` hint. The manifest, existing installed icons and browser favicon remain unchanged. Verify the generated HTML and browser console on the draft Vercel deployment; old previews and installed PWAs can cache previous assets.
+
 ## Acceptance checklist
 
 1. **Authentication & permissions**: test a guest, ordinary buyer with no `sellers/{uid}`, active/expired/suspended seller, and admin. Unauthorized users must not receive privileged data. A denied role lookup must show an error instead of silently treating the user as a buyer.
