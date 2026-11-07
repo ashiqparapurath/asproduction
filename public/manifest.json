@@ -1,15 +1,24 @@
 {
+  "id": "/",
   "short_name": "TreatStory",
   "name": "TreatStory — Little finds, lovely stories",
+  "description": "Discover home bakes, art and handmade finds from independent creators.",
   "icons": [
     {
-      "src": "/favicon.ico",
-      "type": "image/x-icon",
+      "src": "/ts%20logo%20black.png",
+      "type": "image/png",
       "sizes": "any",
       "purpose": "any"
+    },
+    {
+      "src": "/ts%20logo%20black.png",
+      "type": "image/png",
+      "sizes": "any",
+      "purpose": "monochrome"
     }
   ],
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "theme_color": "#faf8f3",
   "background_color": "#faf8f3"
