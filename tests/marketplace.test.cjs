@@ -191,3 +191,22 @@ test('Firestore rules are a single complete ruleset with intact WhatsApp validat
   assert.match(rules, /whatsappNumber\.matches\('\^\[0-9\]\{8,15\}\$'\)/);
   assert.match(rules, /request\.resource\.data\.isOpen is bool/);
 });
+
+
+test('banner uploads use Storage URLs and await Firestore before confirming success', () => {
+  const bannerForm = fs.readFileSync('src/components/admin/banner-form.tsx', 'utf8');
+  assert.match(bannerForm, /await uploadBytes\(uploadedRef, selectedFile/);
+  assert.match(bannerForm, /await getDownloadURL\(uploadedRef\)/);
+  assert.match(bannerForm, /await addDoc\(collection\(firestore, 'banners'\)/);
+  assert.match(bannerForm, /await updateDoc\(doc\(firestore, 'banners', banner\.id\)/);
+  assert.doesNotMatch(bannerForm, /readAsDataURL|addDocumentNonBlocking|updateDocumentNonBlocking/);
+  const storageRules = fs.readFileSync('storage.rules', 'utf8');
+  assert.match(storageRules, /match \/banners\/\{userId\}\/\{fileName\}/);
+  assert.match(storageRules, /firestore\.exists\(\/databases\/\(default\)\/documents\/roles_admin\/\$\(request\.auth\.uid\)\)/);
+  assert.match(storageRules, /request\.auth\.uid == userId/);
+  assert.match(storageRules, /request\.resource\.size <= 1000000/);
+  assert.match(storageRules, /request\.resource\.contentType in \['image\/jpeg', 'image\/png'\]/);
+  assert.match(storageRules, /allow update: if false/);
+  const firebaseConfig = JSON.parse(fs.readFileSync('firebase.json', 'utf8'));
+  assert.equal(firebaseConfig.storage.rules, 'storage.rules');
+});
