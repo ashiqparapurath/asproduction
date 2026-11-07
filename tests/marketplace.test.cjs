@@ -180,3 +180,14 @@ test('Firestore model contains guarded product options and out-for-delivery tran
     i.fields.map(f => [f.fieldPath, f.order]).join('|') ===
     [['sellerId','ASCENDING'],['createdAt','DESCENDING']].join('|')));
 });
+
+
+test('Firestore rules are a single complete ruleset with intact WhatsApp validation', () => {
+  const rules = fs.readFileSync('firestore.rules', 'utf8').trimEnd();
+  assert.ok(rules.endsWith('}\n}'), 'ruleset should end after closing service and database');
+  assert.equal((rules.match(/service cloud\.firestore\s*\{/g) || []).length, 1);
+  assert.equal((rules.match(/match \/marketplace_products\/\{productId\}/g) || []).length, 1);
+  assert.equal((rules.match(/match \/seller_orders\/\{orderId\}/g) || []).length, 1);
+  assert.match(rules, /whatsappNumber\.matches\('\^\[0-9\]\{8,15\}\$'\)/);
+  assert.match(rules, /request\.resource\.data\.isOpen is bool/);
+});
