@@ -142,3 +142,36 @@ test('install icons have declared dimensions and opaque backgrounds', async () =
   }
   assert.equal(manifest.icons.filter(i => i.purpose === 'maskable').length, 1);
 });
+
+
+test('seller product card cycles two separately supplied image URLs and opens a detail page', () => {
+  const { SellerProductCard } = load('src/components/seller-product-card.tsx', {
+    'next/link': 'a',
+    '@/components/product-image': { ProductImage: props => React.createElement('img', props) },
+  });
+  const product = {
+    id: 'cake-1', sellerId: 'seller-a', name: 'Red Velvet Cake',
+    category: 'Cake', description: 'Hand-baked', imageUrls: ['https://example.com/a.jpg', 'https://example.com/b.jpg'],
+    price: 1450, availability: 'made-to-order', showPrice: true, minimumOrderQuantity: 1,
+  };
+  let tree;
+  act(() => { tree = create(React.createElement(SellerProductCard, { product, addToBag: () => {}, buyNow: () => {} })); });
+  assert.equal(tree.root.findAllByType('img')[0].props.src, product.imageUrls[0]);
+  assert.equal(tree.root.findByType('a').props.href, '/product/seller%3Acake-1');
+  const next = tree.root.findAllByType('button').find(b => b.props['aria-label'] === 'Next photo of Red Velvet Cake');
+  assert.ok(next, 'multi-photo card exposes a next-photo button');
+  act(() => next.props.onClick({ preventDefault() {}, stopPropagation() {} }));
+  assert.equal(tree.root.findAllByType('img')[0].props.src, product.imageUrls[1]);
+  act(() => tree.unmount());
+});
+
+test('Firestore model contains guarded product options and out-for-delivery transition', () => {
+  const rules = fs.readFileSync('firestore.rules', 'utf8');
+  assert.match(rules, /'weightValue'.*'weightUnit'.*'customizationOptions'/);
+  assert.match(rules, /'out-for-delivery'/);
+  assert.match(rules, /minimumOrderQuantity/);
+  const indexes = JSON.parse(fs.readFileSync('firestore.indexes.json', 'utf8')).indexes;
+  assert.ok(indexes.some(i => i.collectionGroup === 'seller_orders' &&
+    i.fields.map(f => [f.fieldPath, f.order]).join('|') ===
+    [['sellerId','ASCENDING'],['createdAt','DESCENDING']].join('|')));
+});
