@@ -14,7 +14,7 @@ import Link from 'next/link';
 import type { MarketplaceProduct, Seller } from '@/lib/marketplace-types';
 import { Banknote, CreditCard, MapPin, ShieldCheck, Truck } from 'lucide-react';
 
-export function CreatorCheckout({ variant = 'card', onlyProductId, onComplete }: { variant?: 'card' | 'page'; onlyProductId?: string; onComplete?: () => void }) {
+export function CreatorCheckout({ variant = 'card', onlyProductId, initialNote = '', onComplete }: { variant?: 'card' | 'page'; onlyProductId?: string; initialNote?: string; onComplete?: () => void }) {
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
   const { address: savedAddress } = useAccountData();
@@ -23,7 +23,8 @@ export function CreatorCheckout({ variant = 'card', onlyProductId, onComplete }:
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState(initialNote);
+  useEffect(() => { if (initialNote) setNote(v => v || initialNote); }, [initialNote]);
   const [busy, setBusy] = useState(false);
   const paymentMethod = 'cod' as const;
   const [result, setResult] = useState<string[]>([]);
@@ -53,7 +54,8 @@ export function CreatorCheckout({ variant = 'card', onlyProductId, onComplete }:
         if (!seller.isOpen) throw new Error(`${seller.businessName || 'This seller'} is not accepting orders right now.`);
         const expiry = seller.accessEndsAt as { toMillis?: () => number } | undefined;
         if (!expiry?.toMillis || expiry.toMillis() <= Date.now()) throw new Error(`${seller.businessName || 'This seller'}'s marketplace access has expired.`);
-        if (!Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 99) throw new Error('Choose a quantity between 1 and 99.');
+        if (!Number.isInteger(item.quantity) || item.quantity < Math.max(1, product.minimumOrderQuantity ?? 1) || item.quantity > 99) throw new Error(`Please order at least ${product.minimumOrderQuantity || 1} unit(s) of ${product.name} (maximum 99).`);
+        if (note.trim().length > 1000) throw new Error('Please shorten your customization and delivery notes.');
         if (name.trim().length < 2 || phone.trim().length < 5 || address.trim().length < 10) throw new Error('Please complete your contact and delivery details.');
         stage = 'creating the order';
         const order = await addDoc(collection(db, 'seller_orders'), {
