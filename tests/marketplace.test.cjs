@@ -193,20 +193,40 @@ test('Firestore rules are a single complete ruleset with intact WhatsApp validat
 });
 
 
-test('banner uploads use Storage URLs and await Firestore before confirming success', () => {
-  const bannerForm = fs.readFileSync('src/components/admin/banner-form.tsx', 'utf8');
-  assert.match(bannerForm, /await uploadBytes\(uploadedRef, selectedFile/);
-  assert.match(bannerForm, /await getDownloadURL\(uploadedRef\)/);
-  assert.match(bannerForm, /await addDoc\(collection\(firestore, 'banners'\)/);
-  assert.match(bannerForm, /await updateDoc\(doc\(firestore, 'banners', banner\.id\)/);
-  assert.doesNotMatch(bannerForm, /readAsDataURL|addDocumentNonBlocking|updateDocumentNonBlocking/);
-  const storageRules = fs.readFileSync('storage.rules', 'utf8');
-  assert.match(storageRules, /match \/banners\/\{userId\}\/\{fileName\}/);
-  assert.match(storageRules, /firestore\.exists\(\/databases\/\(default\)\/documents\/roles_admin\/\$\(request\.auth\.uid\)\)/);
-  assert.match(storageRules, /request\.auth\.uid == userId/);
-  assert.match(storageRules, /request\.resource\.size <= 1000000/);
-  assert.match(storageRules, /request\.resource\.contentType in \['image\/jpeg', 'image\/png'\]/);
-  assert.match(storageRules, /allow update: if false/);
-  const firebaseConfig = JSON.parse(fs.readFileSync('firebase.json', 'utf8'));
-  assert.equal(firebaseConfig.storage.rules, 'storage.rules');
+test('Cloudinary photo upload requires verified Firebase authentication and authorized role', () => {
+  const handler = fs.readFileSync('src/app/api/cloudinary/upload/route.ts', 'utf8');
+  assert.match(handler, /verifyIdToken\(idToken\)/);
+  assert.match(handler, /canUpload\(projectId, uid, idToken, kind\)/);
+  assert.match(handler, /roles_admin/);
+  assert.match(handler, /fields\?\.status\?\.stringValue === 'active'/);
+  assert.match(handler, /fileFormat\(bytes\)/);
+  assert.match(handler, /file\.size > maxSize/);
+  assert.match(handler, /process\.env\.CLOUDINARY_API_SECRET/);
+  assert.match(handler, /'Basic '/);
+  assert.doesNotMatch(handler, /upload_preset/);
+  const client = fs.readFileSync('src/lib/cloudinary-upload.ts','utf8');
+  assert.match(client, /await user\.getIdToken\(\)/);
+  assert.match(client, /fetch\('\/api\/cloudinary\/upload'/);
+  assert.doesNotMatch(client, /CLOUDINARY_API_SECRET/);
 });
+
+test('Admin and seller photo forms save only Cloudinary image URLs to Firestore', () => {
+  const bannerForm = fs.readFileSync('src/components/admin/banner-form.tsx', 'utf8');
+  const productForm = fs.readFileSync('src/components/admin/product-form.tsx', 'utf8');
+  const sellerPage = fs.readFileSync('src/app/seller/dashboard/page.tsx', 'utf8');
+  assert.match(bannerForm, /await uploadTreatStoryPhoto\(user, selectedFile, 'banner'\)/);
+  assert.match(productForm, /await uploadTreatStoryPhoto\(user, file, 'product'\)/);
+  assert.match(sellerPage, /await uploadTreatStoryPhoto\(user, file, 'product'\)/);
+  for (const content of [bannerForm, productForm]) {
+    assert.match(content, /await (addDoc|updateDoc)\(/);
+    assert.doesNotMatch(content, /readAsDataURL|addDocumentNonBlocking|updateDocumentNonBlocking/);
+  }
+  assert.match(fs.readFileSync('src/components/seller-product-editor.tsx', 'utf8'), /multiple accept="image\/jpeg,image\/png,image\/webp"/);
+  const nextConfig = fs.readFileSync('next.config.ts', 'utf8');
+  assert.match(nextConfig, /res\.cloudinary\.com/);
+  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+  const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+  assert.ok(pkg.dependencies['firebase-admin']);
+  assert.equal(pkg.dependencies['firebase-admin'], lock.packages[''].dependencies['firebase-admin']);
+});
+
