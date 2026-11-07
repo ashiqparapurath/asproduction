@@ -35,8 +35,8 @@ export function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <Card className="group flex h-full flex-col overflow-hidden rounded-[18px] border-0 bg-transparent shadow-none">
-      <CardHeader className="relative mb-3 overflow-hidden rounded-2xl bg-[#f1eee9] p-0">
+    <Card className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#e8e1d8] bg-white shadow-[0_3px_18px_rgba(35,29,23,0.045)] transition-shadow duration-300 hover:shadow-[0_12px_30px_rgba(35,29,23,0.09)]">
+      <CardHeader className="relative overflow-hidden rounded-none bg-[#f1eee9] p-0">
         <div className="relative aspect-[4/5] w-full overflow-hidden">
           <Image
             src={currentSrc}
@@ -66,11 +66,11 @@ export function ProductCard({ product }: ProductCardProps) {
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-grow flex-col px-0 py-0">
-        <CardTitle className="line-clamp-2 text-sm font-semibold leading-snug tracking-tight text-foreground sm:text-[15px]">{product.name}</CardTitle>
+      <CardContent className="flex flex-grow flex-col px-3.5 pb-0 pt-3.5 sm:px-4">
+        <CardTitle className="line-clamp-2 min-h-[2.5em] text-sm font-semibold leading-snug tracking-tight text-foreground sm:text-[15px]">{product.name}</CardTitle>
         <CardDescription className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{product.description}</CardDescription>
       </CardContent>
-      <CardFooter className="mt-3 flex items-center justify-between gap-2 px-0 py-0">
+      <CardFooter className="mt-3 flex items-center justify-between gap-2 border-t border-[#f0ebe5] px-3.5 pb-4 pt-3 sm:px-4">
         {product.showPrice ? <p className="text-sm font-semibold tracking-tight text-foreground sm:text-base">{formatPrice(product.price)}</p> : <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">Price on request</p>}
 
       </CardFooter>
