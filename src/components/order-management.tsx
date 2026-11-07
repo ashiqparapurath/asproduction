@@ -1,9 +1,9 @@
 'use client';
 import { SectionSkeleton, LoadError } from '@/components/loading-states';
 
-import { useMemo, useState } from 'react';
-import { collection, query, where, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useEffect, useMemo, useState } from 'react';
+import { collection, query, where, orderBy, limit, startAfter, onSnapshot, getDocs, updateDoc, doc, serverTimestamp, type QueryDocumentSnapshot, type DocumentData } from 'firebase/firestore';
+import { useAccountData, useFirestore, useUser } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -32,16 +32,70 @@ export function OrderManagement({ mode }: { mode: 'seller' | 'admin' | 'customer
   const db = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
-  const ref = useMemoFirebase(() => !db || !user ? null : mode === 'admin' ? collection(db, 'seller_orders') : query(collection(db, 'seller_orders'), where(mode === 'seller' ? 'sellerId' : 'buyerUid', '==', user.uid)), [db, user, mode]);
-  const { data, isLoading, error, retry } = useCollection<OrderRecord>(ref);
+  const account = useAccountData();
+  const [recent, setRecent] = useState<OrderRecord[] | null>(null);
+  const [recentCursor, setRecentCursor] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [older, setOlder] = useState<OrderRecord[]>([]);
+  const [olderCursor, setOlderCursor] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [hasOlderPages, setHasOlderPages] = useState<boolean | null>(null);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [feedError, setFeedError] = useState<Error | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const uid = user?.uid ?? null;
+  // Admin/seller have a single live first page. Buyer reuses the session-wide feed.
+  useEffect(() => {
+    setRecent(null); setRecentCursor(null); setOlder([]); setOlderCursor(null); setHasOlderPages(null); setFeedError(null);
+    if (!db || !uid || mode === 'customer') return;
+    let live = true;
+    const started = performance.now();
+    const base = collection(db, 'seller_orders');
+    const scoped = mode === 'admin' ? base : query(base, where('sellerId', '==', uid));
+    const stop = onSnapshot(query(scoped, orderBy('createdAt', 'desc'), limit(20)), snapshot => {
+      if (!live) return;
+      setRecent(snapshot.docs.map(d => ({ ...d.data(), id: d.id } as OrderRecord)));
+      setRecentCursor(snapshot.docs[snapshot.docs.length - 1] ?? null);
+      setFeedError(null);
+      if (performance.getEntriesByName('TreatStory orders first page').length === 0) performance.measure('TreatStory orders first page', { start: started, end: performance.now() });
+    }, error => { if (live) { setFeedError(error); setRecent([]); } });
+    return () => { live = false; stop(); };
+  }, [db, uid, mode, attempt]);
+  const firstPage = mode === 'customer' ? account.buyerOrders : recent;
+  const firstCursor = mode === 'customer' ? account.buyerOrdersCursor : recentCursor;
+  const isLoading = mode === 'customer' ? account.buyerOrdersLoading : recent === null && !feedError;
+  const error = mode === 'customer' ? account.buyerOrdersError : feedError;
+  const retry = () => { if (mode === 'customer') window.location.reload(); else setAttempt(n => n + 1); };
+  const all = useMemo(() => {
+    const seen = new Set<string>();
+    return [...(firstPage ?? []), ...older].filter(order => {
+      if (seen.has(order.id)) return false;
+      seen.add(order.id);
+      return true;
+    });
+  }, [firstPage, older]);
+  const canLoadMore = hasOlderPages ?? (firstPage?.length === 20);
+  async function loadOlder() {
+    if (!db || !uid || !canLoadMore || loadingOlder) return;
+    const cursor = olderCursor ?? firstCursor;
+    if (!cursor) return;
+    setLoadingOlder(true);
+    try {
+      const base = collection(db, 'seller_orders');
+      const scoped = mode === 'admin' ? base : query(base, where(mode === 'seller' ? 'sellerId' : 'buyerUid', '==', uid));
+      const page = await getDocs(query(scoped, orderBy('createdAt', 'desc'), startAfter(cursor), limit(20)));
+      setOlder(prev => [...prev, ...page.docs.map(d => ({ ...d.data(), id: d.id } as OrderRecord))]);
+      if (page.docs.length) setOlderCursor(page.docs[page.docs.length - 1]);
+      setHasOlderPages(page.docs.length === 20);
+    } catch (err) {
+      toast({ variant: 'destructive', title: 'Could not load older orders', description: err instanceof Error ? err.message : 'Try again.' });
+    } finally { setLoadingOlder(false); }
+  }
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [working, setWorking] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<{ id: string; status: Status } | null>(null);
   const [sort, setSort] = useState<'newest'|'oldest'|'value'>('newest');
-  const all = data ?? [];
-  const orders = useMemo(() => all.filter(o => (filter === 'all' || (filter === 'active' ? !['completed','rejected','cancelled'].includes(o.status) : o.status === filter)) && [o.productName,o.id,o.customerName,o.customerPhone].join(' ').toLowerCase().includes(search.trim().toLowerCase())).sort((a,b) => sort === 'value' ? b.subtotal-a.subtotal : sort === 'oldest' ? (a.createdAt?.toDate?.()?.getTime() ?? 0)-(b.createdAt?.toDate?.()?.getTime() ?? 0) : (b.createdAt?.toDate?.()?.getTime() ?? 0)-(a.createdAt?.toDate?.()?.getTime() ?? 0)), [data,filter,search,sort]);
+  const orders = useMemo(() => all.filter(o => (filter === 'all' || (filter === 'active' ? !['completed','rejected','cancelled'].includes(o.status) : o.status === filter)) && [o.productName,o.id,o.customerName,o.customerPhone].join(' ').toLowerCase().includes(search.trim().toLowerCase())).sort((a,b) => sort === 'value' ? b.subtotal-a.subtotal : sort === 'oldest' ? (a.createdAt?.toDate?.()?.getTime() ?? 0)-(b.createdAt?.toDate?.()?.getTime() ?? 0) : (b.createdAt?.toDate?.()?.getTime() ?? 0)-(a.createdAt?.toDate?.()?.getTime() ?? 0)), [all,filter,search,sort]);
   const detail = all.find(o => o.id === selected);
   const count = (s: Status) => all.filter(o => o.status === s).length;
   const pending = count('pending');
@@ -65,19 +119,21 @@ export function OrderManagement({ mode }: { mode: 'seller' | 'admin' | 'customer
   }
   const filters = [{key:'all',label:'All orders',n:all.length},{key:'pending',label:'New',n:pending},{key:'active',label:'In progress',n:active},{key:'ready',label:'Ready',n:count('ready')},{key:'completed',label:'Completed',n:count('completed')},{key:'cancelled',label:'Cancelled',n:count('cancelled')},{key:'rejected',label:'Rejected',n:count('rejected')}];
   return <section className="space-y-6">
-    <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#a68a64]">Fulfillment workspace</p><h2 className="mt-2 text-2xl font-medium tracking-tight">Order processing</h2><p className="mt-2 text-sm text-muted-foreground">Review requests, manage preparation and keep orders moving.</p></div><span className="inline-flex items-center gap-2 rounded-full border bg-white px-4 py-2 text-xs"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Live order queue</span></div>
+    <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#a68a64]">Fulfillment workspace</p><h2 className="mt-2 text-2xl font-medium tracking-tight">Order processing</h2><p className="mt-2 text-sm text-muted-foreground">Review requests, manage preparation and keep orders moving.</p></div><span className="inline-flex items-center gap-2 rounded-full border bg-white px-4 py-2 text-xs"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Recent orders · Live</span></div>
     <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">{[
       {label:'Needs attention',value:String(pending),icon:Clock3,sub:'Awaiting a decision'},
       {label:'In progress',value:String(active),icon:Package,sub:'Active orders'},
       {label:'Completed',value:String(count('completed')),icon:CheckCircle2,sub:'Fulfilled orders'},
-      {label:'Completed order value',value:money(completed),icon:TrendingUp,sub:'Not verified revenue'}
+      {label:'Completed order value',value:money(completed),icon:TrendingUp,sub:'Loaded orders · Not verified revenue'}
     ].map(m => <div key={m.label} className="rounded-2xl border border-[#e8e0d5] bg-white p-4 sm:p-5"><div className="flex items-center justify-between gap-2"><span className="text-xs text-muted-foreground">{m.label}</span><m.icon className="h-4 w-4 shrink-0 text-[#a68a64]" /></div><p className="mt-4 break-words text-2xl font-semibold sm:text-3xl">{m.value}</p><p className="mt-1 text-[11px] text-muted-foreground">{m.sub}</p></div>)}</div>
     {mode !== 'customer' && pending > 0 && <button type="button" onClick={() => setFilter('pending')} className="flex w-full items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-left text-sm text-amber-950 sm:px-5"><span className="flex items-center gap-3"><AlertTriangle className="h-5 w-5 shrink-0" /><span><strong className="block">{pending} new {pending === 1 ? 'order needs' : 'orders need'} your attention</strong><span className="mt-1 block text-xs">Review and accept or reject incoming requests.</span></span></span><ChevronRight className="h-5 w-5 shrink-0" /></button>}
-    <div className="rounded-2xl border border-[#e8e0d5] bg-white p-3 sm:p-4"><div className="flex gap-2 overflow-x-auto pb-3">{filters.map(f => <button key={f.key} onClick={() => setFilter(f.key)} className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-medium transition ${filter===f.key?'bg-[#29251f] text-white':'bg-[#f7f5f1] text-[#71685e] hover:bg-[#eee8df]'}`}>{f.label} <span className="ml-1 opacity-70">{f.n}</span></button>)}</div><div className="grid gap-3 border-t pt-3 sm:grid-cols-[1fr_auto]"><div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search customer, product, order ID or phone…" className="h-10 bg-[#faf9f7] pl-9" /></div><select aria-label="Sort orders" value={sort} onChange={e => setSort(e.target.value as typeof sort)} className="h-10 rounded-lg border bg-white px-3 text-xs"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="value">Highest value</option></select></div></div>
+    <div className="rounded-2xl border border-[#e8e0d5] bg-white p-3 sm:p-4"><div className="flex gap-2 overflow-x-auto pb-3">{filters.map(f => <button key={f.key} onClick={() => setFilter(f.key)} className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-medium transition ${filter===f.key?'bg-[#29251f] text-white':'bg-[#f7f5f1] text-[#71685e] hover:bg-[#eee8df]'}`}>{f.label} <span className="ml-1 opacity-70">{f.n}</span></button>)}</div><div className="grid gap-3 border-t pt-3 sm:grid-cols-[1fr_auto]"><div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search loaded orders…" className="h-10 bg-[#faf9f7] pl-9" /></div><select aria-label="Sort orders" value={sort} onChange={e => setSort(e.target.value as typeof sort)} className="h-10 rounded-lg border bg-white px-3 text-xs"><option value="newest">Newest loaded first</option><option value="oldest">Oldest first</option><option value="value">Highest value</option></select></div></div>
     {error && <LoadError retry={retry} />}
     {error ? null : isLoading ? <SectionSkeleton /> : !orders.length ? <div className="rounded-2xl border bg-white p-12 text-center"><Package className="mx-auto h-9 w-9 text-[#a68a64]" /><h3 className="mt-4 font-medium">No matching orders</h3><p className="mt-2 text-sm text-muted-foreground">Try another status or search term.</p></div> : <div className="space-y-3">{orders.map(o => <article key={o.id} className="overflow-hidden rounded-2xl border border-[#e8e0d5] bg-white transition hover:border-[#cbbba7]"><div className="p-4 sm:p-6"><div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className="text-xs font-semibold">#{o.id.slice(0,10).toUpperCase()}</span><span className="text-xs text-muted-foreground">{date(o.createdAt)}</span></div><h3 className="mt-3 text-base font-semibold sm:text-lg">{o.productName}</h3><p className="mt-1 text-sm text-muted-foreground">{o.quantity} × {money(o.unitPrice)} <span className="mx-1">·</span> {o.customerName}</p></div><div className="text-right"><span className={`inline-flex rounded-full border px-3 py-1.5 text-[11px] font-semibold ${badge[o.status]}`}>{labels[o.status]}</span><p className="mt-3 text-lg font-semibold">{money(o.subtotal)}</p></div></div>
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-[#f0ece6] pt-4 text-xs text-muted-foreground"><span className="flex items-center gap-1.5"><Banknote className="h-3.5 w-3.5" />{o.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Offline payment'}</span><span className="flex items-center gap-1.5"><Clock3 className="h-3.5 w-3.5" />{age(o.createdAt)}</span><span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" />{o.deliveryAddress.slice(0,45)}{o.deliveryAddress.length>45?'…':''}</span></div>
       <div className="mt-4 flex flex-wrap items-center gap-2">{mode !== 'customer' && next[o.status]?.filter(s => !['rejected','cancelled'].includes(s)).map(s => <Button key={s} size="sm" disabled={working !== null} onClick={() => transition(o,s)} className="h-10 rounded-full bg-[#29251f] px-5 text-xs hover:bg-[#51463a]">{primary[o.status] || labels[s]} <ArrowRight className="ml-2 h-3.5 w-3.5" /></Button>)}<Button size="sm" variant="outline" onClick={() => setSelected(o.id)} className="h-10 rounded-full px-4 text-xs">View details <ChevronRight className="ml-1 h-3.5 w-3.5" /></Button>{mode !== 'customer' && next[o.status]?.filter(s => ['rejected','cancelled'].includes(s)).map(s => <Button key={s} size="sm" variant="ghost" disabled={working !== null} onClick={() => transition(o,s)} className="h-10 rounded-full text-xs text-red-700">{s === 'rejected'?'Reject order':'Cancel order'}</Button>)}</div></div></article>)}</div>}
+    {canLoadMore && !error && <div className="flex justify-center"><Button variant="outline" className="min-h-11 rounded-full px-6" disabled={loadingOlder} onClick={() => void loadOlder()}>{loadingOlder ? 'Loading older orders…' : 'Load older orders'}</Button></div>}
+    <p className="text-xs leading-5 text-muted-foreground">Counts, filters and search apply to loaded orders only. Load older pages to see more history.</p>
     <p className="text-xs leading-5 text-muted-foreground">Order values are not proof of payment. COD collection, shipping and delivery confirmation are managed offline. Total requested value: {money(total)}.</p>
     {detail && <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 sm:items-center sm:p-5" onMouseDown={e => { if(e.target===e.currentTarget) setSelected(null); }}><div role="dialog" aria-modal="true" aria-label="Order details" className="max-h-[94dvh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-[#faf8f4] shadow-2xl sm:rounded-3xl"><div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-5 py-5 sm:px-7"><div><p className="text-[10px] uppercase tracking-widest text-[#a68a64]">Order details</p><h2 className="mt-1 text-xl font-semibold">#{detail.id.slice(0,10).toUpperCase()}</h2></div><button aria-label="Close order details" onClick={() => setSelected(null)} className="rounded-full border p-2"><X className="h-5 w-5" /></button></div><div className="space-y-5 p-5 sm:p-7">
       <div className="rounded-2xl border bg-white p-5"><div className="flex items-center justify-between gap-3"><h3 className="font-semibold">Fulfillment progress</h3><span className={`rounded-full border px-3 py-1 text-[11px] font-medium ${badge[detail.status]}`}>{labels[detail.status]}</span></div>{steps.includes(detail.status) ? <div className="mt-6 grid grid-cols-5 gap-1">{steps.map((s,i) => <div key={s}><div className={`h-1.5 rounded-full ${i<=steps.indexOf(detail.status)?'bg-[#9a7c56]':'bg-[#eee8df]'}`} /><p className={`mt-2 text-[9px] leading-3 sm:text-[10px] ${i<=steps.indexOf(detail.status)?'font-semibold text-[#6d5336]':'text-muted-foreground'}`}>{s==='pending'?'New':s==='preparing'?'Preparing':s==='ready'?'Ready':labels[s]}</p></div>)}</div> : <p className="mt-4 text-sm text-muted-foreground">This order is closed and no longer in the active fulfillment workflow.</p>}<p className="mt-4 flex items-center gap-2 text-xs text-muted-foreground"><CalendarDays className="h-4 w-4" />Placed {date(detail.createdAt)} · Last update {date(detail.updatedAt)}</p></div>
