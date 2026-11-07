@@ -1,5 +1,6 @@
 'use client';
 
+import { SectionSkeleton } from '@/components/loading-states';
 import Link from 'next/link';
 import { Header } from '@/components/header';
 import { useCart } from '@/context/cart-context';
@@ -11,7 +12,7 @@ import { Button } from '@/components/ui/button';
 
 const money = (v: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v);
 export default function CartPage() {
-  const { cartItems, removeFromCart, updateQuantity, clearCart, cartCount } = useCart();
+  const { hydrated, cartItems, removeFromCart, updateQuantity, clearCart, cartCount } = useCart();
   const db = useFirestore();
   const settingsRef = useMemoFirebase(() => db ? doc(db, 'settings', 'enquiry') : null, [db]);
   const { data: settings } = useDoc<EnquirySettings>(settingsRef);
@@ -29,7 +30,7 @@ export default function CartPage() {
   return <div className="min-h-screen bg-[#f7f5f1]"><Header /><main className="section-shell py-10 sm:py-16">
     <Link href="/products" className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" />Continue exploring</Link>
     <div className="mt-8 flex flex-wrap items-end justify-between gap-4 border-b pb-7"><div><p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#a68a64]">Your TreatStory edit</p><h1 className="mt-3 text-4xl font-medium tracking-tight sm:text-5xl">Shopping bag <span className="text-[#a68a64]">({cartCount})</span></h1></div>{cartItems.length > 0 && <Button variant="outline" onClick={clearCart} className="rounded-full">Clear bag</Button>}</div>
-    {!cartItems.length ? <div className="mx-auto flex max-w-lg flex-col items-center py-24 text-center"><ShoppingBag className="h-12 w-12 text-[#a68a64]" /><h2 className="mt-6 text-2xl font-medium">Your bag is waiting for a story.</h2><p className="mt-3 text-sm text-muted-foreground">Explore handmade finds and add something you love.</p><Link href="/products" className="editorial-button mt-7">Explore products</Link></div> :
+    {!hydrated ? <SectionSkeleton /> : !cartItems.length ? <div className="mx-auto flex max-w-lg flex-col items-center py-24 text-center"><ShoppingBag className="h-12 w-12 text-[#a68a64]" /><h2 className="mt-6 text-2xl font-medium">Your bag is waiting for a story.</h2><p className="mt-3 text-sm text-muted-foreground">Explore handmade finds and add something you love.</p><Link href="/products" className="editorial-button mt-7">Explore products</Link></div> :
     <div className="mt-9 grid gap-10 lg:grid-cols-[minmax(0,1fr)_340px]">
       <div className="space-y-4">{cartItems.map(item => <article key={item.id} className="flex gap-4 rounded-2xl border border-[#e8e0d5] bg-white p-4 sm:gap-6 sm:p-6">
         <div className="h-28 w-24 shrink-0 overflow-hidden rounded-xl bg-[#eee9e0] sm:h-36 sm:w-28">{item.imageUrl && <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />}</div>

@@ -27,7 +27,12 @@ export default function LoginPage() {
   // The dashboard router sends buyers to their profile and creators/admins
   // to the correct workspace. Never send a successful login to the homepage.
   useEffect(() => {
-    if (!isUserLoading && user) router.replace('/dashboard');
+    if (!isUserLoading && user) {
+      const next = new URLSearchParams(window.location.search).get('next');
+      // Only permit same-origin app destinations.
+      const destination = next && next.startsWith('/') && !next.startsWith('//') && !next.includes('\\') && !/^\/(login|register)([/?#]|$)/.test(next) ? next : '/dashboard';
+      router.replace(destination);
+    }
   }, [user, isUserLoading, router]);
 
   const handleSignIn = async (e: React.FormEvent) => {

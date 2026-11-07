@@ -1,4 +1,5 @@
 'use client';
+import { LoadError } from '@/components/loading-states';
 
 import { useState } from 'react';
 import { collection, doc, serverTimestamp, updateDoc, Timestamp } from 'firebase/firestore';
@@ -12,7 +13,7 @@ export function SellerManagement() {
   const db = useFirestore();
   const { toast } = useToast();
   const ref = useMemoFirebase(() => db ? collection(db, 'sellers') : null, [db]);
-  const { data: sellers, isLoading } = useCollection<Seller>(ref);
+  const { data: sellers, isLoading, error: loadError, retry: retryLoad } = useCollection<Seller>(ref);
   const [working, setWorking] = useState<string | null>(null);
   const [extensionDays, setExtensionDays] = useState(30);
   const [filter, setFilter] = useState('');
@@ -32,6 +33,8 @@ export function SellerManagement() {
     } finally { setWorking(null); }
   }
   const visible = (sellers ?? []).filter(s => (s.businessName + ' ' + s.contactEmail + ' ' + s.status).toLowerCase().includes(filter.toLowerCase()));
+  if (loadError) return <LoadError retry={retryLoad} />;
+
   return <section className="space-y-5">
     <div><h2 className="text-2xl font-semibold">Seller management</h2><p className="text-sm text-muted-foreground">Review approved stores, suspend access and extend trial or subscription expiry.</p></div>
     <div className="flex flex-wrap gap-3"><Input className="max-w-sm" aria-label="Search sellers" placeholder="Search sellers…" value={filter} onChange={e => setFilter(e.target.value)} /><label className="flex items-center gap-2 text-sm">Extension (days)<Input className="w-24" type="number" min={1} max={365} value={extensionDays} onChange={e => setExtensionDays(Math.min(365, Math.max(1, Number(e.target.value) || 1)))} /></label></div>

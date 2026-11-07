@@ -1,5 +1,6 @@
-
 'use client';
+import { LoadError } from '@/components/loading-states';
+
 
 import { useState } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -39,7 +40,7 @@ export function CategoryList() {
     return collection(firestore, 'categories');
   }, [firestore]);
 
-  const { data: categories, isLoading } = useCollection<Category>(categoriesQuery);
+  const { data: categories, isLoading, error: loadError, retry: retryLoad } = useCollection<Category>(categoriesQuery);
 
   const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
@@ -84,6 +85,8 @@ export function CategoryList() {
       </div>
     );
   }
+
+  if (loadError) return <LoadError retry={retryLoad} />;
 
   return (
     <>

@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import Image from 'next/image';
+import { ProductImage } from '@/components/product-image';
 
 interface ProductCardProps { product: Product; }
 
@@ -38,21 +38,14 @@ export function ProductCard({ product }: ProductCardProps) {
     <Card className="group relative h-full overflow-hidden rounded-[22px] border border-white/70 bg-[#f1eee9] shadow-[0_6px_24px_rgba(35,29,23,0.09)] transition-shadow duration-300 hover:shadow-[0_16px_36px_rgba(35,29,23,0.15)]">
       <CardHeader className="relative overflow-hidden rounded-none bg-[#f1eee9] p-0">
         <div className="relative aspect-[3/4] w-full overflow-hidden">
-          <Image
-            src={currentSrc}
-            alt={product.name}
-            fill
-            sizes="(max-width: 640px) 48vw, (max-width: 1024px) 30vw, 23vw"
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.045]"
-            onError={() => setCurrentSrc(fallbackImage)}
-          />
+          <ProductImage src={currentSrc} alt={product.name} />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
           {images.length > 1 && (
             <>
-              <Button variant="ghost" size="icon" aria-label="Previous image" className="absolute left-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full bg-white/85 text-foreground opacity-100 shadow-sm hover:bg-white sm:opacity-0 sm:group-hover:opacity-100" onClick={(e) => changeImage(-1, e)}>
+              <Button variant="ghost" size="icon" aria-label="Previous image" className="absolute left-2 top-1/2 h-11 w-11 -translate-y-1/2 rounded-full bg-white/85 text-foreground opacity-100 shadow-sm hover:bg-white sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100" onClick={(e) => changeImage(-1, e)}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" aria-label="Next image" className="absolute right-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full bg-white/85 text-foreground opacity-100 shadow-sm hover:bg-white sm:opacity-0 sm:group-hover:opacity-100" onClick={(e) => changeImage(1, e)}>
+              <Button variant="ghost" size="icon" aria-label="Next image" className="absolute right-2 top-1/2 h-11 w-11 -translate-y-1/2 rounded-full bg-white/85 text-foreground opacity-100 shadow-sm hover:bg-white sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100" onClick={(e) => changeImage(1, e)}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
               <div className="absolute top-3 left-1/2 flex -translate-x-1/2 gap-1.5">
@@ -66,7 +59,7 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.description && <p className="hidden line-clamp-2 text-[11px] leading-snug text-white/85 sm:block sm:text-xs">{product.description}</p>}
             <div className="flex items-center justify-between gap-2">
             <div className="min-w-0 text-white">{product.showPrice ? <p className="text-lg font-semibold tracking-tight sm:text-xl">{formatPrice(product.price)}</p> : <p className="text-xs font-medium">Price on request</p>}</div>
-            <Button onClick={handleAddToCart} size="icon" aria-label={`Add ${product.name} to bag`} className="h-10 w-10 shrink-0 rounded-full bg-white text-[#29251f] shadow-sm transition-colors hover:bg-[#f4eee5]">
+            <Button onClick={handleAddToCart} size="icon" aria-label={`Add ${product.name} to bag`} className="h-11 w-11 shrink-0 rounded-full bg-white text-[#29251f] shadow-sm transition-colors hover:bg-[#f4eee5]">
             <ShoppingBag className="h-4 w-4" />
             </Button>
             </div>

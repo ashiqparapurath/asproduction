@@ -88,3 +88,12 @@
   .smooth-scrollbar::-webkit-scrollbar-track { background: transparent; }
   .smooth-scrollbar::-webkit-scrollbar-thumb { background-color: hsl(var(--border)); border-radius: 10px; border: 3px solid transparent; background-clip: content-box; }
 }
+
+/* Keep installed apps clear of display cutouts and respect motion preferences. */
+body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); padding-bottom: env(safe-area-inset-bottom); }
+header { padding-top: env(safe-area-inset-top); }
+nav a[aria-current="page"] { color: hsl(var(--foreground)); text-decoration: underline; text-underline-offset: 6px; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}

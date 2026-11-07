@@ -8,8 +8,6 @@ import {
   FirestoreError,
   DocumentSnapshot,
 } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 
 /** Utility type to add an 'id' field to a given type T. */
 type WithId<T> = T & { id: string };
@@ -21,6 +19,7 @@ type WithId<T> = T & { id: string };
 export interface UseDocResult<T> {
   data: WithId<T> | null; // Document data with ID, or null.
   isLoading: boolean;       // True if loading.
+  retry: () => void;
   error: FirestoreError | Error | null; // Error object, or null.
 }
 
@@ -47,7 +46,11 @@ export function useDoc<T = any>(
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
+  const [target, setTarget] = useState<typeof memoizedDocRef>(null);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
+    setTarget(memoizedDocRef);
+    setData(null);
     if (!memoizedDocRef) {
       setData(null);
       setIsLoading(false);
@@ -72,22 +75,14 @@ export function useDoc<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        const contextualError = new FirestorePermissionError({
-          operation: 'get',
-          path: memoizedDocRef.path,
-        })
-
-        setError(contextualError)
-        setData(null)
-        setIsLoading(false)
-
-        // trigger global error propagation
-        errorEmitter.emit('permission-error', contextualError);
+        setError(error);
+        setData(null);
+        setIsLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [memoizedDocRef]); // Re-run if the memoizedDocRef changes.
+  }, [memoizedDocRef, attempt]); // Re-run if the memoizedDocRef changes.
 
-  return { data, isLoading, error };
+  return { data: target === memoizedDocRef ? data : null, isLoading: !!memoizedDocRef && (target !== memoizedDocRef || isLoading), error: target === memoizedDocRef ? error : null, retry: () => setAttempt(n => n + 1) };
 }

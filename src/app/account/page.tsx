@@ -1,4 +1,5 @@
 'use client';
+import { SectionSkeleton } from '@/components/loading-states';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -39,7 +40,7 @@ export default function AccountPage() {
   const completed = orders?.filter(o => o.status === 'completed').length ?? 0;
   const active = orders?.filter(o => !['completed','cancelled','rejected'].includes(o.status)).length ?? 0;
   return <div className="min-h-screen bg-[#f7f5f1]"><Header /><main className="section-shell py-5 sm:py-10">
-    {!user ? <p className="text-sm text-muted-foreground">Loading your profile…</p> : <>
+    {!user ? <SectionSkeleton /> : <>
     <div className="mb-5 rounded-2xl bg-[#29251f] px-5 py-6 text-white sm:mb-8 sm:rounded-3xl sm:px-8 sm:py-9"><p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#d2b58b]">Your personal space</p><h1 className="mt-2 text-3xl font-medium tracking-tight sm:text-5xl">Hello, {firstName}.</h1><p className="mt-3 text-sm text-white/70">Everything you love about TreatStory, all in one place.</p></div>
     <div className="grid min-w-0 gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-6">
       <aside className="min-w-0 space-y-3 lg:space-y-5"><div className="rounded-2xl border border-[#e8e0d5] bg-white p-4 sm:rounded-3xl sm:p-7"><div className="flex h-12 w-12 items-center justify-center rounded-full sm:h-16 sm:w-16 bg-[#efe7db] text-2xl font-medium text-[#846b49]">{(user.displayName || user.email || 'T').charAt(0).toUpperCase()}</div><h2 className="mt-3 text-lg font-semibold sm:mt-5 sm:text-xl">{user.displayName || 'TreatStory member'}</h2><p className="mt-1 break-all text-sm text-muted-foreground">{user.email}</p><span className="mt-4 inline-flex rounded-full bg-[#f5f0e8] px-3 py-1 text-[11px] font-medium capitalize text-[#846b49]">Member</span><div className="mt-4 border-t pt-3 sm:mt-6 sm:pt-5"><p className="flex items-center gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4" />Account secured with Firebase Authentication</p></div></div>

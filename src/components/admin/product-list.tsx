@@ -1,4 +1,5 @@
 'use client';
+import { LoadError } from '@/components/loading-states';
 
 import { useState } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -40,7 +41,7 @@ export function ProductList() {
     return collection(firestore, 'products');
   }, [firestore]);
 
-  const { data: products, isLoading } = useCollection<Product>(productsQuery);
+  const { data: products, isLoading, error: loadError, retry: retryLoad } = useCollection<Product>(productsQuery);
 
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
@@ -92,6 +93,8 @@ export function ProductList() {
       </div>
     );
   }
+
+  if (loadError) return <LoadError retry={retryLoad} />;
 
   return (
     <>
