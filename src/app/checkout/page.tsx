@@ -13,7 +13,9 @@ const money = (value: number) => new Intl.NumberFormat('en-IN', { style: 'curren
 
 function CheckoutContent() {
   const { cartItems, hydrated } = useCart();
-  const directId = useSearchParams().get('product');
+  const params = useSearchParams();
+  const directId = params.get('product');
+  const customization = directId ? (params.get('customization') || '').slice(0, 950) : '';
   const [completed, setCompleted] = useState(false);
   const items = cartItems.filter(item => item.id.startsWith('seller:') && (!directId || item.id === 'seller:' + directId));
   const total = items.reduce((sum, item) => sum + (item.showPrice ? item.price * item.quantity : 0), 0);
@@ -32,7 +34,7 @@ function CheckoutContent() {
       {!hydrated ? <SectionSkeleton /> : items.length === 0 && !completed ? <div className="mx-auto max-w-lg py-24 text-center"><ShoppingBag className="mx-auto h-12 w-12 text-[#a08360]" /><h2 className="mt-5 text-2xl font-medium">Your checkout is empty</h2><p className="mt-3 text-sm text-[#756d64]">Add a creation to your bag to continue.</p><Link href="/products" className="mt-7 inline-flex rounded-full bg-[#29251f] px-7 py-3 text-sm text-white">Explore creations</Link></div> :
       <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,390px)] lg:gap-12">
         <div className="min-w-0 space-y-6">
-          <CreatorCheckout variant="page" onlyProductId={directId ?? undefined} onComplete={() => setCompleted(true)} />
+          <CreatorCheckout variant="page" onlyProductId={directId ?? undefined} initialNote={customization} onComplete={() => setCompleted(true)} />
           <div className="grid gap-3 rounded-3xl border border-[#e6dfd4] bg-white p-5 text-xs leading-5 text-[#756d64] sm:grid-cols-2 sm:p-6">
             <div className="flex gap-3"><ShieldCheck className="h-5 w-5 shrink-0 text-[#a08360]" /><span><strong className="block text-[#29251f]">Your details stay protected</strong>Contact and delivery details are shared for order fulfillment.</span></div>
             <div className="flex gap-3"><Truck className="h-5 w-5 shrink-0 text-[#a08360]" /><span><strong className="block text-[#29251f]">Made with care</strong>Creators confirm fulfillment and delivery arrangements.</span></div>
