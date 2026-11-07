@@ -50,8 +50,10 @@ export default function ProductDetailPage() {
         if (!live) return;
         setProduct(listing); setLoading(false);
         if (sellerListing && listing.sellerId) {
-          const store = await getDoc(doc(db, 'sellers', listing.sellerId));
-          if (live && store.exists()) setSellerName((store.data() as Seller).businessName);
+          try {
+            const store = await getDoc(doc(db, 'sellers', listing.sellerId));
+            if (live && store.exists()) setSellerName((store.data() as Seller).businessName);
+          } catch { /* Seller display name is optional; the product remains visible. */ }
         }
       } catch (err) { if (live) { setError(err instanceof Error ? err.message : 'Unable to load this product.'); setLoading(false); } }
     })();
