@@ -5,8 +5,8 @@ import { SectionSkeleton } from '@/components/loading-states';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { collection, doc, addDoc, deleteDoc, updateDoc, getDoc, query, where, serverTimestamp } from 'firebase/firestore';
-import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, doc, addDoc, deleteDoc, updateDoc, query, where, serverTimestamp, getCountFromServer } from 'firebase/firestore';
+import { useFirestore, useUser, useAccountRole, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { Header } from '@/components/header';
 import { OrderManagement } from '@/components/order-management';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import type { MarketplaceProduct, Seller, SellerApplication } from '@/lib/marketplace-types';
+import type { MarketplaceProduct, SellerApplication } from '@/lib/marketplace-types';
 import { LayoutDashboard, Package, Settings, ShoppingBag, Plus, ArrowUpRight, Clock3, Store, Trash2, Pencil, X, CheckCircle2, AlertCircle, LogOut } from 'lucide-react';
 
 type Section = 'overview' | 'products' | 'orders' | 'store';
@@ -27,9 +27,12 @@ function SellerContent() {
   const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
-  const [seller, setSeller] = useState<Seller | null>(null);
-  const [application, setApplication] = useState<SellerApplication | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { seller, role, roleError, isRoleLoading } = useAccountRole();
+  const appRef = useMemoFirebase(() => db && user && role !== 'seller' ? doc(db, 'seller_applications', user.uid) : null, [db, user?.uid, role]);
+  const { data: application, isLoading: applicationLoading } = useDoc<SellerApplication>(appRef);
+  const [counts, setCounts] = useState<{ total: number; published: number } | null>(null);
+  const [countError, setCountError] = useState(false);
+  const [countVersion, setCountVersion] = useState(0);
   const params = useSearchParams();
   const requestedSection = params.get('section');
   const section: Section = ['overview', 'products', 'orders', 'store'].includes(requestedSection || '') ? requestedSection as Section : 'overview';
@@ -43,32 +46,28 @@ function SellerContent() {
 
   useEffect(() => { if (!isUserLoading && !user) router.replace('/login'); }, [isUserLoading, user, router]);
   useEffect(() => {
-    if (!db || !user) return;
-    let live = true;
-    setLoading(true);
-    (async () => {
-      try {
-        const [sellerSnap, appSnap] = await Promise.all([
-          getDoc(doc(db, 'sellers', user.uid)),
-          getDoc(doc(db, 'seller_applications', user.uid)),
-        ]);
-        if (!live) return;
-        const s = sellerSnap.exists() ? ({ id: sellerSnap.id, ...sellerSnap.data() } as Seller) : null;
-        setSeller(s);
-        setApplication(appSnap.exists() ? ({ id: appSnap.id, ...appSnap.data() } as SellerApplication) : null);
-        if (s) setStoreDraft({ description: s.description, contactPhone: s.contactPhone, isOpen: s.isOpen });
-      } catch {
-        if (live) toast({ variant: 'destructive', title: 'Unable to load seller access', description: 'Check your Firestore rules.' });
-      } finally { if (live) setLoading(false); }
-    })();
-    return () => { live = false; };
-  }, [db, user, toast]);
+    if (seller) setStoreDraft({ description: seller.description, contactPhone: seller.contactPhone, isOpen: seller.isOpen });
+  }, [seller]);
 
-  const productsQuery = useMemoFirebase(() => db && user && seller ? query(collection(db, 'marketplace_products'), where('sellerId', '==', user.uid)) : null, [db, user, seller]);
+  // Overview uses aggregation queries; the full catalog is only downloaded when editing products.
+  useEffect(() => {
+    if (!db || !user || !seller || section !== 'overview') return;
+    let live = true;
+    setCounts(null); setCountError(false);
+    const source = collection(db, 'marketplace_products');
+    Promise.all([
+      getCountFromServer(query(source, where('sellerId', '==', user.uid))),
+      getCountFromServer(query(source, where('sellerId', '==', user.uid), where('status', '==', 'published'))),
+    ]).then(([total, published]) => {
+      if (live) setCounts({ total: total.data().count, published: published.data().count });
+    }).catch(() => { if (live) setCountError(true); });
+    return () => { live = false; };
+  }, [db, user?.uid, seller?.id, section, countVersion]);
+
+  const productsQuery = useMemoFirebase(() => db && user && seller && section === 'products' ? query(collection(db, 'marketplace_products'), where('sellerId', '==', user.uid)) : null, [db, user?.uid, seller?.id, section]);
   const { data: products, isLoading: productsLoading } = useCollection<MarketplaceProduct & { status?: string }>(productsQuery);
   const active = !!seller && seller.status === 'active' && ((seller.accessEndsAt as { toMillis?: () => number } | null)?.toMillis?.() ?? 0) > Date.now();
   const visible = useMemo(() => (products ?? []).filter(p => (p.name + ' ' + p.category).toLowerCase().includes(search.toLowerCase())), [products, search]);
-  const published = (products ?? []).filter(p => p.status === 'published').length;
 
   function openForm(product?: MarketplaceProduct & { status?: string }) {
     setEditing(product ?? null);
@@ -100,6 +99,7 @@ function SellerContent() {
       };
       if (editing) await updateDoc(doc(db, 'marketplace_products', editing.id), data);
       else await addDoc(collection(db, 'marketplace_products'), { ...data, createdAt: serverTimestamp() });
+      setCountVersion(v => v + 1);
       toast({ title: editing ? 'Product updated' : 'Product created' });
       setFormOpen(false);
     } catch { toast({ variant: 'destructive', title: 'Could not save product', description: 'Check your account access and field values.' }); }
@@ -109,7 +109,7 @@ function SellerContent() {
   async function removeProduct(product: MarketplaceProduct) {
     if (!db || !active || busy || !window.confirm('Delete this product permanently?')) return;
     setBusy(true);
-    try { await deleteDoc(doc(db, 'marketplace_products', product.id)); toast({ title: 'Product deleted' }); }
+    try { await deleteDoc(doc(db, 'marketplace_products', product.id)); setCountVersion(v => v + 1); toast({ title: 'Product deleted' }); }
     catch { toast({ variant: 'destructive', title: 'Could not delete product' }); }
     finally { setBusy(false); }
   }
@@ -120,7 +120,6 @@ function SellerContent() {
     setBusy(true);
     try {
       await updateDoc(doc(db, 'sellers', user.uid), { ...storeDraft, updatedAt: serverTimestamp() });
-      setSeller(s => s ? { ...s, ...storeDraft } : s);
       toast({ title: 'Store settings saved' });
     } catch { toast({ variant: 'destructive', title: 'Could not save store settings' }); }
     finally { setBusy(false); }
@@ -133,7 +132,8 @@ function SellerContent() {
     { key: 'store', label: 'Store settings', icon: Settings },
   ];
 
-  if (isUserLoading || loading) return <div className="min-h-screen bg-[#f7f5f1]"><Header /><main className="section-shell py-16 text-sm text-muted-foreground"><SectionSkeleton /></main></div>;
+  if (isUserLoading || isRoleLoading || (!seller && applicationLoading)) return <div className="min-h-screen bg-[#f7f5f1]"><Header /><main className="section-shell py-16 text-sm text-muted-foreground"><SectionSkeleton /></main></div>;
+  if (roleError) return <div className="min-h-screen bg-[#f7f5f1]"><Header /><main className="section-shell py-10"><h1 className="text-xl font-semibold">Unable to verify seller access</h1><p className="mt-3 text-sm text-muted-foreground">Check your connection and deployed Firestore rules. No access changes were made.</p></main></div>;
   if (!seller) return <div className="min-h-screen bg-[#f7f5f1]"><Header /><main className="section-shell mx-auto max-w-2xl py-20"><p className="eyebrow text-[#a68a64]">TreatStory for creators</p><h1 className="mt-4 text-4xl font-medium">Your seller journey starts here.</h1><p className="mt-5 text-muted-foreground">{application ? `Your application is ${application.status}. Your workspace becomes available once approved.` : 'Apply to become a seller to access your workspace.'}</p><Link href="/become-a-seller" className="editorial-button mt-8">Seller application <ArrowUpRight className="ml-2 h-4 w-4" /></Link></main></div>;
 
   return <div className="min-h-screen bg-[#f7f5f1]"><Header />
@@ -148,9 +148,9 @@ function SellerContent() {
         {!active && <div role="alert" className="flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950"><AlertCircle className="h-5 w-5 shrink-0" /><span>Your seller access is suspended, expired or not yet active. Editing and publishing are disabled. Contact TreatStory administration to renew access.</span></div>}
         {section === 'overview' && <div className="space-y-6">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{[
-            { label: 'Total products', value: productsLoading ? '…' : products?.length ?? 0, icon: Package },
-            { label: 'Published products', value: productsLoading ? '…' : published, icon: CheckCircle2 },
-            { label: 'Draft products', value: productsLoading ? '…' : (products?.length ?? 0) - published, icon: Clock3 },
+            { label: 'Total products', value: countError ? '—' : counts?.total ?? '…', icon: Package },
+            { label: 'Published products', value: countError ? '—' : counts?.published ?? '…', icon: CheckCircle2 },
+            { label: 'Draft products', value: countError ? '—' : counts ? counts.total - counts.published : '…', icon: Clock3 },
           ].map(metric => <div key={metric.label} className="rounded-2xl border border-[#e9e3d9] bg-white p-4 shadow-sm shadow-[#29251f]/[0.03] sm:p-6"><metric.icon className="h-5 w-5 text-[#a68a64]" /><p className="mt-3 text-2xl font-semibold sm:mt-6 sm:text-3xl">{metric.value}</p><p className="mt-1 text-xs text-muted-foreground sm:text-sm">{metric.label}</p></div>)}</div>
           <div className="rounded-2xl border border-[#e9e3d9] bg-white p-5 sm:rounded-3xl sm:p-7"><p className="eyebrow text-[#a68a64]">Membership</p><h2 className="mt-3 text-xl font-medium capitalize">{seller.accessType} access</h2><p className="mt-2 text-sm text-muted-foreground">Valid until {dateText(seller.accessEndsAt)} · Status: {seller.status}</p><div className="mt-6 border-t pt-5"><h3 className="font-medium">Get your store ready</h3><p className="mt-2 text-sm text-muted-foreground">Add high-quality photos, publish products and keep your business contact details current.</p><Button variant="outline" className="mt-4 rounded-full" onClick={() => setSection('products')}>Manage products <ArrowUpRight className="ml-2 h-4 w-4" /></Button></div></div>
         </div>}
