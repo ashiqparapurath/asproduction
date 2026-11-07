@@ -45,6 +45,31 @@ Do not deploy an incomplete local indexes file if Firebase already has other ind
 
 This is separate from `firestore.rules` deployment; permission errors generally return `permission-denied`, not these index preconditions.
 
+## Buyer account: recent orders unavailable
+
+If the account screen shows **Recent orders are temporarily unavailable** or the `/orders` page cannot load the buyer feed, inspect the Firestore listener's real error code. The shared buyer query is:
+
+```ts
+query(
+  collection(db, 'seller_orders'),
+  where('buyerUid', '==', auth.currentUser.uid),
+  orderBy('createdAt', 'desc'),
+  limit(20)
+)
+```
+
+A **Collection-scope** composite index is required:
+
+- Collection ID: `seller_orders`
+- `buyerUid`: **Ascending**
+- `createdAt`: **Descending**
+
+This composite index is already declared in `firestore.indexes.json`; it must be deployed and **Enabled** in the Firebase project serving the preview. Index deployment is separate from updating `firestore.rules`.
+
+If the listener reports `permission-denied` instead of `failed-precondition`, verify that the signed-in buyer owns those orders, the query has the `buyerUid` filter, and the expected security rules have been deployed. Do **not** permit public reads to fix a buyer feed.
+
+The account page has one recoverable error message with a retry action; it no longer duplicates the warning.
+
 ## PWA browser console warnings
 
 The draft branch replaces deprecated `apple-mobile-web-app-capable` with `mobile-web-app-capable` and removes the eager splash image's `fetchPriority="high"` hint. The manifest, existing installed icons and browser favicon remain unchanged. Verify the generated HTML and browser console on the draft Vercel deployment; old previews and installed PWAs can cache previous assets.
