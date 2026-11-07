@@ -25,8 +25,8 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Compile Firestore rules in the emulator
-        run: npx --yes firebase-tools@14 emulators:exec --only firestore --project demo-treatstory --config firebase.json 'node -e "console.log(\"Rules emulator started successfully\")"'
+      - name: Compile Firestore and Storage rules in the emulators
+        run: npx --yes firebase-tools@14 emulators:exec --only firestore,storage --project demo-treatstory --config firebase.json 'node -e "console.log(\"Rules emulator started successfully\")"'
       - name: TypeScript validation
         run: npm run typecheck
       - name: Production build
