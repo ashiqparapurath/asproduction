@@ -36,7 +36,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Card className="group flex h-full flex-col overflow-hidden rounded-[18px] border-0 bg-transparent shadow-none">
-      <CardHeader className="relative mb-3 overflow-hidden rounded-[18px] bg-[#eee9e0] p-0">
+      <CardHeader className="relative mb-3 overflow-hidden rounded-2xl bg-[#f1eee9] p-0">
         <div className="relative aspect-[4/5] w-full overflow-hidden">
           <Image
             src={currentSrc}
@@ -46,7 +46,7 @@ export function ProductCard({ product }: ProductCardProps) {
             className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.045]"
             onError={() => setCurrentSrc(fallbackImage)}
           />
-          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/15 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-black/10 to-transparent" />
           {images.length > 1 && (
             <>
               <Button variant="ghost" size="icon" aria-label="Previous image" className="absolute left-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full bg-white/85 text-foreground opacity-100 shadow-sm hover:bg-white sm:opacity-0 sm:group-hover:opacity-100" onClick={(e) => changeImage(-1, e)}>
@@ -60,19 +60,19 @@ export function ProductCard({ product }: ProductCardProps) {
               </div>
             </>
           )}
-          <span className="absolute left-3 top-3 rounded-full bg-[#faf8f3]/90 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#51463a] backdrop-blur-sm">{product.category}</span>
-          <Button onClick={handleAddToCart} size="icon" aria-label={`Add ${product.name} to bag`} className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-white text-foreground shadow-md transition-transform hover:scale-105 hover:bg-[#f4eee5]">
+          <span className="absolute left-2.5 top-2.5 max-w-[calc(100%-20px)] truncate rounded-md bg-white/95 px-2.5 py-1 text-[10px] font-medium text-[#51463a] shadow-sm">{product.category}</span>
+          <Button onClick={handleAddToCart} size="icon" aria-label={`Add ${product.name} to bag`} className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-white text-[#29251f] shadow-sm transition-colors hover:bg-[#f4eee5]">
             <ShoppingBag className="h-4 w-4" />
           </Button>
         </div>
       </CardHeader>
       <CardContent className="flex flex-grow flex-col px-0 py-0">
-        <CardTitle className="line-clamp-2 text-[13px] font-medium leading-snug tracking-tight text-foreground sm:text-[15px]">{product.name}</CardTitle>
-        <CardDescription className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground sm:text-xs">{product.description}</CardDescription>
+        <CardTitle className="line-clamp-2 text-sm font-semibold leading-snug tracking-tight text-foreground sm:text-[15px]">{product.name}</CardTitle>
+        <CardDescription className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{product.description}</CardDescription>
       </CardContent>
       <CardFooter className="mt-3 flex items-center justify-between gap-2 px-0 py-0">
         {product.showPrice ? <p className="text-sm font-semibold tracking-tight text-foreground sm:text-base">{formatPrice(product.price)}</p> : <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">Price on request</p>}
-        <span className="text-[9px] uppercase tracking-[0.12em] text-[#a48a67]">Discover</span>
+
       </CardFooter>
     </Card>
   );
