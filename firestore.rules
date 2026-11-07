@@ -165,7 +165,7 @@ service cloud.firestore {
             (request.resource.data.whatsappNumber == '' ||
               request.resource.data.whatsappNumber.matches('^[0-9]{8,15}$')))) &&
         request.resource.data.isOpen is bool &&
-                request.resource.data.updatedAt == request.time
+        request.resource.data.updatedAt == request.time
       );
     }
 
