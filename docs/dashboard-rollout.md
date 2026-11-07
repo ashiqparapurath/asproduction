@@ -10,7 +10,9 @@ The repository now contains:
 - `firestore.indexes.json` – composite indexes used by the newest-first order feeds, admin counts and seller action queues.
 - `firebase.json` – Firestore deployment configuration.
 
-After reviewing the diff, deploy to the **intended Firebase project**:
+Before deploying indexes, run `firebase firestore:indexes --project treatstory-online` and compare the currently deployed definitions with `firestore.indexes.json`. **Preserve any existing indexes and field overrides** that are not included in this draft file. Review any CLI deletion prompts; do not approve removal of unrelated existing indexes. Firebase notes that console-managed index changes should be reconciled with the local configuration before deployment.
+
+After reviewing the diff and merging any existing index definitions, deploy to the **intended Firebase project**:
 
 ```bash
 firebase login
