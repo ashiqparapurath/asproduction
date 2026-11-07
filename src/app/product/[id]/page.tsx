@@ -65,21 +65,25 @@ export default function ProductDetailPage() {
   const index = Math.min(photoIndex, Math.max(0, photos.length - 1));
   const minQty = Math.max(1, creator?.minimumOrderQuantity ?? 1);
   const available = product?.showPrice && (!creator || creator.availability !== 'unavailable');
-  function addCurrent() {
-    if (!product || !available) return;
+  function customNote() {
+    const fields = (creator?.customizationOptions ?? []).map(field => ({ field, value: answers[field]?.trim() || '' })).filter(item => item.value);
+    return [...fields.map(item => `${item.field}: ${item.value}`), requestNote.trim()].filter(Boolean).join('\n');
+  }
+  function addCurrent(): boolean {
+    if (!product || !available) return false;
+    const note = customNote();
+    if (note.length > 950) { toast({ variant: 'destructive', title: 'Customization notes are too long', description: 'Please shorten your preferences.' }); return false; }
     const item: Product = { id: creator ? 'seller:' + product.id : product.id, sellerId: product.sellerId,
       name: product.name, description: product.description, category: product.category,
-      categoryId: product.category, price: product.price, imageUrls: photos, showPrice: product.showPrice };
+      categoryId: product.category, price: product.price, imageUrls: photos, showPrice: product.showPrice,
+      customizationNote: creator ? note : undefined };
     for (let n = 0; n < (creator ? minQty : 1); n++) addToCart(item);
     toast({ title: 'Added to your bag', description: creator && minQty > 1 ? `${minQty} units of ${product.name} added.` : product.name });
+    return true;
   }
   function buyNow() {
-    if (!product || !available) return;
-    const fields = (creator?.customizationOptions ?? []).map(field => ({ field, value: answers[field]?.trim() || '' })).filter(item => item.value);
-    const note = [...fields.map(item => `${item.field}: ${item.value}`), requestNote.trim()].filter(Boolean).join('\n');
-    if (note.length > 950) { toast({ variant: 'destructive', title: 'Customization notes are too long', description: 'Please shorten your preferences.' }); return; }
-    addCurrent();
-    if (creator) router.push(`/checkout?product=${encodeURIComponent(product.id)}${note ? '&customization=' + encodeURIComponent(note) : ''}`);
+    if (!product || !available || !addCurrent()) return;
+    if (creator) router.push(`/checkout?product=${encodeURIComponent(product.id)}`);
     else router.push('/cart');
   }
   return <div className="min-h-screen bg-[#f8f6f2] text-[#29251f]"><Header /><main className="section-shell pb-20 pt-6 sm:pt-12">
@@ -100,8 +104,8 @@ export default function ProductDetailPage() {
       </div>
       {creator && (creator.customizationOptions?.length || 0) > 0 && <div className="space-y-4 rounded-2xl border border-[#e8e0d5] bg-white p-5"><div><h2 className="font-medium">Make it yours</h2><p className="mt-1 text-xs text-muted-foreground">Optional personalization requests. The creator will confirm feasibility; prices are not automatically changed.</p></div>{creator.customizationOptions?.map((field,i) => <label key={i} className="block space-y-1.5 text-xs font-medium">{field}<Input maxLength={120} value={answers[field] || ''} placeholder="Your preference" onChange={e => setAnswers(v => ({...v,[field]:e.target.value}))} /></label>)}</div>}
       {creator && <label className="block space-y-2 text-sm font-medium">Notes for the creator (optional)<Textarea maxLength={500} rows={3} placeholder="Special requests, colours, gifting instructions…" value={requestNote} onChange={e=>setRequestNote(e.target.value)} className="bg-white"/></label>}
-      <div className="grid grid-cols-[auto_1fr] gap-3"><Button type="button" disabled={!available} onClick={addCurrent} variant="outline" className="h-12 rounded-full border-[#29251f] bg-white px-5" aria-label={`Add ${product.name} to bag`}><ShoppingBag className="mr-2 h-4 w-4" />Add to bag</Button><Button type="button" disabled={!available} onClick={buyNow} className="h-12 rounded-full bg-[#29251f] text-white hover:bg-[#51463a]">{available ? creator ? 'Buy now' : 'View bag' : 'Unavailable'}</Button></div>
-      {creator && <p className="text-xs leading-5 text-muted-foreground">Customization preferences are sent as order notes when you choose Buy now. Delivery charges are confirmed by the seller.</p>}
+      <div className="grid grid-cols-[auto_1fr] gap-3"><Button type="button" disabled={!available} onClick={() => void addCurrent()} variant="outline" className="h-12 rounded-full border-[#29251f] bg-white px-5" aria-label={`Add ${product.name} to bag`}><ShoppingBag className="mr-2 h-4 w-4" />Add to bag</Button><Button type="button" disabled={!available} onClick={buyNow} className="h-12 rounded-full bg-[#29251f] text-white hover:bg-[#51463a]">{available ? creator ? 'Buy now' : 'View bag' : 'Unavailable'}</Button></div>
+      {creator && <p className="text-xs leading-5 text-muted-foreground">Your preferences are saved with this listing in your bag and sent to the seller as order notes. Delivery charges are confirmed by the seller.</p>}
     </div></div>}
   </main></div>;
 }
