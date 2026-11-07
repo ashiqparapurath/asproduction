@@ -6,8 +6,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signOut as firebaseSignOut } from 'firebase/auth';
 import Link from 'next/link';
-import { doc } from 'firebase/firestore';
-import { useAuth, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useAccountRole, useAuth, useUser } from '@/firebase';
 import { Header } from '@/components/header';
 const OrderManagement = dynamic(() => import('@/components/order-management').then(m => m.OrderManagement), { loading: () => <SectionSkeleton /> });
 import { Button } from '@/components/ui/button';
@@ -40,7 +39,6 @@ const navigation: { id: Tab; label: string; icon: typeof Store; group: string }[
 function AdminContent() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
-  const db = useFirestore();
   const router = useRouter();
   const params = useSearchParams();
   const requestedTab = params.get('tab');
@@ -50,8 +48,7 @@ function AdminContent() {
   const [bannerOpen, setBannerOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
-  const adminRef = useMemoFirebase(() => user && db ? doc(db, 'roles_admin', user.uid) : null, [user, db]);
-  const { data: admin, isLoading: adminLoading } = useDoc(adminRef);
+  const { role, roleError, isRoleLoading } = useAccountRole();
 
   useEffect(() => { if (!isUserLoading && !user) router.replace('/login'); }, [isUserLoading, user, router]);
 
@@ -62,8 +59,9 @@ function AdminContent() {
     catch { setSigningOut(false); }
   }
 
-  if (isUserLoading || !user || adminLoading) return <div className="min-h-screen bg-[#f7f5f1]"><Header /><main className="section-shell py-16 text-sm text-muted-foreground"><SectionSkeleton /></main></div>;
-  if (!admin) return <div className="min-h-screen bg-[#f7f5f1]"><Header /><main className="section-shell mx-auto max-w-xl py-20"><ShieldCheck className="h-8 w-8 text-[#a68a64]" /><h1 className="mt-5 text-3xl font-medium">Administrator access required</h1><p className="mt-3 text-sm text-muted-foreground">This workspace is restricted to verified TreatStory administrators.</p><Link href="/account" className="editorial-button mt-7">Return to account</Link></main></div>;
+  if (isUserLoading || !user || isRoleLoading) return <div className="min-h-screen bg-[#f7f5f1]"><Header /><main className="section-shell py-16 text-sm text-muted-foreground"><SectionSkeleton /></main></div>;
+  if (roleError) return <div className="min-h-screen bg-[#f7f5f1]"><Header /><main className="section-shell py-10"><h1 className="text-xl font-semibold">Unable to verify administrator access</h1><p className="mt-3 text-sm text-muted-foreground">Check Firestore permissions and reload. Access has not been granted.</p></main></div>;
+  if (role !== 'admin') return <div className="min-h-screen bg-[#f7f5f1]"><Header /><main className="section-shell mx-auto max-w-xl py-20"><ShieldCheck className="h-8 w-8 text-[#a68a64]" /><h1 className="mt-5 text-3xl font-medium">Administrator access required</h1><p className="mt-3 text-sm text-muted-foreground">This workspace is restricted to verified TreatStory administrators.</p><Link href="/account" className="editorial-button mt-7">Return to account</Link></main></div>;
 
   return <div className="min-h-screen bg-[#f7f5f1]"><Header />
     <div className="section-shell grid min-w-0 gap-4 py-4 sm:gap-6 sm:py-7 lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-8 lg:py-10">
