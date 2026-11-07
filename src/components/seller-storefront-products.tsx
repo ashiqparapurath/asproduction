@@ -5,7 +5,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import type { MarketplaceProduct } from '@/lib/marketplace-types';
 import { useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
-import { Search, Store, Zap, ArrowUpRight, ShoppingBag } from 'lucide-react';
+import { Search, Store, Zap, ShoppingBag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
@@ -31,19 +31,18 @@ export function SellerStorefrontProducts({ limitCount }: { limitCount?: number }
           const available = p.availability !== 'unavailable' && p.showPrice;
           return (
             <article key={p.id} className="group flex min-w-0 flex-col">
-              <div className="relative aspect-[4/5] overflow-hidden rounded-[18px] bg-[#eee9e0]">
+              <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-[#f1eee9]">
                 {p.imageUrls?.[0] ? <img src={p.imageUrls[0]} alt={p.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" /> : <div className="flex h-full items-center justify-center font-serif text-lg text-[#958575]">TreatStory</div>}
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/20 to-transparent" />
-                <span className="absolute left-2.5 top-2.5 max-w-[calc(100%-20px)] truncate rounded-full bg-[#faf8f3]/95 px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-[#51463a] backdrop-blur-sm sm:left-3 sm:top-3">{p.category}</span>
-                <span className={`absolute bottom-3 left-3 rounded-full px-2.5 py-1 text-[9px] font-semibold backdrop-blur-sm ${p.availability === 'unavailable' ? 'bg-[#29251f]/85 text-white' : 'bg-white/90 text-[#51463a]'}`}>{p.availability === 'unavailable' ? 'Unavailable' : p.availability === 'made-to-order' ? 'Made to order' : 'Available'}</span>
-                <button type="button" disabled={!available} aria-label={`Add ${p.name} to bag`} onClick={() => { addProduct(p); toast({ title: 'Added to your bag', description: p.name }); }} className="absolute bottom-2.5 right-2.5 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#29251f] shadow-md transition hover:scale-105 hover:bg-[#f4eee5] disabled:cursor-not-allowed disabled:opacity-50 sm:bottom-3 sm:right-3"><ShoppingBag className="h-4 w-4" /></button>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-black/10 to-transparent" />
+                <span className="absolute left-2.5 top-2.5 max-w-[calc(100%-20px)] truncate rounded-md bg-white/95 px-2.5 py-1.5 text-[10px] font-medium text-[#51463a] shadow-sm sm:left-3 sm:top-3">{p.category}</span>
+                <span className={`absolute bottom-3 left-3 rounded-md px-2.5 py-1 text-[10px] font-medium backdrop-blur-sm ${p.availability === 'unavailable' ? 'bg-[#29251f]/85 text-white' : 'bg-white/90 text-[#51463a]'}`}>{p.availability === 'unavailable' ? 'Unavailable' : p.availability === 'made-to-order' ? 'Made to order' : 'Available'}</span>
+                <button type="button" disabled={!available} aria-label={`Add ${p.name} to bag`} onClick={() => { addProduct(p); toast({ title: 'Added to your bag', description: p.name }); }} className="absolute bottom-2.5 right-2.5 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#29251f] shadow-sm transition-colors hover:bg-[#f4eee5] disabled:cursor-not-allowed disabled:opacity-50 sm:bottom-3 sm:right-3"><ShoppingBag className="h-4 w-4" /></button>
               </div>
               <div className="flex flex-1 flex-col pt-3">
-                <h3 className="line-clamp-2 min-h-[2.6em] text-[13px] font-medium leading-snug tracking-tight text-[#29251f] sm:text-[15px]">{p.name}</h3>
-                <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground sm:text-xs">{p.description}</p>
+                <h3 className="line-clamp-2 min-h-[2.6em] text-sm font-semibold leading-snug tracking-tight text-[#29251f] sm:text-[15px]">{p.name}</h3>
+                <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground sm:text-xs">{p.description}</p>
                 <div className="mt-auto flex items-center justify-between gap-2 pt-3">
                   <p className="text-sm font-semibold tracking-tight text-[#29251f] sm:text-base">{p.showPrice ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(p.price) : 'Price on request'}</p>
-                  <span className="hidden items-center gap-1 text-[10px] font-medium text-[#a48a67] sm:inline-flex">Handmade <ArrowUpRight className="h-3 w-3" /></span>
                 </div>
                 <button type="button" disabled={!available} onClick={() => { addProduct(p); router.push(`/checkout?product=${encodeURIComponent(p.id)}`); }} className="mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-full border border-[#29251f] bg-[#29251f] px-3 py-2.5 text-[11px] font-semibold text-white transition hover:bg-[#51463a] disabled:cursor-not-allowed disabled:border-[#ddd4c8] disabled:bg-[#eee9e0] disabled:text-[#958575] sm:text-xs"><Zap className="h-3.5 w-3.5" />{available ? 'Buy now' : p.showPrice ? 'Unavailable' : 'Enquire for price'}</button>
               </div>
