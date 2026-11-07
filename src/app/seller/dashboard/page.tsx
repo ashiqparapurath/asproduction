@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { MarketplaceProduct, SellerApplication } from '@/lib/marketplace-types';
 import { LayoutDashboard, Package, Settings, ShoppingBag, Plus, ArrowUpRight, Clock3, Store, Trash2, Pencil, CheckCircle2, AlertCircle, LogOut } from 'lucide-react';
 import { SellerProductEditor, emptyDraft, type ProductDraft } from '@/components/seller-product-editor';
+import { uploadTreatStoryPhoto } from '@/lib/cloudinary-upload';
 
 type Section = 'overview' | 'products' | 'orders' | 'store';
 const dateText = (value: unknown) => { const d = (value as { toDate?: () => Date } | null)?.toDate?.(); return d ? d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not set'; };
@@ -41,6 +42,8 @@ function SellerContent() {
   const [editing, setEditing] = useState<MarketplaceProduct | null>(null);
   const [draft, setDraft] = useState<ProductDraft>(emptyDraft);
   const [formOpen, setFormOpen] = useState(false);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState('');
   const [storeDraft, setStoreDraft] = useState({ description: '', contactPhone: '', whatsappNumber: '', isOpen: true });
@@ -96,6 +99,7 @@ function SellerContent() {
 
   function openForm(product?: MarketplaceProduct & { status?: string }) {
     setEditing(product ?? null);
+    setUploadProgress('');
     setDraft(product ? {
       name: product.name, description: product.description, price: String(product.price), category: product.category,
       imageUrls: product.imageUrls.join('\n'), availability: product.availability,
@@ -112,9 +116,40 @@ function SellerContent() {
     setFormOpen(true);
   }
 
+  async function uploadProductPhotos(files: File[]) {
+    if (!user || !active || uploadingPhotos || busy || !files.length) return;
+    const currentCount = draft.imageUrls.split(/\r?\n|,/).filter(x => x.trim()).length;
+    if (currentCount + files.length > 10) {
+      toast({ variant: 'destructive', title: 'Maximum 10 photos', description: 'Remove some photos before adding more.' });
+      return;
+    }
+    for (const file of files) {
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 2_000_000 || file.size === 0) {
+        toast({ variant: 'destructive', title: 'Unsupported photo', description: 'Select JPG, PNG or WebP images under 2 MB each.' });
+        return;
+      }
+    }
+    setUploadingPhotos(true);
+    try {
+      for (const [index, file] of files.entries()) {
+        setUploadProgress(`Uploading photo ${index + 1} of ${files.length}…`);
+        const url = await uploadTreatStoryPhoto(user, file, 'product');
+        setDraft(previous => ({
+          ...previous,
+          imageUrls: [...previous.imageUrls.split(/\r?\n|,/).map(v => v.trim()).filter(Boolean), url].join('\n'),
+        }));
+      }
+      setUploadProgress(`${files.length} photo(s) uploaded`);
+      toast({ title: 'Photos uploaded', description: 'Save the product to publish these images.' });
+    } catch (error) {
+      setUploadProgress('');
+      toast({ variant: 'destructive', title: 'Photo upload failed', description: error instanceof Error ? error.message : 'Check your connection and try again.' });
+    } finally { setUploadingPhotos(false); }
+  }
+
   async function saveProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!db || !user || !active || busy) return;
+    if (!db || !user || !active || busy || uploadingPhotos) return;
     const price = Number(draft.price);
     if (!Number.isFinite(price) || price < 0) return toast({ variant: 'destructive', title: 'Enter a valid price' });
     const imageUrls = draft.imageUrls.split(/\n|,/).map(v => v.trim()).filter(Boolean);
@@ -222,7 +257,7 @@ function SellerContent() {
         {section === 'store' && <form onSubmit={saveStore} className="space-y-5 rounded-2xl border bg-white p-4 sm:space-y-6 sm:rounded-3xl sm:p-8"><div><h2 className="text-xl font-medium">Business profile</h2><p className="mt-1 text-sm text-muted-foreground">Only editable store details appear here. Business identity and access are controlled by TreatStory.</p></div><div><Label>Business name</Label><Input value={seller.businessName} disabled className="mt-2" /></div><div><Label htmlFor="storeDescription">About your store</Label><Textarea id="storeDescription" rows={5} maxLength={2000} value={storeDraft.description} onChange={e => setStoreDraft(s => ({ ...s, description: e.target.value }))} className="mt-2" /></div><div><Label htmlFor="storePhone">Contact phone</Label><Input id="storePhone" maxLength={40} value={storeDraft.contactPhone} onChange={e => setStoreDraft(s => ({ ...s, contactPhone: e.target.value }))} className="mt-2" /></div><div><Label htmlFor="storeWhatsapp">WhatsApp orders · business number</Label><Input id="storeWhatsapp" type="tel" inputMode="tel" maxLength={20} placeholder="919876543210 (include country code)" value={storeDraft.whatsappNumber} onChange={e => setStoreDraft(s => ({...s, whatsappNumber:e.target.value}))} className="mt-2" /><p className="mt-1 text-xs text-muted-foreground">Buyers can contact your store directly from product pages. Digits only, with country code. Leave empty to hide the WhatsApp button.</p></div><label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={storeDraft.isOpen} onChange={e => setStoreDraft(s => ({ ...s, isOpen: e.target.checked }))} />Accepting enquiries</label><Button type="submit" disabled={!active || busy} className="rounded-full">Save changes</Button></form>}
       </main>
     </div>
-    {formOpen && <SellerProductEditor open={formOpen} editing={!!editing} busy={busy} enabled={active} draft={draft} setDraft={setDraft} categories={[...new Set((products ?? []).map(p => p.category))]} onClose={() => setFormOpen(false)} onSubmit={saveProduct} />}
+    {formOpen && <SellerProductEditor open={formOpen} editing={!!editing} busy={busy} enabled={active} draft={draft} setDraft={setDraft} categories={[...new Set((products ?? []).map(p => p.category))]} onClose={() => { if (!uploadingPhotos && !busy) { setFormOpen(false); setUploadProgress(''); } }} onSubmit={saveProduct} onUploadPhotos={uploadProductPhotos} uploading={uploadingPhotos} uploadProgress={uploadProgress} />}
   </div>;
 }
 
