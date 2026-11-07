@@ -20,6 +20,13 @@ jobs:
         run: npm ci
       - name: Regression tests
         run: npm test
+      - name: Set up Java for Firestore emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Compile Firestore rules in the emulator
+        run: npx --yes firebase-tools@14 emulators:exec --only firestore --project demo-treatstory --config firebase.json 'node -e "console.log(\"Rules emulator started successfully\")"'
       - name: TypeScript validation
         run: npm run typecheck
       - name: Production build
