@@ -80,7 +80,7 @@ function SellerContent() {
       getCountFromServer(scopedOrders('pending')),
       getCountFromServer(scopedOrders('preparing')),
       getCountFromServer(scopedOrders('ready')),
-      getCountFromServer(query(products, where('sellerId', '==', user.uid), where('availability', '==', 'available'), where('stockQuantity', '<=', 3))),
+      getCountFromServer(query(products, where('sellerId', '==', user.uid), where('availability', '==', 'available'), where('stockQuantity', '>=', 1), where('stockQuantity', '<=', 3))),
     ]).then(([today, pending, preparing, ready, lowStock]) => {
       if (live) setFulfillment({ today: today.data().count, pending: pending.data().count, preparing: preparing.data().count, ready: ready.data().count, lowStock: lowStock.data().count });
     }).catch(() => { if (live) setFulfillment(null); });
@@ -184,7 +184,7 @@ function SellerContent() {
             ].map(item => <button key={item.label} type="button" onClick={() => setSection('orders')} className="rounded-2xl border border-[#e8e0d5] bg-white p-3 text-left transition hover:border-[#a68a64] sm:p-5"><p className="text-2xl font-semibold">{item.count ?? '…'}</p><p className="mt-1 text-xs text-muted-foreground">{item.label}</p></button>)}
           </div>
           <div className="flex flex-wrap gap-3">
-            <button type="button" onClick={() => setSection('products')} className="rounded-full bg-[#eee6da] px-4 py-2 text-xs font-medium text-[#6d5336]">Low-stock listings (≤3): {fulfillment?.lowStock ?? '…'}</button>
+            <button type="button" onClick={() => setSection('products')} className="rounded-full bg-[#eee6da] px-4 py-2 text-xs font-medium text-[#6d5336]">Low-stock listings (1–3 units): {fulfillment?.lowStock ?? '…'}</button>
             {((seller.accessEndsAt as { toMillis?: () => number } | null)?.toMillis?.() ?? 0) < Date.now() + 7 * 86400000 && <span className="rounded-full bg-amber-50 px-4 py-2 text-xs text-amber-900">Seller access expires {dateText(seller.accessEndsAt)} · Contact admin to renew</span>}
           </div>
           <div className="rounded-2xl border border-[#e9e3d9] bg-white p-5 sm:rounded-3xl sm:p-7"><p className="eyebrow text-[#a68a64]">Membership</p><h2 className="mt-3 text-xl font-medium capitalize">{seller.accessType} access</h2><p className="mt-2 text-sm text-muted-foreground">Valid until {dateText(seller.accessEndsAt)} · Status: {seller.status}</p><div className="mt-6 border-t pt-5"><h3 className="font-medium">Get your store ready</h3><p className="mt-2 text-sm text-muted-foreground">Add high-quality photos, publish products and keep your business contact details current.</p><Button variant="outline" className="mt-4 rounded-full" onClick={() => setSection('products')}>Manage products <ArrowUpRight className="ml-2 h-4 w-4" /></Button></div></div>
