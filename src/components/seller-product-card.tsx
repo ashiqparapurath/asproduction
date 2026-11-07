@@ -28,7 +28,7 @@ export function SellerProductCard({ product: p, addToBag, buyNow }: {
     <div className="relative aspect-[3/4] overflow-hidden bg-[#f1eee9]">
       <ProductImage src={photos[current]} alt={`${p.name} — photo ${current + 1}`} />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-      <Link href={`/product/${encodeURIComponent('seller:' + p.id)}`} aria-label={`View details and photos for ${p.name}`} className="absolute inset-0 z-10 focus-visible:outline focus-visible:outline-4 focus-visible:outline-[#c9ae85]" />
+      <Link href={`/product/${'seller:' + encodeURIComponent(p.id)}`} aria-label={`View details and photos for ${p.name}`} className="absolute inset-0 z-10 focus-visible:outline focus-visible:outline-4 focus-visible:outline-[#c9ae85]" />
       <span className="pointer-events-none absolute left-2.5 top-2.5 z-10 max-w-[45%] truncate rounded-md bg-white/95 px-2.5 py-1.5 text-[10px] font-medium text-[#51463a] shadow-sm">{p.category}</span>
       <span className={`pointer-events-none absolute right-2.5 top-2.5 z-10 max-w-[45%] truncate rounded-md px-2.5 py-1 text-[10px] font-medium ${p.availability === 'unavailable' ? 'bg-[#29251f]/85 text-white' : 'bg-white/90 text-[#51463a]'}`}>{p.availability === 'unavailable' ? 'Unavailable' : p.availability === 'made-to-order' ? 'Made to order' : 'Available'}</span>
       {photos.length > 1 && <>
