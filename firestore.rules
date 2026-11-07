@@ -177,6 +177,17 @@ service cloud.firestore {
         get(/databases/$(database)/documents/sellers/$(sellerId)).data.accessEndsAt > request.time;
     }
 
+    // Limit seller-configured question labels before displaying them in the buyer UI.
+    function validCustomizationPrompts(prompts) {
+      return prompts is list && prompts.size() <= 6 &&
+        (prompts.size() <= 0 || (prompts[0] is string && prompts[0].size() >= 1 && prompts[0].size() <= 80)) &&
+        (prompts.size() <= 1 || (prompts[1] is string && prompts[1].size() >= 1 && prompts[1].size() <= 80)) &&
+        (prompts.size() <= 2 || (prompts[2] is string && prompts[2].size() >= 1 && prompts[2].size() <= 80)) &&
+        (prompts.size() <= 3 || (prompts[3] is string && prompts[3].size() >= 1 && prompts[3].size() <= 80)) &&
+        (prompts.size() <= 4 || (prompts[4] is string && prompts[4].size() >= 1 && prompts[4].size() <= 80)) &&
+        (prompts.size() <= 5 || (prompts[5] is string && prompts[5].size() >= 1 && prompts[5].size() <= 80));
+    }
+
     function validMarketplaceProduct(p) {
       return p.keys().hasOnly([
         'sellerId', 'name', 'description', 'price', 'category', 'imageUrls',
@@ -200,7 +211,7 @@ service cloud.firestore {
       (!('weightUnit' in p) || p.weightUnit in ['g', 'kg', 'ml', 'l', 'pieces']) &&
       (('weightValue' in p) == ('weightUnit' in p)) &&
       (!('careInstructions' in p) || (p.careInstructions is string && p.careInstructions.size() <= 500)) &&
-      (!('customizationOptions' in p) || (p.customizationOptions is list && p.customizationOptions.size() <= 6)) &&
+      (!('customizationOptions' in p) || validCustomizationPrompts(p.customizationOptions)) &&
       p.createdAt is timestamp && p.updatedAt is timestamp;
     }
 
