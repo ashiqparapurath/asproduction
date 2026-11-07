@@ -1,40 +1,29 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
-import { useFirestore, useUser } from '@/firebase';
+import { useAccountRole, useUser } from '@/firebase';
 import { Header } from '@/components/header';
+import { SectionSkeleton } from '@/components/loading-states';
 
 export default function DashboardRouter() {
   const { user, isUserLoading } = useUser();
-  const db = useFirestore();
+  const { role, roleError, isRoleLoading } = useAccountRole();
   const router = useRouter();
-  const [error, setError] = useState(false);
+
   useEffect(() => {
-    if (isUserLoading) return;
+    if (isUserLoading || isRoleLoading) return;
     if (!user) { router.replace('/login'); return; }
-    if (!db) return;
-    let active = true;
-    (async () => {
-      try {
-        const admin = await getDoc(doc(db, 'roles_admin', user.uid));
-        if (!active) return;
-        if (admin.exists()) { router.replace('/admin'); return; }
-        try {
-          const seller = await getDoc(doc(db, 'sellers', user.uid));
-          if (!active) return;
-          router.replace(seller.exists() ? '/seller/dashboard' : '/account');
-        } catch (roleError) {
-          console.warn('Seller role lookup unavailable; continuing to customer account.', roleError);
-          if (active) router.replace('/account');
-        }
-      } catch (roleError) {
-        console.warn('Role lookup unavailable; continuing to customer account.', roleError);
-        if (active) router.replace('/account');
-      }
-    })();
-    return () => { active = false; };
-  }, [user, isUserLoading, db, router]);
-  return <div className="min-h-screen bg-[#f7f5f1]"><Header /><main className="section-shell py-16"><p className="text-sm text-muted-foreground">{error ? 'Unable to verify your account role. Check Firebase permissions and reload.' : 'Opening your workspace…'}</p></main></div>;
+    if (roleError || !role) return;
+    router.replace(role === 'admin' ? '/admin' : role === 'seller' ? '/seller/dashboard' : '/account');
+  }, [user, isUserLoading, role, roleError, isRoleLoading, router]);
+
+  return <div className="min-h-screen bg-[#f7f5f1]"><Header />
+    <main className="section-shell py-10">
+      <h1 className="text-2xl font-medium">Opening your workspace</h1>
+      {roleError ? <div role="alert" className="mt-6 rounded-2xl border border-amber-200 bg-white p-5 text-sm">
+        We couldn’t verify your account access. Check the deployed Firestore rules and try refreshing. Your account role has not been changed.
+      </div> : <SectionSkeleton />}
+    </main>
+  </div>;
 }
