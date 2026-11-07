@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   description: 'Discover home bakes, handmade crafts, art and thoughtful finds from independent creators at TreatStory.',
   applicationName: 'TreatStory',
   icons: {
-    icon: [{ url: '/ts%20logo%20black.png', media: '(prefers-color-scheme: light)', type: 'image/png' }, { url: '/ts%20logo%20white.png', media: '(prefers-color-scheme: dark)', type: 'image/png' }],
+    icon: [{ url: '/favicon.ico', sizes: 'any', type: 'image/x-icon' }],
     apple: [{ url: '/ts%20logo%20black.png', type: 'image/png' }],
   },
 };
@@ -29,8 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/ts%20logo%20black.png" type="image/png" media="(prefers-color-scheme: light)" />
-        <link rel="icon" href="/ts%20logo%20white.png" type="image/png" media="(prefers-color-scheme: dark)" />
+        <link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <link rel="manifest" href="/manifest.json" />
