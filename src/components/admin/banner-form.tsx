@@ -16,9 +16,9 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { useFirestore, useFirebaseApp, useAccountRole, useUser, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useAccountRole, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, serverTimestamp, addDoc, updateDoc } from 'firebase/firestore';
-import { getStorage, ref as imageRef, uploadBytes, getDownloadURL, deleteObject, type StorageReference } from 'firebase/storage';
+import { uploadTreatStoryPhoto } from '@/lib/cloudinary-upload';
 import type { Banner, Category } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
  import { useState, useRef, useEffect } from 'react';
@@ -27,19 +27,14 @@ import { X, UploadCloud } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '../ui/skeleton';
 
-const MAX_FILE_SIZE = 1_000_000; // Under 1 MB. Images live in Storage, not in Firestore documents.
+const MAX_FILE_SIZE = 1_000_000; // Under 1 MB. Images live on Cloudinary, not inside Firestore.
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png']);
 
 function bannerSaveError(error: unknown): string {
   const code = (error as { code?: string } | null)?.code;
-  if (code === 'permission-denied') return 'Firestore denied this banner change. Check the published Firestore rules and your roles_admin document.';
-  if (code === 'storage/unauthorized') return 'Firebase Storage rejected the upload. Publish the admin-only Storage rules and verify your account is an admin.';
-  if (code === 'storage/bucket-not-found' || code === 'storage/no-default-bucket') return 'No Firebase Storage bucket is configured. Enable Storage in the Firebase project and verify NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET.';
-  if (code === 'storage/quota-exceeded') return 'The Firebase Storage quota was exceeded. Check your Firebase project usage.';
-  if (code === 'resource-exhausted' || code === 'invalid-argument') return 'Firebase rejected the banner data. The file must be a JPG or PNG under 1 MB.';
-  return error instanceof Error ? error.message : 'Unable to save the banner. Check Firestore and Storage configuration.';
+  if (code === 'permission-denied') return 'Firestore denied the banner change. Check your administrator role and published Firestore rules.';
+  return error instanceof Error ? error.message : 'Unable to save the banner. Check Cloudinary configuration and Firestore permissions.';
 }
-
 
 const formSchema = z.object({
   title: z.string().min(2, 'Title must be at least 2 characters.'),
@@ -59,7 +54,6 @@ interface BannerFormProps {
 
 export function BannerForm({ banner, onFinished }: BannerFormProps) {
   const firestore = useFirestore();
-  const firebaseApp = useFirebaseApp();
   const { role, isRoleLoading } = useAccountRole();
   const { toast } = useToast();
   const { user } = useUser();
@@ -115,7 +109,7 @@ export function BannerForm({ banner, onFinished }: BannerFormProps) {
     setImagePreview(url);
     form.clearErrors('imageUrl');
     // Form requires an image, but the file itself is uploaded only on Save.
-    // Never save a Base64 data URI in Firestore (1 MB document size limit).
+    // Only the resulting Cloudinary HTTPS URL is saved in Firestore.
     form.setValue('imageUrl', 'pending-upload', { shouldValidate: true, shouldDirty: true });
   };
 
@@ -127,7 +121,7 @@ export function BannerForm({ banner, onFinished }: BannerFormProps) {
   };
 
   const onSubmit = async (data: BannerFormValues) => {
-    if (!firestore || !firebaseApp || !user || role !== 'admin') {
+    if (!firestore || !user || role !== 'admin') {
       toast({
         variant: 'destructive',
         title: 'Administrator access required',
@@ -137,19 +131,10 @@ export function BannerForm({ banner, onFinished }: BannerFormProps) {
     }
     if (isSubmitting) return;
     setIsSubmitting(true);
-    let uploadedRef: StorageReference | null = null;
 
     try {
       let url = data.imageUrl;
-      if (selectedFile) {
-        if (!firebaseApp.options.storageBucket) {
-          throw new Error('Firebase Storage is not configured. Enable the Storage bucket in Firebase before uploading images.');
-        }
-        const extension = selectedFile.type === 'image/png' ? 'png' : 'jpg';
-        uploadedRef = imageRef(getStorage(firebaseApp), `banners/${user.uid}/${crypto.randomUUID()}.${extension}`);
-        await uploadBytes(uploadedRef, selectedFile, { contentType: selectedFile.type });
-        url = await getDownloadURL(uploadedRef);
-      }
+      if (selectedFile) url = await uploadTreatStoryPhoto(user, selectedFile, 'banner');
       if (!url || url === 'pending-upload') throw new Error('Choose a banner image before saving.');
 
       const bannerData = {
@@ -166,14 +151,9 @@ export function BannerForm({ banner, onFinished }: BannerFormProps) {
         await addDoc(collection(firestore, 'banners'), { ...bannerData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
       }
 
-      uploadedRef = null; // Image is now referenced by a successfully saved banner.
       toast({ title: isEditMode ? 'Banner updated' : 'Banner added', description: `"${data.title}" is saved and ready.` });
       onFinished();
     } catch (error: unknown) {
-      // Do not leave a newly uploaded image orphaned if Firestore rejects the write.
-      if (uploadedRef) {
-        try { await deleteObject(uploadedRef); } catch (cleanupError) { console.warn('Unable to clean up unsaved banner upload', cleanupError); }
-      }
       console.error('Banner save failed', { code: (error as { code?: string })?.code, error });
       toast({ variant: 'destructive', title: 'Could not save banner', description: bannerSaveError(error) });
     } finally {
@@ -202,7 +182,7 @@ export function BannerForm({ banner, onFinished }: BannerFormProps) {
                           <span className="font-semibold">Click to upload</span>
                         </p>
                         <p className="text-xs text-muted-foreground">Recommended: 1280x720px (16:9)</p>
-                        <p className="text-xs text-muted-foreground">PNG, JPG (under 1 MB). Uploaded securely to Firebase Storage.</p>
+                        <p className="text-xs text-muted-foreground">PNG, JPG (under 1 MB). Stored on Cloudinary.</p>
                         <Input 
                           type="file" 
                           accept="image/png, image/jpeg" 
