@@ -1,7 +1,7 @@
 "use client";
 
 import type { Product } from '@/lib/products';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
 import { useCart } from '@/context/cart-context';
@@ -35,9 +35,9 @@ export function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <Card className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#e8e1d8] bg-white shadow-[0_3px_18px_rgba(35,29,23,0.045)] transition-shadow duration-300 hover:shadow-[0_12px_30px_rgba(35,29,23,0.09)]">
+    <Card className="group relative h-full overflow-hidden rounded-[22px] border border-white/70 bg-[#f1eee9] shadow-[0_6px_24px_rgba(35,29,23,0.09)] transition-shadow duration-300 hover:shadow-[0_16px_36px_rgba(35,29,23,0.15)]">
       <CardHeader className="relative overflow-hidden rounded-none bg-[#f1eee9] p-0">
-        <div className="relative aspect-[4/5] w-full overflow-hidden">
+        <div className="relative aspect-[3/4] w-full overflow-hidden">
           <Image
             src={currentSrc}
             alt={product.name}
@@ -61,18 +61,18 @@ export function ProductCard({ product }: ProductCardProps) {
             </>
           )}
           <span className="absolute left-2.5 top-2.5 max-w-[calc(100%-20px)] truncate rounded-md bg-white/95 px-2.5 py-1 text-[10px] font-medium text-[#51463a] shadow-sm">{product.category}</span>
-          <div className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-2 sm:inset-x-4 sm:bottom-4">
+          <div className="absolute inset-x-3 bottom-3 flex flex-col gap-2.5 text-white sm:inset-x-4 sm:bottom-4">
+            <h3 className="line-clamp-2 text-sm font-semibold leading-snug drop-shadow-sm sm:text-base">{product.name}</h3>
+            {product.description && <p className="line-clamp-2 text-[11px] leading-snug text-white/85 sm:text-xs">{product.description}</p>}
+            <div className="flex items-center justify-between gap-2">
             <div className="min-w-0 text-white">{product.showPrice ? <p className="text-lg font-semibold tracking-tight sm:text-xl">{formatPrice(product.price)}</p> : <p className="text-xs font-medium">Price on request</p>}</div>
             <Button onClick={handleAddToCart} size="icon" aria-label={`Add ${product.name} to bag`} className="h-10 w-10 shrink-0 rounded-full bg-white text-[#29251f] shadow-sm transition-colors hover:bg-[#f4eee5]">
             <ShoppingBag className="h-4 w-4" />
             </Button>
+            </div>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-grow flex-col px-3.5 pb-4 pt-3.5 sm:px-4">
-        <CardTitle className="line-clamp-2 min-h-[2.5em] text-sm font-semibold leading-snug tracking-tight text-foreground sm:text-[15px]">{product.name}</CardTitle>
-        <CardDescription className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{product.description}</CardDescription>
-      </CardContent>
     </Card>
   );
 }
