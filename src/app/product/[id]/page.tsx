@@ -22,7 +22,10 @@ type Listing = MarketplaceProduct | Product;
 
 export default function ProductDetailPage() {
   const params = useParams<{ id: string }>();
-  const routeId = params?.id || '';
+  // Next can deliver a percent-encoded dynamic segment (especially on client navigation).
+  // Decode at most twice to handle both regular and legacy encoded links.
+  let routeId = params?.id || '';
+  for (let n = 0; n < 2; n++) { try { const decoded = decodeURIComponent(routeId); if (decoded === routeId) break; routeId = decoded; } catch { break; } }
   const sellerListing = routeId.startsWith('seller:');
   const productId = sellerListing ? routeId.slice('seller:'.length) : routeId;
   const db = useFirestore();
@@ -30,6 +33,7 @@ export default function ProductDetailPage() {
   const { addToCart } = useCart();
   const { toast } = useToast();
   const [product, setProduct] = useState<Listing | null>(null);
+  const [resolvedSellerListing, setResolvedSellerListing] = useState(false);
   const [sellerName, setSellerName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,13 +47,21 @@ export default function ProductDetailPage() {
     setProduct(null); setSellerName(null); setPhotoIndex(0); setLoading(true); setError(null); setAnswers({}); setRequestNote('');
     (async () => {
       try {
-        const snapshot = await getDoc(doc(db, sellerListing ? 'marketplace_products' : 'products', productId));
-        if (!snapshot.exists()) throw new Error('This product could not be found.');
-        const listing = { id: snapshot.id, ...snapshot.data() } as Listing;
-        if (sellerListing && (listing as MarketplaceProduct).status !== 'published') throw new Error('This product is not available for public viewing.');
+        // Older product URLs may not carry the seller prefix. Resolve both
+        // collections when needed, without turning permission errors into 404s.
+        let foundInSeller = sellerListing;
+        let snapshot = await getDoc(doc(db, sellerListing ? 'marketplace_products' : 'products', productId));
+        if (!snapshot.exists()) {
+          const other = await getDoc(doc(db, sellerListing ? 'products' : 'marketplace_products', productId));
+          snapshot = other;
+          foundInSeller = !sellerListing;
+        }
+        if (!snapshot.exists()) throw new Error('This product could not be found. The listing may have been removed.');
+        const listing = { ...snapshot.data(), id: snapshot.id } as Listing;
+        if (foundInSeller && (listing as MarketplaceProduct).status !== 'published') throw new Error('This product is not available for public viewing.');
         if (!live) return;
-        setProduct(listing); setLoading(false);
-        if (sellerListing && listing.sellerId) {
+        setProduct(listing); setResolvedSellerListing(foundInSeller); setLoading(false);
+        if (foundInSeller && listing.sellerId) {
           try {
             const store = await getDoc(doc(db, 'sellers', listing.sellerId));
             if (live && store.exists()) setSellerName((store.data() as Seller).businessName);
@@ -60,7 +72,7 @@ export default function ProductDetailPage() {
     return () => { live = false; };
   }, [db, productId, sellerListing]);
 
-  const creator = sellerListing ? product as MarketplaceProduct | null : null;
+  const creator = resolvedSellerListing ? product as MarketplaceProduct | null : null;
   const photos = (product?.imageUrls ?? []).flatMap(url => url.split(/\r?\n/)).map(url => url.trim()).filter(Boolean);
   const index = Math.min(photoIndex, Math.max(0, photos.length - 1));
   const minQty = Math.max(1, creator?.minimumOrderQuantity ?? 1);
