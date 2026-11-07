@@ -145,8 +145,11 @@ service cloud.firestore {
       allow list, update, delete: if isAdmin();
     }
     match /sellers/{sellerId} {
-      allow get: if isAdmin() || (request.auth != null &&
-        resource.data.ownerUid == request.auth.uid) || resource.data.status == 'active';
+      // A signed-in user may read their own UID document even if it does not yet
+      // exist. This is needed for a reliable non-seller role lookup.
+      // Client reads do not grant seller permissions: writes still require sellerActive().
+      allow get: if isAdmin() || (isSignedIn() && sellerId == request.auth.uid) ||
+        resource.data.status == 'active';
       allow list: if isAdmin() || resource.data.status == 'active';
       allow create, delete: if isAdmin();
       allow update: if isAdmin() || (
