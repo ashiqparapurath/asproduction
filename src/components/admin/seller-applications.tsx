@@ -1,4 +1,5 @@
 'use client';
+import { LoadError } from '@/components/loading-states';
 
 import { useState } from 'react';
 import { collection, doc, serverTimestamp, Timestamp, writeBatch } from 'firebase/firestore';
@@ -14,7 +15,7 @@ export function SellerApplications() {
   const { user } = useUser();
   const { toast } = useToast();
   const applicationsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'seller_applications') : null, [firestore]);
-  const { data: applications, isLoading } = useCollection<SellerApplication>(applicationsQuery);
+  const { data: applications, isLoading, error: loadError, retry: retryLoad } = useCollection<SellerApplication>(applicationsQuery);
   const [durationDays, setDurationDays] = useState(30);
   const [working, setWorking] = useState<string | null>(null);
 
@@ -64,6 +65,8 @@ export function SellerApplications() {
   }
 
   const pending = (applications || []).filter(item => item.status === 'pending');
+  if (loadError) return <LoadError retry={retryLoad} />;
+
   return (
     <section className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">

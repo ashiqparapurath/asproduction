@@ -1,4 +1,5 @@
-'use client';
+'use client';import { ProductGridSkeleton, LoadError } from '@/components/loading-states';
+import { usePublicCatalog } from '@/firebase/firestore/use-public-catalog';
 
 import { Header } from '@/components/header';
 import { SellerStorefrontProducts } from '@/components/seller-storefront-products';
@@ -9,7 +10,7 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
 import type { Product, Banner } from '@/lib/products';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -21,11 +22,10 @@ function HomePageContent() {
     if (!firestore) return null;
     return query(collection(firestore, 'products'), limit(8));
   }, [firestore]);
-  const { data: products, isLoading } = useCollection<Product>(productsQuery);
+  const { data: products, isLoading, error, retry } = usePublicCatalog<Product>(productsQuery);
 
-  if (isLoading) {
-    return <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="space-y-3"><Skeleton className="aspect-[4/5] w-full rounded-[18px]" /><Skeleton className="h-4 w-2/3" /><Skeleton className="h-4 w-1/3" /></div>)}</div>;
-  }
+  if (error) return <LoadError retry={retry} />;
+  if (isLoading) return <ProductGridSkeleton count={8} />;
   return <ProductGridContainer products={products || []} />;
 }
 
@@ -35,7 +35,7 @@ function BannerCarousel() {
     if (!firestore) return null;
     return query(collection(firestore, 'banners'), where('isActive', '==', true));
   }, [firestore]);
-  const { data: banners, isLoading } = useCollection<Banner>(bannersQuery);
+  const { data: banners, isLoading } = usePublicCatalog<Banner>(bannersQuery);
 
   if (isLoading) return <Skeleton className="h-56 w-full rounded-[24px] md:h-72" />;
   if (!banners || banners.length === 0) return null;

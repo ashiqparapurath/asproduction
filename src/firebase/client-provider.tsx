@@ -51,17 +51,20 @@ interface FirebaseServices {
 export function FirebaseClientProvider({ children }: FirebaseClientProviderProps) {
   const [firebaseServices, setFirebaseServices] = useState<FirebaseServices | null>(null);
 
+  const [initialized, setInitialized] = useState(false);
   useEffect(() => {
     // This effect runs only on the client, after the initial render.
     // It's safe to initialize Firebase here.
     if (typeof window !== 'undefined') {
        const services = initializeClientFirebase();
        setFirebaseServices(services);
+       setInitialized(true);
     }
   }, []);
 
   return (
     <FirebaseProvider
+      initialized={initialized}
       firebaseApp={firebaseServices?.firebaseApp || null}
       auth={firebaseServices?.auth || null}
       firestore={firebaseServices?.firestore || null}

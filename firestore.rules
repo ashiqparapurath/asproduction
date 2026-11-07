@@ -145,8 +145,11 @@ service cloud.firestore {
       allow list, update, delete: if isAdmin();
     }
     match /sellers/{sellerId} {
-      allow get: if isAdmin() || (request.auth != null &&
-        resource.data.ownerUid == request.auth.uid) || resource.data.status == 'active';
+      // A signed-in user may read their own UID document even if it does not yet
+      // exist. This is needed for a reliable non-seller role lookup.
+      // Client reads do not grant seller permissions: writes still require sellerActive().
+      allow get: if isAdmin() || (isSignedIn() && sellerId == request.auth.uid) ||
+        resource.data.status == 'active';
       allow list: if isAdmin() || resource.data.status == 'active';
       allow create, delete: if isAdmin();
       allow update: if isAdmin() || (
@@ -174,11 +177,23 @@ service cloud.firestore {
         get(/databases/$(database)/documents/sellers/$(sellerId)).data.accessEndsAt > request.time;
     }
 
+    // Limit seller-configured question labels before displaying them in the buyer UI.
+    function validCustomizationPrompts(prompts) {
+      return prompts is list && prompts.size() <= 6 &&
+        (prompts.size() <= 0 || (prompts[0] is string && prompts[0].size() >= 1 && prompts[0].size() <= 80)) &&
+        (prompts.size() <= 1 || (prompts[1] is string && prompts[1].size() >= 1 && prompts[1].size() <= 80)) &&
+        (prompts.size() <= 2 || (prompts[2] is string && prompts[2].size() >= 1 && prompts[2].size() <= 80)) &&
+        (prompts.size() <= 3 || (prompts[3] is string && prompts[3].size() >= 1 && prompts[3].size() <= 80)) &&
+        (prompts.size() <= 4 || (prompts[4] is string && prompts[4].size() >= 1 && prompts[4].size() <= 80)) &&
+        (prompts.size() <= 5 || (prompts[5] is string && prompts[5].size() >= 1 && prompts[5].size() <= 80));
+    }
+
     function validMarketplaceProduct(p) {
       return p.keys().hasOnly([
         'sellerId', 'name', 'description', 'price', 'category', 'imageUrls',
         'showPrice', 'availability', 'stockQuantity', 'preparationDays',
-        'status', 'createdAt', 'updatedAt'
+        'minimumOrderQuantity', 'weightValue', 'weightUnit', 'customizationOptions',
+        'careInstructions', 'status', 'createdAt', 'updatedAt'
       ]) &&
       p.sellerId is string &&
       p.name is string && p.name.size() >= 2 && p.name.size() <= 120 &&
@@ -191,6 +206,12 @@ service cloud.firestore {
       p.stockQuantity is int && p.stockQuantity >= 0 &&
       p.preparationDays is int && p.preparationDays >= 0 &&
       p.status in ['draft', 'published'] &&
+      (!('minimumOrderQuantity' in p) || (p.minimumOrderQuantity is int && p.minimumOrderQuantity >= 1 && p.minimumOrderQuantity <= 99)) &&
+      (!('weightValue' in p) || (p.weightValue is number && p.weightValue > 0 && p.weightValue <= 100000)) &&
+      (!('weightUnit' in p) || p.weightUnit in ['g', 'kg', 'ml', 'l', 'pieces']) &&
+      (('weightValue' in p) == ('weightUnit' in p)) &&
+      (!('careInstructions' in p) || (p.careInstructions is string && p.careInstructions.size() <= 500)) &&
+      (!('customizationOptions' in p) || validCustomizationPrompts(p.customizationOptions)) &&
       p.createdAt is timestamp && p.updatedAt is timestamp;
     }
 
@@ -250,6 +271,8 @@ service cloud.firestore {
         d.sellerId == orderProduct(d.productId).sellerId &&
         d.productName == orderProduct(d.productId).name &&
         d.unitPrice == orderProduct(d.productId).price &&
+        (!('minimumOrderQuantity' in orderProduct(d.productId)) ||
+          d.quantity >= orderProduct(d.productId).minimumOrderQuantity) &&
         d.subtotal == d.quantity * d.unitPrice &&
         exists(/databases/$(database)/documents/sellers/$(d.sellerId)) &&
         get(/databases/$(database)/documents/sellers/$(d.sellerId)).data.status == 'active' &&
@@ -291,7 +314,8 @@ service cloud.firestore {
           (resource.data.status == 'pending' && request.resource.data.status in ['accepted', 'rejected']) ||
           (resource.data.status == 'accepted' && request.resource.data.status in ['preparing', 'cancelled']) ||
           (resource.data.status == 'preparing' && request.resource.data.status in ['ready', 'cancelled']) ||
-          (resource.data.status == 'ready' && request.resource.data.status == 'completed')
+          (resource.data.status == 'ready' && request.resource.data.status in ['out-for-delivery', 'completed']) ||
+          (resource.data.status == 'out-for-delivery' && request.resource.data.status == 'completed')
         )
       );
       allow delete: if false;

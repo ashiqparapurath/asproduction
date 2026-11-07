@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
-import { DeliveryAddress, addressText } from '@/components/default-delivery-address';
+import { SectionSkeleton } from '@/components/loading-states';
+import { addressText } from '@/components/default-delivery-address';
 import { addDoc, collection, doc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { useFirestore, useUser } from '@/firebase';
+import { useAccountData, useFirestore, useUser } from '@/firebase';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -13,20 +14,22 @@ import Link from 'next/link';
 import type { MarketplaceProduct, Seller } from '@/lib/marketplace-types';
 import { Banknote, CreditCard, MapPin, ShieldCheck, Truck } from 'lucide-react';
 
-export function CreatorCheckout({ variant = 'card', onlyProductId }: { variant?: 'card' | 'page'; onlyProductId?: string }) {
-  const { user } = useUser();
+export function CreatorCheckout({ variant = 'card', onlyProductId, initialNote = '', onComplete }: { variant?: 'card' | 'page'; onlyProductId?: string; initialNote?: string; onComplete?: () => void }) {
+  const { user, isUserLoading } = useUser();
   const db = useFirestore();
+  const { address: savedAddress } = useAccountData();
   const { cartItems, removeFromCart } = useCart();
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState(initialNote);
+  useEffect(() => { if (initialNote) setNote(v => v || initialNote); }, [initialNote]);
   const [busy, setBusy] = useState(false);
   const paymentMethod = 'cod' as const;
   const [result, setResult] = useState<string[]>([]);
   const items = cartItems.filter(i => i.id.startsWith('seller:') && (!onlyProductId || i.id === 'seller:' + onlyProductId));
-  useEffect(() => { if (!db || !user) return; let live = true; getDoc(doc(db,'customer_addresses',user.uid)).then(s => { if(!live || !s.exists()) return; const a = s.data() as DeliveryAddress; setName(v=>v||a.recipient||'');setPhone(v=>v||a.phone||'');setAddress(v=>v||addressText(a)); }).catch(()=>{});return()=>{live=false}; },[db,user]);
+  useEffect(() => { if (!savedAddress) return; setName(v=>v||savedAddress.recipient||'');setPhone(v=>v||savedAddress.phone||'');setAddress(v=>v||addressText(savedAddress)); }, [savedAddress]);
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!db || !user || busy || !items.length) return;
@@ -51,7 +54,9 @@ export function CreatorCheckout({ variant = 'card', onlyProductId }: { variant?:
         if (!seller.isOpen) throw new Error(`${seller.businessName || 'This seller'} is not accepting orders right now.`);
         const expiry = seller.accessEndsAt as { toMillis?: () => number } | undefined;
         if (!expiry?.toMillis || expiry.toMillis() <= Date.now()) throw new Error(`${seller.businessName || 'This seller'}'s marketplace access has expired.`);
-        if (!Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 99) throw new Error('Choose a quantity between 1 and 99.');
+        if (!Number.isInteger(item.quantity) || item.quantity < Math.max(1, product.minimumOrderQuantity ?? 1) || item.quantity > 99) throw new Error(`Please order at least ${product.minimumOrderQuantity || 1} unit(s) of ${product.name} (maximum 99).`);
+        const itemNote = [item.customizationNote ? `Personalization for ${product.name}: ${item.customizationNote}` : '', note.trim()].filter(Boolean).join('\n\n');
+        if (itemNote.length > 1000) throw new Error('Please shorten your customization and delivery notes.');
         if (name.trim().length < 2 || phone.trim().length < 5 || address.trim().length < 10) throw new Error('Please complete your contact and delivery details.');
         stage = 'creating the order';
         const order = await addDoc(collection(db, 'seller_orders'), {
@@ -59,10 +64,11 @@ export function CreatorCheckout({ variant = 'card', onlyProductId }: { variant?:
           productName: product.name, quantity: item.quantity,
           unitPrice: product.price, subtotal: product.price * item.quantity,
           status: 'pending', paymentMethod, customerName: name.trim(), customerPhone: phone.trim(),
-          deliveryAddress: address.trim(), customerNote: note.trim(),
+          deliveryAddress: address.trim(), customerNote: itemNote,
           createdAt: serverTimestamp(), updatedAt: serverTimestamp()
         });
         placed.push(order.id);
+        onComplete?.();
         removeFromCart(item.id);
       }
       setResult(placed);
@@ -70,7 +76,7 @@ export function CreatorCheckout({ variant = 'card', onlyProductId }: { variant?:
     } catch (err) {
       if (placed.length) setResult(placed);
       const message = err instanceof Error ? err.message : 'Please retry remaining items.';
-      const helpful = message.toLowerCase().includes('permission') ? `Firestore denied access while ${stage}. ${stage === 'creating the order' ? 'The seller and product reads succeeded, but the seller_orders create rule rejected the submitted data. Check published rules and the order validation conditions.' : 'Check the published Firestore read rules for this collection and the signed-in account.'}` : message;
+      const helpful = message.toLowerCase().includes('permission') ? 'We couldn’t confirm this order. Please refresh and check availability, or contact the seller.' : message;
       console.error('TreatStory checkout failed', { stage, code: (err as { code?: string })?.code, message });
       toast({ variant: 'destructive', title: 'Could not finish checkout', description: `${placed.length} order(s) succeeded. ${helpful}` });
     } finally { setBusy(false); }
@@ -79,7 +85,7 @@ export function CreatorCheckout({ variant = 'card', onlyProductId }: { variant?:
   return <section className={variant === 'page' ? 'space-y-7 rounded-3xl border border-[#e8e0d5] bg-white p-5 shadow-[0_14px_45px_rgba(51,39,24,0.04)] sm:p-8 lg:p-10' : 'mt-7 space-y-6 rounded-3xl border border-[#e8e0d5] bg-[#faf8f4] p-5 sm:p-7'}>
     <div className="border-b border-[#e8e0d5] pb-5"><p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#a68a64]">Step 02 · Secure checkout</p><h3 className="mt-2 text-2xl font-medium tracking-tight">Delivery & payment</h3><p className="mt-2 text-xs leading-5 text-muted-foreground">Order handmade favourites from independent creators. Your seller confirms the order before fulfillment.</p></div>
     {result.length > 0 && <div className="rounded-2xl border bg-white p-5 text-sm"><p className="font-semibold">{result.length} order(s) submitted</p><p className="mt-2 text-xs text-muted-foreground">References: {result.map(id => id.slice(0, 10)).join(', ')}</p><Link href="/orders" className="mt-3 inline-block font-medium underline underline-offset-4">Track your orders</Link></div>}
-    {!user ? <div className="rounded-2xl bg-white p-5"><p className="text-sm">Sign in to continue to checkout.</p><Link href="/login" className="editorial-button mt-4">Sign in</Link></div> : items.length > 0 && <form onSubmit={submit} className="space-y-6">
+    {isUserLoading ? <SectionSkeleton /> : !user ? <div className="rounded-2xl bg-white p-5"><p className="text-sm">Sign in to continue to checkout.</p><Link href={`/login?next=${encodeURIComponent(onlyProductId ? `/checkout?product=${encodeURIComponent(onlyProductId)}` : "/checkout")}`} className="editorial-button mt-4">Sign in</Link></div> : items.length > 0 && <form onSubmit={submit} className="space-y-6">
       <div className="space-y-4"><p className="flex items-center gap-2 text-sm font-semibold"><MapPin className="h-4 w-4 text-[#a68a64]" />Contact & delivery details</p>
       <div className="grid gap-4 sm:grid-cols-2"><label className="block space-y-1.5 text-xs font-medium">Full name<Input required minLength={2} maxLength={120} autoComplete="name" placeholder="Name for your order" value={name} onChange={e => setName(e.target.value)} className="mt-1 bg-white" /></label>
       <label className="block space-y-1.5 text-xs font-medium">Mobile number<Input required minLength={5} maxLength={40} autoComplete="tel" placeholder="Phone number" value={phone} onChange={e => setPhone(e.target.value)} className="mt-1 bg-white" /></label></div>

@@ -1,4 +1,4 @@
-import type {Metadata} from 'next';
+import type {Metadata, Viewport} from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
@@ -17,9 +17,11 @@ export const metadata: Metadata = {
   applicationName: 'TreatStory',
   icons: {
     icon: [{ url: '/favicon.ico', sizes: 'any', type: 'image/x-icon' }],
-    apple: [{ url: '/ts%20logo%20black.png', type: 'image/png' }],
+    apple: [{ url: '/icons/app-180.png', sizes: '180x180', type: 'image/png' }],
   },
 };
+
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: '#faf8f3' };
 
 export default function RootLayout({
   children,
@@ -29,11 +31,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#faf8f3" />
       </head>
       <body className={cn("min-h-screen bg-background font-sans antialiased", inter.variable)}>
         <FirebaseClientProvider>

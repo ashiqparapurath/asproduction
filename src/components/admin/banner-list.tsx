@@ -1,4 +1,5 @@
 'use client';
+import { LoadError } from '@/components/loading-states';
 
 import { useState } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -41,7 +42,7 @@ export function BannerList() {
     return collection(firestore, 'banners');
   }, [firestore]);
 
-  const { data: banners, isLoading } = useCollection<Banner>(bannersQuery);
+  const { data: banners, isLoading, error: loadError, retry: retryLoad } = useCollection<Banner>(bannersQuery);
 
   const [bannerToEdit, setBannerToEdit] = useState<Banner | null>(null);
   const [bannerToDelete, setBannerToDelete] = useState<Banner | null>(null);
@@ -96,6 +97,8 @@ export function BannerList() {
       </div>
     );
   }
+
+  if (loadError) return <LoadError retry={retryLoad} />;
 
   return (
     <>

@@ -17,6 +17,7 @@ interface CartContextType {
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   cartCount: number;
+  hydrated: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -32,7 +33,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const existingItem = prevItems.find((item) => item.id === product.id);
       if (existingItem) {
         return prevItems.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === product.id ? { ...item, quantity: item.quantity + 1, customizationNote: product.customizationNote ?? item.customizationNote, minimumOrderQuantity: product.minimumOrderQuantity ?? item.minimumOrderQuantity } : item
         );
       }
       // When adding, use the first image from the array as the display image for the cart.
@@ -52,7 +53,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     } else {
       setCartItems((prevItems) =>
         prevItems.map((item) =>
-          item.id === productId ? { ...item, quantity } : item
+          item.id === productId ? { ...item, quantity: Math.max(item.minimumOrderQuantity ?? 1, quantity) } : item
         )
       );
     }
@@ -68,6 +69,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     <CartContext.Provider
       value={{
         cartItems,
+        hydrated,
         addToCart,
         removeFromCart,
         updateQuantity,

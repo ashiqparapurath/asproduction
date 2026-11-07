@@ -1,11 +1,12 @@
-'use client';
+'use client';import { ProductGridSkeleton, LoadError } from '@/components/loading-states';
+import { usePublicCatalog } from '@/firebase/firestore/use-public-catalog';
 
 import { Suspense } from 'react';
 import { Header } from '@/components/header';
 import { SellerStorefrontProducts } from '@/components/seller-storefront-products';
 import { ProductGridContainer } from '@/components/product-grid';
 import Link from 'next/link';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Product } from '@/lib/products';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,9 +14,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 function ProductsPageContent() {
   const firestore = useFirestore();
   const productsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
-  const { data: products, isLoading } = useCollection<Product>(productsQuery);
+  const { data: products, isLoading, error, retry } = usePublicCatalog<Product>(productsQuery);
 
-  if (isLoading) return <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="space-y-3"><Skeleton className="aspect-[4/5] w-full rounded-[18px]" /><Skeleton className="h-4 w-2/3" /><Skeleton className="h-4 w-1/3" /></div>)}</div>;
+  if (error) return <LoadError retry={retry} />;
+  if (isLoading) return <ProductGridSkeleton count={8} />;
   return <ProductGridContainer products={products || []} />;
 }
 

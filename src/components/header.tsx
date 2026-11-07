@@ -12,12 +12,12 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { useCart } from '@/context/cart-context';
-import { CartDrawer } from './cart-drawer';
+import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import { useUser, useAuth } from '@/firebase';
 import { signOut as firebaseSignOut } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 const navItems = [
   { href: '/', label: 'Home' },
@@ -31,6 +31,8 @@ export function Header() {
   const { user } = useUser();
   const auth = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const { toast } = useToast();
   const [signingOut, setSigningOut] = useState(false);
   async function handleSignOut() {
     if (!auth || signingOut) return;
@@ -39,6 +41,8 @@ export function Header() {
       await firebaseSignOut(auth);
       setIsMobileMenuOpen(false);
       router.replace('/');
+    } catch {
+      toast({ variant: 'destructive', title: 'Unable to sign out', description: 'Please try again.' });
     } finally {
       setSigningOut(false);
     }
@@ -59,7 +63,7 @@ export function Header() {
                       <Menu className="h-5 w-5" />
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="left" className="w-[min(86vw,360px)] border-r-0 bg-[#faf8f3]">
+                  <SheetContent side="left" className="w-[min(86vw,360px)] overflow-y-auto border-r-0 bg-[#faf8f3] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
                     <SheetHeader className="border-b border-[#e9e2d8] pb-6 text-left">
                       <SheetTitle>
                         <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="brand-wordmark text-3xl text-foreground">TreatStory</Link>
@@ -69,7 +73,7 @@ export function Header() {
                     <nav className="mt-8 flex flex-col">
                       {navItems.map((item, index) => (
                         <SheetClose asChild key={item.href}>
-                          <Link href={item.href} className="flex items-center justify-between border-b border-[#e9e2d8] py-5 text-lg font-medium tracking-tight">
+                          <Link href={item.href} aria-current={pathname === item.href ? "page" : undefined} className="flex items-center justify-between border-b border-[#e9e2d8] py-5 text-lg font-medium tracking-tight">
                             <span><span className="mr-4 text-xs text-[#b59a73]">0{index + 1}</span>{item.label}</span>
                             <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
                           </Link>
@@ -81,7 +85,7 @@ export function Header() {
                       <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-medium hover:bg-[#eee7dc]"><UserRound className="h-4 w-4" />My account</Link>
                       <button type="button" onClick={handleSignOut} disabled={signingOut} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"><LogOut className="h-4 w-4" />{signingOut ? 'Signing out…' : 'Sign out'}</button>
                     </div>}
-                    <div className="absolute bottom-8 left-6 right-6 rounded-2xl bg-[#eee7dc] p-5">
+                    <div className="mt-6 rounded-2xl bg-[#eee7dc] p-5">
                       <p className="eyebrow text-muted-foreground">The TreatStory edit</p>
                       <p className="mt-2 text-sm leading-relaxed">Discover pieces that make the everyday feel a little more special.</p>
                     </div>
@@ -100,7 +104,7 @@ export function Header() {
             <div className="flex items-center justify-end gap-0.5 sm:gap-2">
               <nav className="hidden items-center gap-5 xl:gap-7 lg:flex">
                 {navItems.map((item) => (
-                  <Link key={item.href} href={item.href} className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.10em] text-[#72685d] transition-colors hover:text-foreground">
+                  <Link key={item.href} href={item.href} aria-current={pathname === item.href ? "page" : undefined} className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.10em] text-[#72685d] transition-colors hover:text-foreground">
                     {item.label}
                   </Link>
                 ))}
@@ -114,7 +118,7 @@ export function Header() {
           </div>
           <nav className="hidden h-10 items-center justify-center gap-8 border-t border-[#eee8df] lg:hidden md:flex">
             {navItems.map((item) => (
-              <Link key={item.href} href={item.href} className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground">{item.label}</Link>
+              <Link key={item.href} href={item.href} aria-current={pathname === item.href ? "page" : undefined} className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground">{item.label}</Link>
             ))}
           </nav>
         </div>

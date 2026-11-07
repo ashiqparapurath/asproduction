@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useDeferredValue } from 'react';
 import type { Product } from '@/lib/products';
 import { ProductCard } from '@/components/product-card';
 import { Input } from '@/components/ui/input';
@@ -15,16 +15,17 @@ function ProductGrid({ products, categories, initialCategory }: ProductGridProps
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(initialCategory || 'All');
 
-  useEffect(() => {
-    if (initialCategory) setSelectedCategory(initialCategory);
-  }, [initialCategory]);
+  const deferredSearch = useDeferredValue(searchTerm);
+  const [visibleCount, setVisibleCount] = useState(24);
+  useEffect(() => setSelectedCategory(initialCategory || 'All'), [initialCategory]);
+  useEffect(() => setVisibleCount(24), [deferredSearch, selectedCategory]);
 
   const filteredProducts = useMemo(() => {
     if (!products) return [];
     return products
       .filter((product) => selectedCategory === 'All' || product.category === selectedCategory)
-      .filter((product) => product.name.toLowerCase().includes(searchTerm.toLowerCase()) || product.description.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [products, selectedCategory, searchTerm]);
+      .filter((product) => product.name.toLowerCase().includes(deferredSearch.toLowerCase()) || product.description.toLowerCase().includes(deferredSearch.toLowerCase()));
+  }, [products, selectedCategory, deferredSearch]);
 
   return (
     <div>
@@ -46,6 +47,7 @@ function ProductGrid({ products, categories, initialCategory }: ProductGridProps
             <Button
               key={category}
               variant="outline"
+              aria-pressed={selectedCategory === category}
               onClick={() => setSelectedCategory(category)}
               className={`h-9 shrink-0 rounded-full px-4 text-[11px] font-semibold capitalize tracking-wide transition-all ${selectedCategory === category ? 'border-foreground bg-foreground text-background hover:bg-foreground/90 hover:text-background' : 'border-[#e6ded2] bg-transparent text-muted-foreground hover:border-foreground hover:bg-transparent hover:text-foreground'}`}
             >
@@ -62,7 +64,7 @@ function ProductGrid({ products, categories, initialCategory }: ProductGridProps
 
       {filteredProducts.length > 0 ? (
         <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-x-5 sm:gap-y-9 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-6">
-          {filteredProducts.map((product) => <ProductCard key={product.id} product={product} />)}
+          {filteredProducts.slice(0, visibleCount).map((product) => <ProductCard key={product.id} product={product} />)}
         </div>
       ) : (
         <div className="rounded-3xl border border-dashed border-[#ded4c7] bg-white/60 px-5 py-20 text-center">
@@ -71,6 +73,7 @@ function ProductGrid({ products, categories, initialCategory }: ProductGridProps
           <p className="mt-2 text-sm text-muted-foreground">Try another search or choose a different category.</p>
         </div>
       )}
+      {visibleCount < filteredProducts.length && <Button variant="outline" className="mx-auto mt-8 flex min-h-11" onClick={() => setVisibleCount(n => n + 24)}>Show more products</Button>}
     </div>
   );
 }

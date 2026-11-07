@@ -9,6 +9,8 @@ export type Product = {
   categoryId: string;
   imageUrls: string[]; 
   showPrice: boolean;
+  minimumOrderQuantity?: number;
+  customizationNote?: string; // Optional buyer request; final price is confirmed by the seller.
   createdAt?: any;
   updatedAt?: any;
 };
