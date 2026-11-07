@@ -181,7 +181,8 @@ service cloud.firestore {
       return p.keys().hasOnly([
         'sellerId', 'name', 'description', 'price', 'category', 'imageUrls',
         'showPrice', 'availability', 'stockQuantity', 'preparationDays',
-        'status', 'createdAt', 'updatedAt'
+        'minimumOrderQuantity', 'weightValue', 'weightUnit', 'customizationOptions',
+        'careInstructions', 'status', 'createdAt', 'updatedAt'
       ]) &&
       p.sellerId is string &&
       p.name is string && p.name.size() >= 2 && p.name.size() <= 120 &&
@@ -194,6 +195,12 @@ service cloud.firestore {
       p.stockQuantity is int && p.stockQuantity >= 0 &&
       p.preparationDays is int && p.preparationDays >= 0 &&
       p.status in ['draft', 'published'] &&
+      (!('minimumOrderQuantity' in p) || (p.minimumOrderQuantity is int && p.minimumOrderQuantity >= 1 && p.minimumOrderQuantity <= 99)) &&
+      (!('weightValue' in p) || (p.weightValue is number && p.weightValue > 0 && p.weightValue <= 100000)) &&
+      (!('weightUnit' in p) || p.weightUnit in ['g', 'kg', 'ml', 'l', 'pieces']) &&
+      (('weightValue' in p) == ('weightUnit' in p)) &&
+      (!('careInstructions' in p) || (p.careInstructions is string && p.careInstructions.size() <= 500)) &&
+      (!('customizationOptions' in p) || (p.customizationOptions is list && p.customizationOptions.size() <= 6)) &&
       p.createdAt is timestamp && p.updatedAt is timestamp;
     }
 
@@ -294,7 +301,8 @@ service cloud.firestore {
           (resource.data.status == 'pending' && request.resource.data.status in ['accepted', 'rejected']) ||
           (resource.data.status == 'accepted' && request.resource.data.status in ['preparing', 'cancelled']) ||
           (resource.data.status == 'preparing' && request.resource.data.status in ['ready', 'cancelled']) ||
-          (resource.data.status == 'ready' && request.resource.data.status == 'completed')
+          (resource.data.status == 'ready' && request.resource.data.status in ['out-for-delivery', 'completed']) ||
+          (resource.data.status == 'out-for-delivery' && request.resource.data.status == 'completed')
         )
       );
       allow delete: if false;
