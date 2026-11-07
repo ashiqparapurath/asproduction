@@ -9,17 +9,11 @@
       "type": "image/png",
       "sizes": "any",
       "purpose": "any"
-    },
-    {
-      "src": "/ts%20logo%20black.png",
-      "type": "image/png",
-      "sizes": "any",
-      "purpose": "monochrome"
     }
   ],
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "theme_color": "#faf8f3",
-  "background_color": "#faf8f3"
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff"
 }
