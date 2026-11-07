@@ -1,5 +1,5 @@
 'use client';
-import { SectionSkeleton, LoadError } from '@/components/loading-states';
+import { SectionSkeleton } from '@/components/loading-states';
 
 import { useEffect, useMemo, useState } from 'react';
 import { collection, query, where, orderBy, limit, startAfter, onSnapshot, getDocs, updateDoc, doc, serverTimestamp, type QueryDocumentSnapshot, type DocumentData } from 'firebase/firestore';
@@ -150,7 +150,7 @@ export function OrderManagement({ mode }: { mode: 'seller' | 'admin' | 'customer
   const filters = [{key:'all',label:'All orders',n:all.length},{key:'pending',label:'New',n:pending},{key:'active',label:'In progress',n:active},{key:'ready',label:'Ready',n:count('ready')},{key:'out-for-delivery',label:'Out for delivery',n:count('out-for-delivery')},{key:'completed',label:'Completed',n:count('completed')},{key:'cancelled',label:'Cancelled',n:count('cancelled')},{key:'rejected',label:'Rejected',n:count('rejected')}];
   return <section className="space-y-6">
     <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#a68a64]">Fulfillment workspace</p><h2 className="mt-2 text-2xl font-medium tracking-tight">Order processing</h2><p className="mt-2 text-sm text-muted-foreground">Review requests, manage preparation and keep orders moving.</p></div><span className="inline-flex items-center gap-2 rounded-full border bg-white px-4 py-2 text-xs"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Recent orders · Live</span></div>
-    <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">{[
+    <div className={`grid grid-cols-2 gap-3 ${mode === 'seller' ? 'sm:grid-cols-3' : 'xl:grid-cols-4'}`}>{[
       {label:'Needs attention',value:String(pending),icon:Clock3,sub:'Awaiting a decision'},
       {label:'In progress',value:String(active),icon:Package,sub:'Active orders'},
       {label:'Completed',value:String(count('completed')),icon:CheckCircle2,sub:'Fulfilled orders'},
