@@ -26,7 +26,7 @@ export function SellerStorefrontProducts({ limitCount }: { limitCount?: number }
   useEffect(() => setVisibleCount(24), [deferredSearch]);
   const visible = useMemo(() => (data ?? []).filter(p => p.name.toLowerCase().includes(deferredSearch.toLowerCase()) || p.category.toLowerCase().includes(deferredSearch.toLowerCase())).slice(0, limitCount), [data, deferredSearch, limitCount]);
   const addProduct = (p: MarketplaceProduct) => {
-    const item = { id: `seller:${p.id}`, sellerId: p.sellerId, name: p.name, description: p.description, category: p.category, categoryId: p.category, price: p.price, imageUrls: p.imageUrls, showPrice: p.showPrice };
+    const item = { id: `seller:${p.id}`, sellerId: p.sellerId, name: p.name, description: p.description, category: p.category, categoryId: p.category, price: p.price, imageUrls: p.imageUrls, showPrice: p.showPrice, minimumOrderQuantity: p.minimumOrderQuantity };
     for (let n = 0; n < Math.max(1, Math.min(99, p.minimumOrderQuantity ?? 1)); n++) addToCart(item);
   };
   if (error) return <LoadError retry={retry} />;
