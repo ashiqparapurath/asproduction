@@ -32,7 +32,7 @@ function SellerContent() {
   const { data: application, isLoading: applicationLoading } = useDoc<SellerApplication>(appRef);
   const [counts, setCounts] = useState<{ total: number; published: number } | null>(null);
   const [countError, setCountError] = useState(false);
-  const [fulfillment, setFulfillment] = useState<{ today: number; pending: number; preparing: number; ready: number; lowStock: number } | null>(null);
+  const [fulfillment, setFulfillment] = useState<{ today: number; pending: number; preparing: number; ready: number; outForDelivery: number; lowStock: number } | null>(null);
   const [countVersion, setCountVersion] = useState(0);
   const params = useSearchParams();
   useEffect(() => { const start = performance.now(); const frame = requestAnimationFrame(() => performance.measure('TreatStory seller render', { start, end: performance.now() })); return () => cancelAnimationFrame(frame); }, [params]);
@@ -80,9 +80,10 @@ function SellerContent() {
       getCountFromServer(scopedOrders('pending')),
       getCountFromServer(scopedOrders('preparing')),
       getCountFromServer(scopedOrders('ready')),
+      getCountFromServer(scopedOrders('out-for-delivery')),
       getCountFromServer(query(products, where('sellerId', '==', user.uid), where('availability', '==', 'available'), where('stockQuantity', '>=', 1), where('stockQuantity', '<=', 3))),
-    ]).then(([today, pending, preparing, ready, lowStock]) => {
-      if (live) setFulfillment({ today: today.data().count, pending: pending.data().count, preparing: preparing.data().count, ready: ready.data().count, lowStock: lowStock.data().count });
+    ]).then(([today, pending, preparing, ready, outForDelivery, lowStock]) => {
+      if (live) setFulfillment({ today: today.data().count, pending: pending.data().count, preparing: preparing.data().count, ready: ready.data().count, outForDelivery: outForDelivery.data().count, lowStock: lowStock.data().count });
     }).catch(() => { if (live) setFulfillment(null); });
     return () => { live = false; };
   }, [db, user?.uid, seller?.id, section, countVersion]);
@@ -191,12 +192,13 @@ function SellerContent() {
             { label: 'Published products', value: countError ? '—' : counts?.published ?? '…', icon: CheckCircle2 },
             { label: 'Draft products', value: countError ? '—' : counts ? counts.total - counts.published : '…', icon: Clock3 },
           ].map(metric => <div key={metric.label} className="rounded-2xl border border-[#e9e3d9] bg-white p-4 shadow-sm shadow-[#29251f]/[0.03] sm:p-6"><metric.icon className="h-5 w-5 text-[#a68a64]" /><p className="mt-3 text-2xl font-semibold sm:mt-6 sm:text-3xl">{metric.value}</p><p className="mt-1 text-xs text-muted-foreground sm:text-sm">{metric.label}</p></div>)}</div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
             {[
               { label: "Today's orders", count: fulfillment?.today },
               { label: 'Needs acceptance', count: fulfillment?.pending },
               { label: 'Preparing', count: fulfillment?.preparing },
               { label: 'Ready to fulfill', count: fulfillment?.ready },
+              { label: 'Out for delivery', count: fulfillment?.outForDelivery },
             ].map(item => <button key={item.label} type="button" onClick={() => setSection('orders')} className="rounded-2xl border border-[#e8e0d5] bg-white p-3 text-left transition hover:border-[#a68a64] sm:p-5"><p className="text-2xl font-semibold">{item.count ?? '…'}</p><p className="mt-1 text-xs text-muted-foreground">{item.label}</p></button>)}
           </div>
           <div className="flex flex-wrap gap-3">
