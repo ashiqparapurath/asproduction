@@ -32,9 +32,10 @@ type AccountDataState = {
   addressLoading: boolean;
   buyerOrders: OrderRecord[] | null;
   buyerOrdersLoading: boolean;
+  buyerOrdersError: Error | null;
   buyerOrdersCursor: QueryDocumentSnapshot<DocumentData> | null;
 };
-const emptyAccount: AccountDataState = { uid: null, address: null, addressLoading: false, buyerOrders: null, buyerOrdersLoading: false, buyerOrdersCursor: null };
+const emptyAccount: AccountDataState = { uid: null, address: null, addressLoading: false, buyerOrders: null, buyerOrdersLoading: false, buyerOrdersError: null, buyerOrdersCursor: null };
 const emptyRole: RoleState = { uid: null, role: null, loading: true, error: null, seller: null };
 
 // Combined state for the Firebase context
@@ -170,11 +171,11 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         setAccountData(v => v.uid === uid ? {
           ...v, buyerOrders: snapshot.docs.map(d => ({ ...d.data(), id: d.id } as OrderRecord)),
           buyerOrdersCursor: snapshot.docs[snapshot.docs.length - 1] ?? null,
-          buyerOrdersLoading: false,
+          buyerOrdersLoading: false, buyerOrdersError: null,
         } : v);
         if (performance.getEntriesByName('TreatStory buyer recent orders').length === 0) performance.measure('TreatStory buyer recent orders', { start, end: performance.now() });
       },
-      () => { if (live) setAccountData(v => v.uid === uid ? { ...v, buyerOrdersLoading: false } : v); });
+      error => { if (live) setAccountData(v => v.uid === uid ? { ...v, buyerOrdersLoading: false, buyerOrdersError: error } : v); });
     return () => { live = false; stopAddress(); stopOrders(); };
   }, [firestore, userAuthState.user?.uid]);
 
