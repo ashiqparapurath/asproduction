@@ -55,7 +55,8 @@ export function CreatorCheckout({ variant = 'card', onlyProductId, initialNote =
         const expiry = seller.accessEndsAt as { toMillis?: () => number } | undefined;
         if (!expiry?.toMillis || expiry.toMillis() <= Date.now()) throw new Error(`${seller.businessName || 'This seller'}'s marketplace access has expired.`);
         if (!Number.isInteger(item.quantity) || item.quantity < Math.max(1, product.minimumOrderQuantity ?? 1) || item.quantity > 99) throw new Error(`Please order at least ${product.minimumOrderQuantity || 1} unit(s) of ${product.name} (maximum 99).`);
-        if (note.trim().length > 1000) throw new Error('Please shorten your customization and delivery notes.');
+        const itemNote = [item.customizationNote ? `Personalization for ${product.name}: ${item.customizationNote}` : '', note.trim()].filter(Boolean).join('\n\n');
+        if (itemNote.length > 1000) throw new Error('Please shorten your customization and delivery notes.');
         if (name.trim().length < 2 || phone.trim().length < 5 || address.trim().length < 10) throw new Error('Please complete your contact and delivery details.');
         stage = 'creating the order';
         const order = await addDoc(collection(db, 'seller_orders'), {
@@ -63,7 +64,7 @@ export function CreatorCheckout({ variant = 'card', onlyProductId, initialNote =
           productName: product.name, quantity: item.quantity,
           unitPrice: product.price, subtotal: product.price * item.quantity,
           status: 'pending', paymentMethod, customerName: name.trim(), customerPhone: phone.trim(),
-          deliveryAddress: address.trim(), customerNote: note.trim(),
+          deliveryAddress: address.trim(), customerNote: itemNote,
           createdAt: serverTimestamp(), updatedAt: serverTimestamp()
         });
         placed.push(order.id);
