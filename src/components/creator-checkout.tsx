@@ -2,9 +2,9 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import { SectionSkeleton } from '@/components/loading-states';
-import { DeliveryAddress, addressText } from '@/components/default-delivery-address';
+import { addressText } from '@/components/default-delivery-address';
 import { addDoc, collection, doc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { useFirestore, useUser } from '@/firebase';
+import { useAccountData, useFirestore, useUser } from '@/firebase';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import { Banknote, CreditCard, MapPin, ShieldCheck, Truck } from 'lucide-react';
 export function CreatorCheckout({ variant = 'card', onlyProductId, onComplete }: { variant?: 'card' | 'page'; onlyProductId?: string; onComplete?: () => void }) {
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
+  const { address: savedAddress } = useAccountData();
   const { cartItems, removeFromCart } = useCart();
   const { toast } = useToast();
   const [name, setName] = useState('');
@@ -27,7 +28,7 @@ export function CreatorCheckout({ variant = 'card', onlyProductId, onComplete }:
   const paymentMethod = 'cod' as const;
   const [result, setResult] = useState<string[]>([]);
   const items = cartItems.filter(i => i.id.startsWith('seller:') && (!onlyProductId || i.id === 'seller:' + onlyProductId));
-  useEffect(() => { if (!db || !user) return; let live = true; getDoc(doc(db,'customer_addresses',user.uid)).then(s => { if(!live || !s.exists()) return; const a = s.data() as DeliveryAddress; setName(v=>v||a.recipient||'');setPhone(v=>v||a.phone||'');setAddress(v=>v||addressText(a)); }).catch(()=>{});return()=>{live=false}; },[db,user]);
+  useEffect(() => { if (!savedAddress) return; setName(v=>v||savedAddress.recipient||'');setPhone(v=>v||savedAddress.phone||'');setAddress(v=>v||addressText(savedAddress)); }, [savedAddress]);
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!db || !user || busy || !items.length) return;
