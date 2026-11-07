@@ -5,7 +5,7 @@ import { DashboardShellSkeleton, SectionSkeleton } from '@/components/loading-st
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { collection, doc, addDoc, deleteDoc, updateDoc, query, where, serverTimestamp, getCountFromServer, Timestamp } from 'firebase/firestore';
+import { collection, doc, addDoc, deleteDoc, updateDoc, query, where, serverTimestamp, getCountFromServer, Timestamp, deleteField } from 'firebase/firestore';
 import { useFirestore, useUser, useAccountRole, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { Header } from '@/components/header';
 import { OrderManagement } from '@/components/order-management';
@@ -133,7 +133,7 @@ function SellerContent() {
         minimumOrderQuantity: minQty,
         customizationOptions: options,
         careInstructions: draft.careInstructions.trim(),
-        ...(weight !== null ? { weightValue: weight, weightUnit: draft.weightUnit } : {}),
+        ...(weight !== null ? { weightValue: weight, weightUnit: draft.weightUnit } : editing ? { weightValue: deleteField(), weightUnit: deleteField() } : {}),
         status: draft.status, updatedAt: serverTimestamp()
       };
       if (editing) await updateDoc(doc(db, 'marketplace_products', editing.id), data);
