@@ -5,10 +5,16 @@
   "description": "Discover home bakes, art and handmade finds from independent creators.",
   "icons": [
     {
-      "src": "/ts%20logo%20black.png",
+      "src": "/app-icon?size=192",
       "type": "image/png",
-      "sizes": "any",
+      "sizes": "192x192",
       "purpose": "any"
+    },
+    {
+      "src": "/app-icon?size=512",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": "/",
