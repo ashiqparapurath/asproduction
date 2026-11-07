@@ -3,7 +3,7 @@ import { LoadError } from '@/components/loading-states';
 
 import { useState } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import type { Banner } from '@/lib/products';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,11 +28,9 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { BannerDialog } from './banner-dialog';
-import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { format } from 'date-fns';
 import { Switch } from '@/components/ui/switch';
 import Image from 'next/image';
-import { serverTimestamp } from 'firebase/firestore';
 
 export function BannerList() {
   const firestore = useFirestore();
@@ -48,6 +46,7 @@ export function BannerList() {
   const [bannerToDelete, setBannerToDelete] = useState<Banner | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [workingBannerId, setWorkingBannerId] = useState<string | null>(null);
 
   const handleEdit = (banner: Banner) => {
     setBannerToEdit(banner);
@@ -60,27 +59,32 @@ export function BannerList() {
   };
 
   const confirmDelete = async () => {
-    if (bannerToDelete && firestore) {
-      const docRef = doc(firestore, 'banners', bannerToDelete.id);
-      deleteDocumentNonBlocking(docRef);
-      toast({
-        title: 'Banner Deleted',
-        description: `The banner "${bannerToDelete.title}" has been removed.`,
-      });
+    if (!bannerToDelete || !firestore || workingBannerId) return;
+    setWorkingBannerId(bannerToDelete.id);
+    try {
+      await deleteDoc(doc(firestore, 'banners', bannerToDelete.id));
+      toast({ title: 'Banner deleted', description: `"${bannerToDelete.title}" was removed.` });
       setIsDeleteConfirmOpen(false);
       setBannerToDelete(null);
-    }
+    } catch (error) {
+      console.error('Banner deletion failed', error);
+      toast({ variant: 'destructive', title: 'Could not delete banner', description: error instanceof Error ? error.message : 'Check Firestore administrator permissions.' });
+    } finally { setWorkingBannerId(null); }
   };
-  
-  const handleToggleActive = (banner: Banner) => {
-    if (!firestore) return;
-    const docRef = doc(firestore, 'banners', banner.id);
-    updateDocumentNonBlocking(docRef, { isActive: !banner.isActive, updatedAt: serverTimestamp() });
-    toast({
-        title: "Banner status updated",
-        description: `"${banner.title}" is now ${!banner.isActive ? 'active' : 'inactive'}.`
-    });
-  }
+
+  const handleToggleActive = async (banner: Banner) => {
+    if (!firestore || workingBannerId) return;
+    setWorkingBannerId(banner.id);
+    try {
+      await updateDoc(doc(firestore, 'banners', banner.id), {
+        isActive: !banner.isActive, updatedAt: serverTimestamp(),
+      });
+      toast({ title: 'Banner status updated', description: `"${banner.title}" is now ${!banner.isActive ? 'active' : 'inactive'}.` });
+    } catch (error) {
+      console.error('Banner status change failed', error);
+      toast({ variant: 'destructive', title: 'Could not change banner status', description: error instanceof Error ? error.message : 'Check Firestore administrator permissions.' });
+    } finally { setWorkingBannerId(null); }
+  };
 
   const formatDate = (timestamp: any) => {
     if (!timestamp) return 'N/A';
@@ -117,7 +121,7 @@ export function BannerList() {
                       <div className="flex items-center gap-2 mt-2">
                         <Switch
                             checked={banner.isActive}
-                            onCheckedChange={() => handleToggleActive(banner)}
+                            onCheckedChange={() => void handleToggleActive(banner)}
                             aria-label="Toggle banner status"
                         />
                         <span className="text-sm text-muted-foreground">{banner.isActive ? "Active" : "Inactive"}</span>
@@ -173,7 +177,7 @@ export function BannerList() {
                     <div className="flex items-center gap-2">
                         <Switch
                             checked={banner.isActive}
-                            onCheckedChange={() => handleToggleActive(banner)}
+                            onCheckedChange={() => void handleToggleActive(banner)}
                             aria-label="Toggle banner status"
                         />
                         <span className="text-sm">{banner.isActive ? "Active" : "Inactive"}</span>
