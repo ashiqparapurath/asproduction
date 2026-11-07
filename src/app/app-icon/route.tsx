@@ -12,7 +12,7 @@ export async function GET(request: Request) {
 
   return new ImageResponse(
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff' }}>
-      <img src={src} alt="" width={Math.round(size * 0.70)} height={Math.round(size * 0.70)} style={{ objectFit: 'contain' }} />
+      <img src={src} alt="" width={Math.round(size * 0.86)} height={Math.round(size * 0.86)} style={{ objectFit: 'contain' }} />
     </div>,
     { width: size, height: size, headers: { 'Cache-Control': 'public, max-age=3600' } }
   );
