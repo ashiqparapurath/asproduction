@@ -6,9 +6,9 @@ import { useFirestore, useMemoFirebase } from '@/firebase';
 import type { MarketplaceProduct } from '@/lib/marketplace-types';
 import { useMemo, useState, useEffect, useDeferredValue } from 'react';
 import { ProductGridSkeleton, LoadError } from '@/components/loading-states';
-import { ProductImage } from '@/components/product-image';
+import { SellerProductCard } from '@/components/seller-product-card';
 import { Input } from '@/components/ui/input';
-import { Search, Store, ShoppingBag } from 'lucide-react';
+import { Search, Store } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
@@ -34,25 +34,10 @@ export function SellerStorefrontProducts({ limitCount }: { limitCount?: number }
     {!limitCount && <div className="relative max-w-sm"><Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search creator products…" aria-label="Search creator products" className="rounded-full bg-white pl-11" /></div>}
     {visible.length === 0 ? <p className="text-sm text-muted-foreground">No matching creator products.</p> : (
       <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 sm:gap-x-5 lg:grid-cols-4">
-        {visible.slice(0, visibleCount).map(p => {
-          const available = p.availability !== 'unavailable' && p.showPrice;
-          return (
-            <article key={p.id} className="group relative min-w-0 overflow-hidden rounded-[22px] border border-white/70 bg-[#f1eee9] shadow-[0_6px_24px_rgba(35,29,23,0.09)] transition-shadow duration-300 hover:shadow-[0_16px_36px_rgba(35,29,23,0.15)]">
-              <div className="relative aspect-[3/4] overflow-hidden bg-[#f1eee9]">
-                <ProductImage src={p.imageUrls?.[0]} alt={p.name} />
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-                <span className="absolute left-2.5 top-2.5 max-w-[45%] truncate rounded-md bg-white/95 px-2.5 py-1.5 text-[10px] font-medium text-[#51463a] shadow-sm sm:left-3 sm:top-3">{p.category}</span>
-                <span className={`absolute right-2.5 top-2.5 max-w-[45%] truncate rounded-md px-2.5 py-1 text-[10px] font-medium backdrop-blur-sm ${p.availability === 'unavailable' ? 'bg-[#29251f]/85 text-white' : 'bg-white/90 text-[#51463a]'}`}>{p.availability === 'unavailable' ? 'Unavailable' : p.availability === 'made-to-order' ? 'Made to order' : 'Available'}</span>
-                <div className="absolute inset-x-3 bottom-3 flex flex-col gap-2 text-white sm:inset-x-4 sm:bottom-4">
-                  <h3 className="line-clamp-2 text-sm font-semibold leading-snug drop-shadow-sm sm:text-base">{p.name}</h3>
-                  {p.description && <p className="hidden line-clamp-2 text-[11px] leading-snug text-white/85 sm:block sm:text-xs">{p.description}</p>}
-                  <p className="min-w-0 text-lg font-semibold tracking-tight text-white sm:text-xl">{p.showPrice ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(p.price) : 'Price on request'}</p>
-                  <div className="flex gap-2"><button type="button" disabled={!available} onClick={() => { addProduct(p); toast({ title: 'Added to your bag', description: p.name }); }} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white px-0 text-[10px] font-semibold text-[#29251f] transition hover:bg-[#f4eee5] disabled:opacity-60 sm:h-auto sm:w-auto sm:min-h-9 sm:flex-1 sm:gap-1.5 sm:px-2"><ShoppingBag className="h-4 w-4 sm:h-3.5 sm:w-3.5" /><span className="sr-only sm:not-sr-only">Add to bag</span></button><button type="button" disabled={!available} onClick={() => { addProduct(p); router.push(`/checkout?product=${encodeURIComponent(p.id)}`); }} className="flex min-h-10 min-w-0 flex-1 items-center justify-center rounded-full border border-white/70 bg-white/15 px-2 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white/25 disabled:opacity-60 sm:min-h-9 sm:text-[10px]">{available ? 'Buy now' : 'Unavailable'}</button></div>
-                </div>
-              </div>
-            </article>
-          );
-        })}
+        {visible.slice(0, visibleCount).map(p => <SellerProductCard key={p.id} product={p}
+          addToBag={product => { addProduct(product); toast({ title: 'Added to your bag', description: product.name }); }}
+          buyNow={product => { addProduct(product); router.push(`/checkout?product=${encodeURIComponent(product.id)}`); }}
+        />)}
       </div>
     )}
     {visibleCount < visible.length && <button type="button" onClick={() => setVisibleCount(n => n + 24)} className="min-h-11 rounded-xl border px-5 text-sm">Show more creations</button>}
