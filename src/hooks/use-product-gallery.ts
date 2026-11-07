@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type TouchEvent } from 'react';
+import { useRef, useState, type TouchEvent, type MouseEvent } from 'react';
 
 /** Accessible gallery control: swipe on touchscreens; buttons on larger screens. */
 export function useProductGallery(length: number) {
@@ -32,7 +32,7 @@ export function useProductGallery(length: number) {
     move(delta < 0 ? 1 : -1);
     if (event.cancelable) event.preventDefault(); // Don't open the product while swiping its card.
   }
-  function onClickCapture(event: React.MouseEvent) {
+  function onClickCapture(event: MouseEvent) {
     if (swipeHandled.current) {
       event.preventDefault();
       event.stopPropagation();
